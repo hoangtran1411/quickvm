@@ -52,7 +52,10 @@ If a new version is available, download and install it automatically.`,
 		if !autoInstall {
 			fmt.Print("❓ Do you want to install this update? [y/N]: ")
 			var response string
-			fmt.Scanln(&response)
+			if _, err := fmt.Scanln(&response); err != nil {
+				// Default to 'no' if can't read input
+				response = "n"
+			}
 			
 			if response != "y" && response != "Y" {
 				fmt.Println("⏭️  Update cancelled")

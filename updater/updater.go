@@ -265,7 +265,9 @@ func extractZip(zipPath, destPath string) error {
 		fpath := filepath.Join(destPath, f.Name)
 
 		if f.FileInfo().IsDir() {
-			os.MkdirAll(fpath, os.ModePerm)
+			if err := os.MkdirAll(fpath, os.ModePerm); err != nil {
+				return err
+			}
 			continue
 		}
 

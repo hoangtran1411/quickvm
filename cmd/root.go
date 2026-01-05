@@ -64,7 +64,10 @@ func checkAndUpdate() {
 	fmt.Print("❓ Do you want to update now? [Y/n]: ")
 	
 	var response string
-	fmt.Scanln(&response)
+	if _, err := fmt.Scanln(&response); err != nil {
+		// Default to 'yes' if can't read input
+		response = ""
+	}
 	
 	if response == "n" || response == "N" {
 		fmt.Println("⏭️  Continuing with current version...")
