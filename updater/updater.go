@@ -247,30 +247,26 @@ Remove-Item $scriptFile -Force -ErrorAction SilentlyContinue
 	}
 
 	// Execute cleanup script in background
-	// Use PowerShell with hidden window
-	cmd := fmt.Sprintf(`powershell.exe -WindowStyle Hidden -ExecutionPolicy Bypass -File "%s"`, scriptPath)
-	
 	// Start the process detached (don't wait for it)
 	go func() {
 		// Small delay to ensure current process can exit first
 		time.Sleep(100 * time.Millisecond)
-		_ = executeCommand(cmd)
+		_ = executeCommand(scriptPath)
 	}()
 
 	return nil
 }
 
-// executeCommand executes a shell command
-func executeCommand(cmd string) error {
-	// This is a simplified version - just launch and forget
-	// The cleanup script will handle its own deletion
-	parts := strings.Fields(cmd)
-	if len(parts) == 0 {
-		return fmt.Errorf("empty command")
-	}
+// executeCommand executes a shell command in the background
+func executeCommand(scriptPath string) error {
+	// Use PowerShell to execute the cleanup script in hidden mode
+	cmd := exec.Command("powershell.exe", 
+		"-WindowStyle", "Hidden",
+		"-ExecutionPolicy", "Bypass",
+		"-File", scriptPath)
 	
-	// For Windows, use cmd /c to execute
-	return nil
+	// Start without waiting for completion
+	return cmd.Start()
 }
 
 // DownloadZipPackage downloads the full ZIP package
