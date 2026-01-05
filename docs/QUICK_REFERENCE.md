@@ -21,8 +21,17 @@ quickvm
 | `quickvm start <index>` | Start VM by index | `quickvm start 1` |
 | `quickvm stop <index>` | Stop VM by index | `quickvm stop 1` |
 | `quickvm restart <index>` | Restart VM by index | `quickvm restart 1` |
+| `quickvm update` | Check and install updates | `quickvm update` |
 | `quickvm version` | Show version info | `quickvm version` |
 | `quickvm help` | Show help | `quickvm help` |
+
+### Update Flags
+| Flag | Description | Example |
+|------|-------------|---------|
+| `--update` | Check for updates before running any command | `quickvm --update list` |
+| `--yes, -y` | Auto-install without prompting | `quickvm update -y` |
+| `--check-only` | Only check, don't install | `quickvm update --check-only` |
+
 
 ## ⌨️ TUI Keyboard Shortcuts
 

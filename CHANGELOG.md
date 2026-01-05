@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- 🔄 Auto-update functionality
+  - `quickvm update` command to check and install updates
+  - `--update` flag to check for updates before running any command
+  - Download updates directly from GitHub releases
+  - Auto-backup before updating
+  - Support for both AMD64 and ARM64 architectures
+
 ### Planned Features
 - VM snapshot management
 - Create new VMs

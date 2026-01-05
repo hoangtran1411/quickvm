@@ -32,6 +32,16 @@ Real-world use cases and power user tips:
 - Advanced techniques
 - Integration with other tools
 
+#### [Auto-Update Guide](AUTO_UPDATE.md) 🔄
+**Keep QuickVM up-to-date automatically!**
+
+Complete guide to auto-update feature:
+- Update commands and options
+- Automatic update checks
+- Troubleshooting update issues
+- Security and rollback
+- Automation examples
+
 ### For Developers
 
 #### [Developer Guide](DEVELOPER.md) 👨‍💻
@@ -69,6 +79,27 @@ Complete project overview including:
 - Technology stack
 - Statistics
 - Future roadmap
+
+### Development Notes
+
+#### [Restructure Notes](RESTRUCTURE_NOTES.md) 📝
+Summary of project restructure and CI/CD setup:
+- Documentation reorganization
+- GitHub Actions workflows
+- Build and release automation
+
+#### [Auto-Update Summary](AUTO_UPDATE_SUMMARY.md) 🔄
+Implementation details of auto-update feature:
+- Technical implementation
+- Update flow
+- Security features
+- User experience design
+
+#### [Test Fixes](TEST_FIXES.md) 🧪
+CI/CD test improvements:
+- Environment detection
+- Graceful test skipping
+- Best practices for CI tests
 
 ## 🎯 Quick Navigation
 

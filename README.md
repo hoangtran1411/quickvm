@@ -91,6 +91,21 @@ quickvm stop 1
 quickvm restart 1
 ```
 
+#### Update QuickVM
+```bash
+# Check for updates and install
+quickvm update
+
+# Check for updates without installing
+quickvm update --check-only
+
+# Auto-install without prompting
+quickvm update -y
+
+# Check for updates before running any command
+quickvm --update list
+```
+
 ## 🎯 Quick Examples
 
 ```bash
