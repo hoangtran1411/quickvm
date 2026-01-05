@@ -165,7 +165,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m *Model) updateTable() {
 	rows := []table.Row{}
 	for _, vm := range m.vms {
-		state := vm.State
+		var state string
 		switch strings.ToLower(vm.State) {
 		case "running":
 			state = statusRunningStyle.Render(vm.State)

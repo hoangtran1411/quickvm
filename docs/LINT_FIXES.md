@@ -1,162 +1,77 @@
-# Golangci-lint Fixes
+# Lint Fixes - 2026-01-05
 
-## ❌ Linter Errors
+This document describes the linting errors that were fixed to make the CI/CD pipeline pass.
 
+## Fixed Issues
+
+### 1. Ineffectual Assignment in `ui/table.go` (Line 168)
+
+**Error:**
 ```
-Error: Error return value of `fmt.Scanln` is not checked (errcheck)
-Error: Error return value of `os.MkdirAll` is not checked (errcheck)
-level=warning msg="The output format `github-actions` is deprecated"
+ui\table.go:168:3: ineffectual assignment to state (ineffassign)
+    state := vm.State
+    ^
 ```
 
-## ✅ Fixes Applied
+**Problem:**
+The variable `state` was being assigned `vm.State` but was immediately reassigned in the switch statement below, making the initial assignment useless.
 
-### 1. fmt.Scanln Errors (errcheck)
-
-#### cmd/root.go - Line 67
-**Before:**
+**Fix:**
+Changed from:
 ```go
-var response string
-fmt.Scanln(&response)
-```
-
-**After:**
-```go
-var response string
-if _, err := fmt.Scanln(&response); err != nil {
-    // Default to 'yes' if can't read input
-    response = ""
+state := vm.State
+switch strings.ToLower(vm.State) {
+case "running":
+    state = statusRunningStyle.Render(vm.State)
+// ...
 }
 ```
 
-#### cmd/update.go - Line 55
-**Before:**
+To:
 ```go
-var response string
-fmt.Scanln(&response)
-```
-
-**After:**
-```go
-var response string
-if _, err := fmt.Scanln(&response); err != nil {
-    // Default to 'no' if can't read input
-    response = "n"
+var state string
+switch strings.ToLower(vm.State) {
+case "running":
+    state = statusRunningStyle.Render(vm.State)
+// ...
 }
 ```
 
-### 2. os.MkdirAll Error (errcheck)
+### 2. Potential Nil Pointer Dereference in `updater/updater_test.go` (Line 14)
 
-#### updater/updater.go - Line 268
-**Before:**
-```go
-if f.FileInfo().IsDir() {
-    os.MkdirAll(fpath, os.ModePerm)
-    continue
-}
+**Error:**
+```
+updater\updater_test.go:14:7: SA5011: possible nil pointer dereference (staticcheck)
+    if u.currentVersion != "1.0.0" {
+         ^
+updater\updater_test.go:10:5: SA5011(related information): this check suggests that the pointer can be nil (staticcheck)
+    if u == nil {
+       ^
 ```
 
-**After:**
+**Problem:**
+The test checks if `u == nil` on line 10 but doesn't return early, meaning the code could continue to line 14 and dereference the nil pointer.
+
+**Fix:**
+Added early return after nil check:
 ```go
-if f.FileInfo().IsDir() {
-    if err := os.MkdirAll(fpath, os.ModePerm); err != nil {
-        return err
+func TestNewUpdater(t *testing.T) {
+    u := NewUpdater("1.0.0")
+    if u == nil {
+        t.Error("NewUpdater() returned nil")
+        return  // <- Added this line
     }
-    continue
+    
+    if u.currentVersion != "1.0.0" {
+        t.Errorf("Expected version 1.0.0, got %s", u.currentVersion)
+    }
 }
 ```
 
-### 3. Deprecated Output Format (warning)
+## Summary
 
-#### .github/workflows/build.yml
-**Before:**
-```yaml
-args: --timeout=5m
-```
+Both issues have been resolved:
+- ✅ Removed ineffectual assignment in `ui/table.go`
+- ✅ Added early return to prevent nil pointer dereference in `updater/updater_test.go`
 
-**After:**
-```yaml
-args: --timeout=5m --out-format=colored-line-number
-```
-
-## 📊 Summary
-
-### Files Modified:
-```
-✅ cmd/root.go           - Check fmt.Scanln error
-✅ cmd/update.go         - Check fmt.Scanln error
-✅ updater/updater.go    - Check os.MkdirAll error
-✅ .github/workflows/build.yml - Fix deprecated format
-```
-
-### Errors Fixed:
-- ✅ 2x errcheck for fmt.Scanln
-- ✅ 1x errcheck for os.MkdirAll
-- ✅ 1x deprecated warning
-
-## 🎯 Best Practices Applied
-
-### 1. Always Check Errors
-```go
-// ❌ Bad
-fmt.Scanln(&response)
-
-// ✅ Good
-if _, err := fmt.Scanln(&response); err != nil {
-    // Handle error with sensible default
-    response = ""
-}
-```
-
-### 2. Provide Defaults
-When input fails, provide sensible defaults:
-- **Update prompt**: Default to "yes" (safe for user interaction)
-- **Install prompt**: Default to "no" (conservative, don't install without confirmation)
-
-### 3. Error Propagation
-```go
-// ❌ Bad
-os.MkdirAll(path, perm)
-
-// ✅ Good
-if err := os.MkdirAll(path, perm); err != nil {
-    return err  // Propagate error up
-}
-```
-
-## ✅ Verification
-
-```powershell
-# Build successfully
-PS> go build -o quickvm.exe
-✅ No errors
-
-# All linter checks should pass now
-PS> golangci-lint run
-✅ No issues found
-```
-
-## 📝 Rationale
-
-### Why Default to "" vs "n"?
-
-**root.go (auto-update check):**
-- Prompt: "Do you want to update now? [Y/n]"
-- Default: "" (empty = yes)
-- Rationale: User already ran with `--update` flag, showing intent to update
-
-**update.go (install confirmation):**
-- Prompt: "Do you want to install this update? [y/N]"
-- Default: "n" (no)
-- Rationale: Conservative approach, don't install without explicit consent
-
-## 🔄 Impact
-
-- ✅ Code now follows Go best practices
-- ✅ All errors properly handled
-- ✅ GitHub Actions will pass linting
-- ✅ No breaking changes to functionality
-- ✅ Better error resilience
-
----
-
-**All Linter Errors Fixed! ✅**
+The CI/CD lint job should now pass successfully.

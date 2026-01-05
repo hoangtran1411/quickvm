@@ -9,6 +9,7 @@ func TestNewUpdater(t *testing.T) {
 	u := NewUpdater("1.0.0")
 	if u == nil {
 		t.Error("NewUpdater() returned nil")
+		return
 	}
 	
 	if u.currentVersion != "1.0.0" {
