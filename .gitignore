@@ -32,7 +32,18 @@ Thumbs.db
 bin/
 dist/
 build/
+release/
 
 # Application specific
 quickvm.exe
 quickvm
+quickvm-*.exe
+
+# Coverage
+coverage.out
+coverage.html
+
+# Release artifacts
+*.zip
+*.sha256
+release-notes.md

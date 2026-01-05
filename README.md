@@ -3,8 +3,9 @@
 <div align="center">
 
 ![QuickVM Logo](https://img.shields.io/badge/QuickVM-Hyper--V%20Manager-blue?style=for-the-badge&logo=windows)
-![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?style=for-the-badge&logo=go)
+![Go Version](https://img.shields.io/badge/Go-1.25.2-00ADD8?style=for-the-badge&logo=go)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
+[![Build Status](https://github.com/hoangtran1411/quickvm/actions/workflows/build.yml/badge.svg)](https://github.com/hoangtran1411/quickvm/actions/workflows/build.yml)
 
 **A beautiful TUI-based command-line tool for managing Hyper-V virtual machines**
 
@@ -143,6 +144,18 @@ quickvm/
 2. **Performance** - Fast VM operations with minimal overhead
 3. **Reliability** - Comprehensive error handling and validation
 4. **Beauty** - Color-coded states and modern terminal aesthetics
+
+## 📚 Documentation
+
+For more detailed information, check out our comprehensive documentation:
+
+- **[Quick Reference](docs/QUICK_REFERENCE.md)** - All commands and shortcuts at a glance
+- **[Vietnamese Guide](docs/HUONG_DAN.md)** - Hướng dẫn chi tiết bằng tiếng Việt
+- **[Demo & Examples](docs/DEMO.md)** - Real-world use cases and power user tips
+- **[Developer Guide](docs/DEVELOPER.md)** - Architecture and development notes
+- **[Workflow Guide](docs/WORKFLOW.md)** - Development and deployment workflow
+- **[Contributing Guide](docs/CONTRIBUTING.md)** - How to contribute to QuickVM
+- **[Project Summary](docs/PROJECT_SUMMARY.md)** - Complete project overview
 
 ## 🔒 Permissions
 

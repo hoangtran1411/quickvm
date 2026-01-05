@@ -1,0 +1,132 @@
+name: Build QuickVM
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  release:
+    types: [ created ]
+
+jobs:
+  build-windows:
+    name: Build for Windows
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.25.2'
+
+    - name: Cache Go modules
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~\AppData\Local\go-build
+          ~\go\pkg\mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
+    - name: Download dependencies
+      run: go mod download
+
+    - name: Verify dependencies
+      run: go mod verify
+
+    - name: Run tests
+      run: go test -v ./...
+
+    - name: Build AMD64
+      run: |
+        $env:GOOS="windows"
+        $env:GOARCH="amd64"
+        go build -v -ldflags="-s -w" -o quickvm-windows-amd64.exe
+      shell: pwsh
+
+    - name: Build ARM64
+      run: |
+        $env:GOOS="windows"
+        $env:GOARCH="arm64"
+        go build -v -ldflags="-s -w" -o quickvm-windows-arm64.exe
+      shell: pwsh
+
+    - name: Upload AMD64 artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: quickvm-windows-amd64
+        path: quickvm-windows-amd64.exe
+        retention-days: 30
+
+    - name: Upload ARM64 artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: quickvm-windows-arm64
+        path: quickvm-windows-arm64.exe
+        retention-days: 30
+
+    - name: Create checksums
+      if: github.event_name == 'release'
+      run: |
+        Get-FileHash quickvm-windows-amd64.exe -Algorithm SHA256 | Select-Object Hash | Out-File -FilePath quickvm-windows-amd64.exe.sha256
+        Get-FileHash quickvm-windows-arm64.exe -Algorithm SHA256 | Select-Object Hash | Out-File -FilePath quickvm-windows-arm64.exe.sha256
+      shell: pwsh
+
+    - name: Upload Release Assets
+      if: github.event_name == 'release'
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          quickvm-windows-amd64.exe
+          quickvm-windows-arm64.exe
+          quickvm-windows-amd64.exe.sha256
+          quickvm-windows-arm64.exe.sha256
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  lint:
+    name: Lint
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.25.2'
+
+    - name: golangci-lint
+      uses: golangci/golangci-lint-action@v4
+      with:
+        version: latest
+        args: --timeout=5m
+
+  test-coverage:
+    name: Test Coverage
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.25.2'
+
+    - name: Run tests with coverage
+      run: go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        files: ./coverage.out
+        flags: unittests
+        name: codecov-quickvm
+        fail_ci_if_error: false

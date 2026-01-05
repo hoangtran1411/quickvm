@@ -1,0 +1,162 @@
+name: Release QuickVM
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  create-release:
+    name: Create Release
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.25.2'
+
+    - name: Get version from tag
+      id: get_version
+      run: |
+        $VERSION = $env:GITHUB_REF -replace 'refs/tags/', ''
+        echo "VERSION=$VERSION" >> $env:GITHUB_OUTPUT
+        echo "VERSION_NUMBER=$($VERSION -replace 'v', '')" >> $env:GITHUB_OUTPUT
+      shell: pwsh
+
+    - name: Update version in code
+      run: |
+        $VERSION_NUMBER = "${{ steps.get_version.outputs.VERSION_NUMBER }}"
+        $content = Get-Content cmd/version.go -Raw
+        $content = $content -replace 'Version\s*=\s*"[^"]*"', "Version   = `"$VERSION_NUMBER`""
+        $content = $content -replace 'BuildDate\s*=\s*"[^"]*"', "BuildDate = `"$(Get-Date -Format 'yyyy-MM-dd')`""
+        $content = $content -replace 'GitCommit\s*=\s*"[^"]*"', "GitCommit = `"$env:GITHUB_SHA`""
+        Set-Content cmd/version.go -Value $content
+      shell: pwsh
+
+    - name: Download dependencies
+      run: |
+        go mod download
+        go mod verify
+
+    - name: Run tests
+      run: go test -v ./...
+
+    - name: Build AMD64
+      run: |
+        $env:GOOS="windows"
+        $env:GOARCH="amd64"
+        go build -v -ldflags="-s -w -X 'main.Version=${{ steps.get_version.outputs.VERSION_NUMBER }}' -X 'main.BuildDate=$(Get-Date -Format 'yyyy-MM-dd')' -X 'main.GitCommit=$env:GITHUB_SHA'" -o build/quickvm-windows-amd64.exe
+      shell: pwsh
+
+    - name: Build ARM64
+      run: |
+        $env:GOOS="windows"
+        $env:GOARCH="arm64"
+        go build -v -ldflags="-s -w -X 'main.Version=${{ steps.get_version.outputs.VERSION_NUMBER }}' -X 'main.BuildDate=$(Get-Date -Format 'yyyy-MM-dd')' -X 'main.GitCommit=$env:GITHUB_SHA'" -o build/quickvm-windows-arm64.exe
+      shell: pwsh
+
+    - name: Create release package
+      run: |
+        # Create directories
+        New-Item -ItemType Directory -Force -Path "release/quickvm-windows-amd64"
+        New-Item -ItemType Directory -Force -Path "release/quickvm-windows-arm64"
+        
+        # Copy files for AMD64
+        Copy-Item build/quickvm-windows-amd64.exe release/quickvm-windows-amd64/quickvm.exe
+        Copy-Item README.md release/quickvm-windows-amd64/
+        Copy-Item LICENSE release/quickvm-windows-amd64/
+        Copy-Item install.ps1 release/quickvm-windows-amd64/
+        Copy-Item -Recurse docs release/quickvm-windows-amd64/
+        
+        # Copy files for ARM64
+        Copy-Item build/quickvm-windows-arm64.exe release/quickvm-windows-arm64/quickvm.exe
+        Copy-Item README.md release/quickvm-windows-arm64/
+        Copy-Item LICENSE release/quickvm-windows-arm64/
+        Copy-Item install.ps1 release/quickvm-windows-arm64/
+        Copy-Item -Recurse docs release/quickvm-windows-arm64/
+        
+        # Create ZIP archives
+        Compress-Archive -Path release/quickvm-windows-amd64/* -DestinationPath release/quickvm-${{ steps.get_version.outputs.VERSION }}-windows-amd64.zip
+        Compress-Archive -Path release/quickvm-windows-arm64/* -DestinationPath release/quickvm-${{ steps.get_version.outputs.VERSION }}-windows-arm64.zip
+        
+        # Create checksums
+        Get-FileHash build/quickvm-windows-amd64.exe -Algorithm SHA256 | Select-Object -ExpandProperty Hash | Out-File -FilePath release/quickvm-windows-amd64.exe.sha256 -NoNewline
+        Get-FileHash build/quickvm-windows-arm64.exe -Algorithm SHA256 | Select-Object -ExpandProperty Hash | Out-File -FilePath release/quickvm-windows-arm64.exe.sha256 -NoNewline
+        Get-FileHash release/quickvm-${{ steps.get_version.outputs.VERSION }}-windows-amd64.zip -Algorithm SHA256 | Select-Object -ExpandProperty Hash | Out-File -FilePath release/quickvm-${{ steps.get_version.outputs.VERSION }}-windows-amd64.zip.sha256 -NoNewline
+        Get-FileHash release/quickvm-${{ steps.get_version.outputs.VERSION }}-windows-arm64.zip -Algorithm SHA256 | Select-Object -ExpandProperty Hash | Out-File -FilePath release/quickvm-${{ steps.get_version.outputs.VERSION }}-windows-arm64.zip.sha256 -NoNewline
+      shell: pwsh
+
+    - name: Generate release notes
+      id: release_notes
+      run: |
+        $NOTES = @"
+        ## QuickVM ${{ steps.get_version.outputs.VERSION }}
+        
+        ### 🚀 Features
+        - Fast Hyper-V VM management via CLI
+        - Beautiful TUI interface with Bubble Tea
+        - Index-based operations for quick access
+        - Real-time VM status monitoring
+        
+        ### 📦 Downloads
+        
+        #### Windows AMD64 (64-bit Intel/AMD)
+        - **Binary**: ``quickvm-windows-amd64.exe``
+        - **Package**: ``quickvm-${{ steps.get_version.outputs.VERSION }}-windows-amd64.zip``
+        
+        #### Windows ARM64
+        - **Binary**: ``quickvm-windows-arm64.exe``
+        - **Package**: ``quickvm-${{ steps.get_version.outputs.VERSION }}-windows-arm64.zip``
+        
+        ### 📖 Quick Start
+        
+        1. Download the appropriate package for your system
+        2. Extract the ZIP file
+        3. Run ``quickvm.exe list`` to see your VMs
+        4. Run ``quickvm.exe`` for interactive TUI mode
+        
+        ### 📚 Documentation
+        - [Quick Reference](https://github.com/hoangtran1411/quickvm/blob/main/docs/QUICK_REFERENCE.md)
+        - [Vietnamese Guide](https://github.com/hoangtran1411/quickvm/blob/main/docs/HUONG_DAN.md)
+        - [Developer Guide](https://github.com/hoangtran1411/quickvm/blob/main/docs/DEVELOPER.md)
+        
+        ### ✅ Checksums
+        SHA256 checksums are provided for all downloads to verify integrity.
+        
+        ### 🛠️ Built with Go ${{ steps.get_version.outputs.GO_VERSION }}
+        "@
+        
+        echo $NOTES | Out-File -FilePath release-notes.md
+      shell: pwsh
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        name: QuickVM ${{ steps.get_version.outputs.VERSION }}
+        body_path: release-notes.md
+        draft: false
+        prerelease: false
+        files: |
+          build/quickvm-windows-amd64.exe
+          build/quickvm-windows-arm64.exe
+          release/quickvm-${{ steps.get_version.outputs.VERSION }}-windows-amd64.zip
+          release/quickvm-${{ steps.get_version.outputs.VERSION }}-windows-arm64.zip
+          release/*.sha256
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: quickvm-release-${{ steps.get_version.outputs.VERSION }}
+        path: |
+          build/
+          release/*.zip
+          release/*.sha256
+        retention-days: 90
