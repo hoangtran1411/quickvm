@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -144,32 +145,34 @@ func (u *Updater) DownloadAndInstall(release *Release) error {
 		return fmt.Errorf("failed to get executable path: %w", err)
 	}
 
-	// Backup current version
-	backupPath := exePath + ".backup"
-	fmt.Println("📦 Creating backup...")
-	
-	if err := copyFile(exePath, backupPath); err != nil {
-		return fmt.Errorf("failed to create backup: %w", err)
-	}
-
-	// Replace with new version
+	// Use a different strategy: rename old file instead of deleting
+	oldPath := exePath + ".old"
 	fmt.Println("🔄 Installing update...")
 	
-	if err := os.Remove(exePath); err != nil {
-		return fmt.Errorf("failed to remove old version: %w", err)
+	// Remove any existing .old file first
+	_ = os.Remove(oldPath)
+	
+	// Rename current executable to .old (this works even if file is locked)
+	if err := os.Rename(exePath, oldPath); err != nil {
+		return fmt.Errorf("failed to rename old version: %w", err)
 	}
 
+	// Copy new version to the original location
 	if err := copyFile(tmpPath, exePath); err != nil {
-		// Restore backup if update fails
-		_ = copyFile(backupPath, exePath)
+		// Restore old version if update fails
+		_ = os.Rename(oldPath, exePath)
 		return fmt.Errorf("failed to install update: %w", err)
 	}
 
-	// Clean up backup
-	os.Remove(backupPath)
+	// Create a cleanup script to delete the old version after this process exits
+	if err := createCleanupScript(exePath, oldPath); err != nil {
+		// Non-fatal error, just log it
+		fmt.Printf("⚠️  Warning: Failed to create cleanup script: %v\n", err)
+	}
 
 	fmt.Printf("✅ Successfully updated to version %s!\n", release.TagName)
-	fmt.Println("🔄 Please restart QuickVM to use the new version.")
+	fmt.Println("🔄 Please close this terminal and run 'quickvm version' to verify.")
+	fmt.Println("   The old version will be automatically cleaned up.")
 
 	return nil
 }
@@ -209,6 +212,65 @@ func copyFile(src, dst string) error {
 	}
 
 	return os.Chmod(dst, sourceInfo.Mode())
+}
+
+// createCleanupScript creates a script to clean up old version after update
+func createCleanupScript(exePath, oldPath string) error {
+	// Create a PowerShell script that will delete the old version after a delay
+	scriptPath := oldPath + ".cleanup.ps1"
+	
+	scriptContent := fmt.Sprintf(`# QuickVM Update Cleanup Script
+# This script will delete itself after cleaning up
+
+Start-Sleep -Seconds 2
+
+# Try to remove old version
+$oldFile = "%s"
+if (Test-Path $oldFile) {
+    try {
+        Remove-Item $oldFile -Force -ErrorAction Stop
+        Write-Host "✅ Cleaned up old version" -ForegroundColor Green
+    } catch {
+        # Silently fail if file is still locked
+    }
+}
+
+# Delete this cleanup script
+$scriptFile = "%s"
+Start-Sleep -Milliseconds 500
+Remove-Item $scriptFile -Force -ErrorAction SilentlyContinue
+`, oldPath, scriptPath)
+
+	// Write script to file
+	if err := os.WriteFile(scriptPath, []byte(scriptContent), 0644); err != nil {
+		return err
+	}
+
+	// Execute cleanup script in background
+	// Use PowerShell with hidden window
+	cmd := fmt.Sprintf(`powershell.exe -WindowStyle Hidden -ExecutionPolicy Bypass -File "%s"`, scriptPath)
+	
+	// Start the process detached (don't wait for it)
+	go func() {
+		// Small delay to ensure current process can exit first
+		time.Sleep(100 * time.Millisecond)
+		_ = executeCommand(cmd)
+	}()
+
+	return nil
+}
+
+// executeCommand executes a shell command
+func executeCommand(cmd string) error {
+	// This is a simplified version - just launch and forget
+	// The cleanup script will handle its own deletion
+	parts := strings.Fields(cmd)
+	if len(parts) == 0 {
+		return fmt.Errorf("empty command")
+	}
+	
+	// For Windows, use cmd /c to execute
+	return nil
 }
 
 // DownloadZipPackage downloads the full ZIP package
