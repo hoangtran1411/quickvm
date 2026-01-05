@@ -75,6 +75,8 @@ jobs:
         Copy-Item README.md release/quickvm-windows-amd64/
         Copy-Item LICENSE release/quickvm-windows-amd64/
         Copy-Item install.ps1 release/quickvm-windows-amd64/
+        Copy-Item install-menu.ps1 release/quickvm-windows-amd64/
+        Copy-Item install-menu.bat release/quickvm-windows-amd64/
         Copy-Item -Recurse docs release/quickvm-windows-amd64/
         
         # Copy files for ARM64
@@ -82,6 +84,8 @@ jobs:
         Copy-Item README.md release/quickvm-windows-arm64/
         Copy-Item LICENSE release/quickvm-windows-arm64/
         Copy-Item install.ps1 release/quickvm-windows-arm64/
+        Copy-Item install-menu.ps1 release/quickvm-windows-arm64/
+        Copy-Item install-menu.bat release/quickvm-windows-arm64/
         Copy-Item -Recurse docs release/quickvm-windows-arm64/
         
         # Create ZIP archives
@@ -119,10 +123,20 @@ jobs:
         
         ### 📖 Quick Start
         
+        #### Option 1: Interactive Installation (Recommended)
+        1. Download and extract the ZIP package for your system
+        2. Double-click ``install-menu.bat`` or run ``install-menu.ps1``
+        3. Select installation location (System/User/Current)
+        
+        #### Option 2: Manual Installation
         1. Download the appropriate package for your system
         2. Extract the ZIP file
-        3. Run ``quickvm.exe list`` to see your VMs
-        4. Run ``quickvm.exe`` for interactive TUI mode
+        3. Run ``install.ps1 -InstallLocation User``
+        
+        #### Option 3: Portable Mode
+        1. Download and extract the ZIP file
+        2. Run ``quickvm.exe list`` to see your VMs
+        3. Run ``quickvm.exe`` for interactive TUI mode
         
         ### 📚 Documentation
         - [Quick Reference](https://github.com/hoangtran1411/quickvm/blob/main/docs/QUICK_REFERENCE.md)

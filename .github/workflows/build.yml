@@ -85,6 +85,9 @@ jobs:
           quickvm-windows-arm64.exe
           quickvm-windows-amd64.exe.sha256
           quickvm-windows-arm64.exe.sha256
+          install.ps1
+          install-menu.ps1
+          install-menu.bat
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

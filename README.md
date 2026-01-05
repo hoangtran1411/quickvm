@@ -32,21 +32,60 @@
 
 ## 🚀 Installation
 
+### Quick Install (Recommended)
+
+For the easiest installation experience:
+
+1. **Download** the latest release package for your architecture
+   - [Windows AMD64 (64-bit Intel/AMD)](https://github.com/hoangtran1411/quickvm/releases)
+   - [Windows ARM64](https://github.com/hoangtran1411/quickvm/releases)
+
+2. **Extract** the ZIP file to a folder
+
+3. **Run the installation menu**
+   - Double-click `install-menu.bat`, or
+   - Right-click on `install-menu.ps1` → Run with PowerShell
+
+4. **Choose your installation location**:
+   - **Option 1 (System)**: Install to `C:\Windows\System32` - available globally for all users (requires Admin)
+   - **Option 2 (User)**: Install to `%USERPROFILE%\bin` - available for current user (recommended)
+   - **Option 3 (Current)**: Keep in current directory - portable mode
+
+### Automated Install
+
+For scripted or custom installations:
+
+```powershell
+# Install for current user (recommended)
+.\install.ps1 -InstallLocation User
+
+# Install system-wide (requires Admin)
+.\install.ps1 -InstallLocation System
+
+# Keep in current directory
+.\install.ps1 -InstallLocation Current
+
+# Additional options
+.\install.ps1 -InstallLocation User -CreateAlias  # Add 'qvm' alias
+```
+
 ### Build from Source
+
+For developers or those who want the latest code:
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/quickvm.git
+git clone https://github.com/hoangtran1411/quickvm.git
 cd quickvm
 
 # Download dependencies
 go mod download
 
 # Build the application
-go build -o quickvm.exe
+go build -ldflags="-s -w" -o quickvm.exe
 
-# (Optional) Add to PATH for global access
-# Copy quickvm.exe to a directory in your PATH
+# Install using the menu
+.\install-menu.bat
 ```
 
 ## 📖 Usage
@@ -164,9 +203,16 @@ quickvm/
 
 For more detailed information, check out our comprehensive documentation:
 
+### Getting Started
+- **[Installation Guide](docs/INSTALLATION.md)** - Detailed installation instructions (English)
+- **[Hướng Dẫn Cài Đặt](docs/CAI_DAT.md)** - Chi tiết cài đặt (Tiếng Việt)
 - **[Quick Reference](docs/QUICK_REFERENCE.md)** - All commands and shortcuts at a glance
+
+### User Guides
 - **[Vietnamese Guide](docs/HUONG_DAN.md)** - Hướng dẫn chi tiết bằng tiếng Việt
 - **[Demo & Examples](docs/DEMO.md)** - Real-world use cases and power user tips
+
+### Developer Documentation
 - **[Developer Guide](docs/DEVELOPER.md)** - Architecture and development notes
 - **[Workflow Guide](docs/WORKFLOW.md)** - Development and deployment workflow
 - **[Contributing Guide](docs/CONTRIBUTING.md)** - How to contribute to QuickVM
