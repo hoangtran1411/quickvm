@@ -6,8 +6,8 @@ $ErrorActionPreference = "Stop"
 # Display banner
 Write-Host ""
 Write-Host "╔══════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-Write-Host "║   QuickVM - Fast Hyper-V Virtual Machine Manager    ║" -ForegroundColor Cyan
-Write-Host "║          Interactive Installation Menu              ║" -ForegroundColor Cyan
+Write-Host "║   QuickVM - Fast Hyper-V Virtual Machine Manager     ║" -ForegroundColor Cyan
+Write-Host "║          Interactive Installation Menu               ║" -ForegroundColor Cyan
 Write-Host "╚══════════════════════════════════════════════════════╝" -ForegroundColor Cyan
 Write-Host ""
 

@@ -16,7 +16,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 Write-Host "╔══════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-Write-Host "║   QuickVM - Fast Hyper-V Virtual Machine Manager    ║" -ForegroundColor Cyan
+Write-Host "║   QuickVM - Fast Hyper-V Virtual Machine Manager     ║" -ForegroundColor Cyan
 Write-Host "║              Installation Script v1.0                ║" -ForegroundColor Cyan
 Write-Host "╚══════════════════════════════════════════════════════╝" -ForegroundColor Cyan
 Write-Host ""
