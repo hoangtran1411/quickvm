@@ -1,0 +1,43 @@
+- Requirements -
+
+Windows 10 Pro license (Required for HyperV)
+Current GPU Drivers
+
+
+- Installation Instructions -
+
+Install HyperV (Turn Windows Features On or Off)
+	- Configure virtual switch for External Network
+	- Disable Enhanced Sessions
+	
+Verify GPU Compatibility
+	- Check with Powershell: Get-VMPartitionableGPU
+
+
+Start VM + Install Windows 10 Pro
+
+
+- Driver Installation -
+
+File Transfers
+	- HOST - C:\Windows\System32\DriverStore\FileRepository\nv_dispi.inf_amd64_[UUID]
+	- GUEST - - To C:\Windows\System32\HostDriverStore\FileRepository\nv_dispi.inf_amd64_[UUID]
+
+	- HOST - C:\Windows\System32\nv*.* (Every file that begins with nv)
+	- GUEST - C:\Windows\System32\
+
+
+- GPU Partition -
+
+Run PowerShell ISE as Administrator
+
+Open GPU-P-Partition.ps1
+	- Set $vm = [VM-NAME]
+	- Set-ExecutionPolicy Unrestricted
+	- Run Script with Play button
+
+Start VM
+
+Check to see driver is loaded
+
+
