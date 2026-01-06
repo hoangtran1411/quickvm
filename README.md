@@ -130,6 +130,17 @@ quickvm stop 1
 quickvm restart 1
 ```
 
+#### View System Information
+```bash
+quickvm info
+```
+
+This will display:
+- 🖥️ **CPU**: Name and number of cores
+- 💾 **Memory**: Total, used, and free RAM (in MB and GB)
+- 💿 **Disk Drives**: Name, free space, and total capacity for each drive
+- 🔧 **Hyper-V Status**: Whether Hyper-V is enabled or disabled
+
 #### Update QuickVM
 ```bash
 # Check for updates and install
@@ -175,11 +186,17 @@ quickvm/
 │   ├── start.go    # Start VM command
 │   ├── stop.go     # Stop VM command
 │   ├── restart.go  # Restart VM command
-│   └── list.go     # List VMs command
+│   ├── list.go     # List VMs command
+│   ├── info.go     # System info command
+│   ├── update.go   # Update command
+│   └── version.go  # Version command
 ├── hyperv/         # Hyper-V integration layer
-│   └── hyperv.go   # VM management via PowerShell
+│   ├── hyperv.go   # VM management via PowerShell
+│   └── sysinfo.go  # System information (CPU, RAM, Disk, Hyper-V)
 ├── ui/             # TUI components
 │   └── table.go    # Interactive table view (Bubble Tea)
+├── updater/        # Auto-update functionality
+│   └── updater.go  # Check and apply updates from GitHub
 ├── main.go         # Application entry point
 └── go.mod          # Go modules
 ```
