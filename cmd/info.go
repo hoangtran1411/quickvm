@@ -43,7 +43,7 @@ func printSystemInfo(info *hyperv.SystemInfo) {
 
 	fmt.Println()
 	headerColor.Println("╔══════════════════════════════════════════════════════════════╗")
-	headerColor.Println("║                    📊 SYSTEM INFORMATION                      ║")
+	headerColor.Println("║                       SYSTEM INFORMATION                     ║")
 	headerColor.Println("╚══════════════════════════════════════════════════════════════╝")
 	fmt.Println()
 
