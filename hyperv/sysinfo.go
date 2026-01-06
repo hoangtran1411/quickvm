@@ -257,3 +257,104 @@ func (m *Manager) getHyperVStatusAlternative() (*HyperVStatus, error) {
 
 	return &result, nil
 }
+
+// EnableHyperV enables Hyper-V on the system
+// Returns true if a restart is needed, false otherwise
+func (m *Manager) EnableHyperV() (bool, error) {
+	// Try to enable all Hyper-V features
+	psScript := `
+		$features = @(
+			"Microsoft-Hyper-V-All",
+			"Microsoft-Hyper-V",
+			"Microsoft-Hyper-V-Tools-All",
+			"Microsoft-Hyper-V-Management-PowerShell",
+			"Microsoft-Hyper-V-Hypervisor",
+			"Microsoft-Hyper-V-Services",
+			"Microsoft-Hyper-V-Management-Clients"
+		)
+		
+		$needsRestart = $false
+		$enabled = $false
+		
+		foreach ($feature in $features) {
+			try {
+				$result = Enable-WindowsOptionalFeature -Online -FeatureName $feature -All -NoRestart -ErrorAction SilentlyContinue
+				if ($result -ne $null) {
+					$enabled = $true
+					if ($result.RestartNeeded) {
+						$needsRestart = $true
+					}
+				}
+			} catch {
+				# Continue to next feature
+			}
+		}
+		
+		if (-not $enabled) {
+			# Try DISM as fallback
+			$dismResult = dism /online /enable-feature /featurename:Microsoft-Hyper-V-All /all /norestart 2>&1
+			if ($LASTEXITCODE -eq 0 -or $LASTEXITCODE -eq 3010) {
+				$enabled = $true
+				if ($LASTEXITCODE -eq 3010) {
+					$needsRestart = $true
+				}
+			}
+		}
+		
+		@{
+			Enabled = $enabled
+			NeedsRestart = $needsRestart
+		} | ConvertTo-Json
+	`
+
+	cmd := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-Command", psScript)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return false, fmt.Errorf("failed to enable Hyper-V: %v\nOutput: %s", err, string(output))
+	}
+
+	var result struct {
+		Enabled      bool `json:"Enabled"`
+		NeedsRestart bool `json:"NeedsRestart"`
+	}
+	if err := json.Unmarshal(output, &result); err != nil {
+		// If we can't parse the result, assume it worked but needs restart
+		return true, nil
+	}
+
+	if !result.Enabled {
+		return false, fmt.Errorf("failed to enable Hyper-V. Please enable it manually through Windows Features")
+	}
+
+	return result.NeedsRestart, nil
+}
+
+// IsRunningAsAdmin checks if the current process is running with administrator privileges
+func IsRunningAsAdmin() bool {
+	psScript := `
+		$identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+		$principal = New-Object Security.Principal.WindowsPrincipal($identity)
+		$principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+	`
+
+	cmd := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-Command", psScript)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return false
+	}
+
+	return strings.TrimSpace(string(output)) == "True"
+}
+
+// ScheduleRestart schedules a system restart after the specified number of seconds
+func (m *Manager) ScheduleRestart(seconds int) error {
+	psScript := fmt.Sprintf(`shutdown /r /t %d /c "Restarting to complete Hyper-V installation"`, seconds)
+
+	cmd := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-Command", psScript)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to schedule restart: %v\nOutput: %s", err, string(output))
+	}
+
+	return nil
+}

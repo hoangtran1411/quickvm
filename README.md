@@ -156,6 +156,20 @@ quickvm update -y
 quickvm --update list
 ```
 
+#### Enable Hyper-V
+```bash
+# Enable Hyper-V (will prompt for restart if needed)
+quickvm enable
+
+# Enable and restart immediately
+quickvm enable -y
+
+# Enable without restarting (manual restart required)
+quickvm enable --no-restart
+```
+
+> ⚠️ **Note**: The `enable` command requires Administrator privileges.
+
 ## 🎯 Quick Examples
 
 ```bash
@@ -188,6 +202,7 @@ quickvm/
 │   ├── restart.go  # Restart VM command
 │   ├── list.go     # List VMs command
 │   ├── info.go     # System info command
+│   ├── enable.go   # Enable Hyper-V command
 │   ├── update.go   # Update command
 │   └── version.go  # Version command
 ├── hyperv/         # Hyper-V integration layer
