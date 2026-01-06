@@ -52,7 +52,47 @@ PS> quickvm start 2
 ✅ VM 'Windows-Test' started successfully!
 ```
 
-### 4. Stop Command
+### 4. Start Range Command (New Feature!)
+Start multiple VMs at once using the `--range` flag:
+
+**Range format (start-end):**
+```powershell
+PS> quickvm start --range 1-3
+
+🚀 Starting 3 VMs...
+
+🚀 Starting VM: Ubuntu-Dev (Index: 1)...
+✅ VM 'Ubuntu-Dev' started successfully!
+🚀 Starting VM: Windows-Test (Index: 2)...
+✅ VM 'Windows-Test' started successfully!
+🚀 Starting VM: Docker-Host (Index: 3)...
+✅ VM 'Docker-Host' started successfully!
+
+📊 Summary: 3 started, 0 failed
+```
+
+**Comma-separated format:**
+```powershell
+PS> quickvm start --range 1,3,5
+
+🚀 Starting 3 VMs...
+
+🚀 Starting VM: Ubuntu-Dev (Index: 1)...
+✅ VM 'Ubuntu-Dev' started successfully!
+🚀 Starting VM: Docker-Host (Index: 3)...
+✅ VM 'Docker-Host' started successfully!
+🚀 Starting VM: CentOS-Server (Index: 5)...
+✅ VM 'CentOS-Server' started successfully!
+
+📊 Summary: 3 started, 0 failed
+```
+
+**Short flag syntax:**
+```powershell
+PS> quickvm start -r 1-5
+```
+
+### 5. Stop Command
 ```powershell
 PS> quickvm stop 3
 
@@ -66,10 +106,11 @@ PS> quickvm stop 3
 **Scenario**: You work with multiple development VMs and need to quickly start them each morning.
 
 ```powershell
-# Morning routine - Start development environment
-quickvm start 1    # Ubuntu-Dev for backend
-quickvm start 3    # Docker-Host for containers
-quickvm start 5    # CentOS-Server for testing
+# Morning routine - Start development environment (using --range flag)
+quickvm start --range 1,3,5  # Start Ubuntu-Dev, Docker-Host, CentOS-Server
+
+# Or use range format for consecutive VMs
+quickvm start -r 1-3  # Start VMs 1, 2, 3
 
 # Quick check
 quickvm list
@@ -79,17 +120,16 @@ quickvm list
 **Scenario**: Running automated tests across different OS versions.
 
 ```powershell
-# Start all test VMs
-$testVMs = @(2, 4, 6, 7)
-foreach ($vm in $testVMs) {
-    quickvm start $vm
-    Start-Sleep -Seconds 30  # Wait for VM to boot
-}
+# Start all test VMs at once (no loop needed!)
+quickvm start --range 2,4,6,7
+
+# Wait for VMs to boot
+Start-Sleep -Seconds 60
 
 # Run your tests...
 
-# Clean up - Stop all test VMs
-foreach ($vm in $testVMs) {
+# Clean up - Stop all test VMs (can also use --range when stop supports it)
+foreach ($vm in @(2, 4, 6, 7)) {
     quickvm stop $vm
 }
 ```
