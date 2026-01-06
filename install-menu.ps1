@@ -65,4 +65,4 @@ do {
 
 Write-Host ""
 Write-Host "Nhấn phím bất kỳ để đóng..." -ForegroundColor Gray
-$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+# $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
