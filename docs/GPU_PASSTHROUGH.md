@@ -1,72 +1,72 @@
 # GPU Passthrough (GPU-P) Feature
 
-Tính năng share GPU giữa máy thật và máy ảo Hyper-V thông qua GPU Partitioning.
+Share GPU between host and Hyper-V virtual machines through GPU Partitioning.
 
-## Yêu Cầu Hệ Thống
+## System Requirements
 
-- Windows 10/11 Pro với Hyper-V enabled
-- GPU hỗ trợ GPU Partitioning (NVIDIA/AMD thế hệ mới)
-- GPU drivers đã cài đặt trên Host
+- Windows 10/11 Pro with Hyper-V enabled
+- GPU supporting GPU Partitioning (newer NVIDIA/AMD generations)
+- GPU drivers installed on Host
 
-## Kiểm Tra GPU Hỗ Trợ
+## Check GPU Support
 
 ```powershell
 # PowerShell as Admin
 Get-VMPartitionableGPU
 ```
 
-Nếu có output, GPU của bạn hỗ trợ partitioning.
+If there's output, your GPU supports partitioning.
 
 ## Commands
 
-### Kiểm tra GPU status
+### Check GPU Status
 ```bash
 quickvm gpu status
 ```
 
-### Add GPU cho VM
+### Add GPU to VM
 ```bash
-# VM phải OFF trước khi add GPU
+# VM must be OFF before adding GPU
 quickvm stop <vm-index>
 quickvm gpu add <vm-index>
 ```
 
-### Remove GPU khỏi VM
+### Remove GPU from VM
 ```bash
 quickvm gpu remove <vm-index>
 ```
 
-## Cài Đặt Driver Trong Guest VM
+## Installing Drivers in Guest VM
 
-Sau khi add GPU, cần copy drivers từ Host sang Guest:
+After adding GPU, you need to copy drivers from Host to Guest:
 
 ### 1. Copy Driver Files
 
-**Từ Host:**
+**From Host:**
 ```
 C:\Windows\System32\DriverStore\FileRepository\nv_dispi.inf_amd64_[UUID]
 ```
 
-**Sang Guest:**
+**To Guest:**
 ```
 C:\Windows\System32\HostDriverStore\FileRepository\nv_dispi.inf_amd64_[UUID]
 ```
 
 ### 2. Copy System Files
 
-**Từ Host:**
+**From Host:**
 ```
-C:\Windows\System32\nv*.*  (tất cả file bắt đầu bằng "nv")
+C:\Windows\System32\nv*.*  (all files starting with "nv")
 ```
 
-**Sang Guest:**
+**To Guest:**
 ```
 C:\Windows\System32\
 ```
 
-## PowerShell Commands (Chi tiết)
+## PowerShell Commands (Detailed)
 
-Script gốc sử dụng các commands sau:
+The original script uses the following commands:
 
 ```powershell
 $vm = "VMName"
@@ -91,14 +91,14 @@ Set-VM -HighMemoryMappedIoSpace 32GB -VMName $vm
 
 ## Troubleshooting
 
-| Vấn đề | Giải pháp |
-|--------|-----------|
-| GPU không hiện trong Guest | Kiểm tra driver đã copy đúng chưa |
-| Lỗi khi add GPU | Đảm bảo VM đang OFF |
-| `Get-VMPartitionableGPU` trống | GPU không hỗ trợ hoặc driver cũ |
-| Cần Admin | Chạy PowerShell/Terminal as Administrator |
+| Issue | Solution |
+|-------|----------|
+| GPU not visible in Guest | Check if drivers were copied correctly |
+| Error when adding GPU | Ensure VM is OFF |
+| `Get-VMPartitionableGPU` returns empty | GPU not supported or outdated driver |
+| Admin required | Run PowerShell/Terminal as Administrator |
 
-## Tham Khảo
+## References
 
 - [GPU-P Tutorial.txt](../GPU-P%20Tutorial.txt)
 - [GPU-P-Partition.ps1](../GPU-P-Partition.ps1)

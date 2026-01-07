@@ -2,129 +2,66 @@
 
 Welcome to the QuickVM documentation! This directory contains comprehensive guides and references for using and developing QuickVM.
 
-## 📚 Available Documentation
+## 📚 Documentation Index
 
-### For Users
+### Getting Started
 
-#### [Quick Reference](QUICK_REFERENCE.md) ⚡
-**Start here if you want to quickly learn all commands!**
+| Document | Description |
+|----------|-------------|
+| [Installation Guide](INSTALLATION.md) | Step-by-step installation instructions |
+| [Quick Reference](QUICK_REFERENCE.md) | Command cheat sheet and keyboard shortcuts |
 
-A concise reference card with:
-- All CLI commands with examples
-- TUI keyboard shortcuts
-- Common use cases
-- Troubleshooting tips
-- Performance notes
+### User Guides
 
-#### [Vietnamese Guide (Hướng Dẫn)](HUONG_DAN.md) 🇻🇳
-**Hướng dẫn chi tiết bằng tiếng Việt**
+| Document | Description |
+|----------|-------------|
+| [Demo & Examples](DEMO.md) | Real-world use cases and power user tips |
+| [Auto-Update Guide](AUTO_UPDATE.md) | Keep QuickVM up-to-date automatically |
+| [GPU Passthrough](GPU_PASSTHROUGH.md) | Share GPU between host and guest VMs |
 
-Complete user guide in Vietnamese:
-- Installation instructions
-- Detailed usage examples
-- Tips and tricks
-- FAQ and troubleshooting
+### Developer Guides
 
-#### [Demo & Examples](DEMO.md) 💡
-Real-world use cases and power user tips:
-- Development workflows
-- Automation examples
-- Advanced techniques
-- Integration with other tools
+| Document | Description |
+|----------|-------------|
+| [Developer Guide](DEVELOPER.md) | Architecture, design decisions, and development setup |
+| [Contributing Guide](CONTRIBUTING.md) | How to contribute to QuickVM |
+| [Workflow Guide](WORKFLOW.md) | Development and deployment processes |
+| [Feature Roadmap](FEATURE_ROADMAP.md) | Planned features and implementation priority |
 
-#### [Auto-Update Guide](AUTO_UPDATE.md) 🔄
-**Keep QuickVM up-to-date automatically!**
-
-Complete guide to auto-update feature:
-- Update commands and options
-- Automatic update checks
-- Troubleshooting update issues
-- Security and rollback
-- Automation examples
-
-### For Developers
-
-#### [Developer Guide](DEVELOPER.md) 👨‍💻
-**Essential reading for contributors!**
-
-Technical documentation covering:
-- Architecture overview
-- Design decisions
-- Development setup
-- Code organization
-- Testing strategy
-- Performance considerations
-
-#### [Workflow Guide](WORKFLOW.md) 🔄
-Development and deployment processes:
-- Build instructions
-- Testing procedures
-- Release process
-- Code quality tools
-
-#### [Contributing Guide](CONTRIBUTING.md) 🤝
-How to contribute to QuickVM:
-- Code of conduct
-- Bug reporting
-- Feature requests
-- Pull request process
-- Coding guidelines
-
-### Project Information
-
-#### [Project Summary](PROJECT_SUMMARY.md) 📊
-Complete project overview including:
-- All features
-- Architecture details
-- Technology stack
-- Statistics
-- Future roadmap
-
-### Development Notes
-
-#### [Restructure Notes](RESTRUCTURE_NOTES.md) 📝
-Summary of project restructure and CI/CD setup:
-- Documentation reorganization
-- GitHub Actions workflows
-- Build and release automation
-
-#### [Auto-Update Summary](AUTO_UPDATE_SUMMARY.md) 🔄
-Implementation details of auto-update feature:
-- Technical implementation
-- Update flow
-- Security features
-- User experience design
-
-#### [Test Fixes](TEST_FIXES.md) 🧪
-CI/CD test improvements:
-- Environment detection
-- Graceful test skipping
-- Best practices for CI tests
+---
 
 ## 🎯 Quick Navigation
 
 ### I want to...
 
-- **Learn all commands quickly** → [Quick Reference](QUICK_REFERENCE.md)
-- **Read in Vietnamese** → [Hướng Dẫn](HUONG_DAN.md)
-- **See real examples** → [Demo & Examples](DEMO.md)
-- **Understand the architecture** → [Developer Guide](DEVELOPER.md)
-- **Contribute code** → [Contributing Guide](CONTRIBUTING.md)
-- **Build from source** → [Workflow Guide](WORKFLOW.md)
-- **Get project overview** → [Project Summary](PROJECT_SUMMARY.md)
+| Goal | Document |
+|------|----------|
+| **Install QuickVM** | [Installation Guide](INSTALLATION.md) |
+| **Learn all commands quickly** | [Quick Reference](QUICK_REFERENCE.md) |
+| **See real examples** | [Demo & Examples](DEMO.md) |
+| **Update QuickVM** | [Auto-Update Guide](AUTO_UPDATE.md) |
+| **Use GPU in VMs** | [GPU Passthrough](GPU_PASSTHROUGH.md) |
+| **Understand the architecture** | [Developer Guide](DEVELOPER.md) |
+| **Contribute code** | [Contributing Guide](CONTRIBUTING.md) |
+| **Build from source** | [Workflow Guide](WORKFLOW.md) |
+| **See planned features** | [Feature Roadmap](FEATURE_ROADMAP.md) |
 
-## 📖 Reading Order
+---
+
+## 📖 Recommended Reading Order
 
 ### For New Users
-1. [Quick Reference](QUICK_REFERENCE.md) - Learn the basics
-2. [Demo & Examples](DEMO.md) - See it in action
-3. [Vietnamese Guide](HUONG_DAN.md) - Detailed guide (nếu bạn thích đọc tiếng Việt)
+1. [Installation Guide](INSTALLATION.md) - Get QuickVM installed
+2. [Quick Reference](QUICK_REFERENCE.md) - Learn the basics
+3. [Demo & Examples](DEMO.md) - See it in action
 
 ### For Developers
-1. [Project Summary](PROJECT_SUMMARY.md) - Understand the project
-2. [Developer Guide](DEVELOPER.md) - Learn the architecture
-3. [Contributing Guide](CONTRIBUTING.md) - How to contribute
-4. [Workflow Guide](WORKFLOW.md) - Development processes
+1. [Developer Guide](DEVELOPER.md) - Understand the architecture
+2. [Contributing Guide](CONTRIBUTING.md) - How to contribute
+3. [Workflow Guide](WORKFLOW.md) - Development processes
+4. [Feature Roadmap](FEATURE_ROADMAP.md) - What's planned
+
+---
 
 ## 🔗 External Resources
 
@@ -133,6 +70,8 @@ CI/CD test improvements:
 - [Issue Tracker](https://github.com/hoangtran1411/quickvm/issues)
 - [Releases](https://github.com/hoangtran1411/quickvm/releases)
 
+---
+
 ## 📝 Documentation Standards
 
 All documentation follows these principles:
@@ -140,7 +79,9 @@ All documentation follows these principles:
 - **Well-organized** - Logical structure
 - **Up-to-date** - Reflects current version
 - **Examples included** - Practical demonstrations
-- **Bilingual support** - English and Vietnamese
+- **English only** - EN-US language
+
+---
 
 ## 🤝 Help Improve Documentation
 

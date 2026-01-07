@@ -1,15 +1,15 @@
 # QuickVM Feature Roadmap 🗺️
 
-> Tài liệu này mô tả các feature được đề xuất cho QuickVM, sắp xếp theo mức độ ưu tiên và độ phức tạp.
+> This document describes proposed features for QuickVM, organized by priority and complexity.
 
-**Cập nhật lần cuối:** 2026-01-07
+**Last Updated:** 2026-01-07
 
 ---
 
-## 📊 Tổng quan
+## 📊 Overview
 
-| Tier | Mô tả | Số lượng Features |
-|------|-------|-------------------|
+| Tier | Description | Feature Count |
+|------|-------------|---------------|
 | Tier 1 | High Value, Medium Effort | 4 |
 | Tier 2 | Quick Wins | 5 |
 | Tier 3 | Advanced Features | 5 |
@@ -19,25 +19,25 @@
 
 ## 🚀 Tier 1: High Value, Medium Effort
 
-> **Ưu tiên cao** - Các feature mang lại giá trị lớn, nên triển khai sớm.
+> **High Priority** - Features that provide great value, should be implemented early.
 
 ### 1. VM Snapshots/Checkpoints ⭐ ✅ DONE
 
 **Command:** `quickvm snapshot`
 
 ```bash
-quickvm snapshot list <vm-index>              # Liệt kê snapshots của VM
-quickvm snapshot create <vm-index> "name"     # Tạo snapshot mới
-quickvm snapshot restore <vm-index> "name"    # Khôi phục snapshot
-quickvm snapshot delete <vm-index> "name"     # Xóa snapshot
+quickvm snapshot list <vm-index>              # List snapshots of a VM
+quickvm snapshot create <vm-index> "name"     # Create a new snapshot
+quickvm snapshot restore <vm-index> "name"    # Restore a snapshot
+quickvm snapshot delete <vm-index> "name"     # Delete a snapshot
 ```
 
-**Lý do:** Quản lý checkpoint là tính năng rất quan trọng khi làm việc với VM. Cho phép người dùng:
-- Lưu trạng thái trước khi thực hiện thay đổi
-- Khôi phục nhanh khi có lỗi
-- Test safely với khả năng rollback
+**Rationale:** Checkpoint management is a crucial feature when working with VMs. It allows users to:
+- Save state before making changes
+- Quickly restore when errors occur
+- Test safely with rollback capability
 
-**Độ phức tạp:** ⭐⭐⭐ (Medium)
+**Complexity:** ⭐⭐⭐ (Medium)
 
 **PowerShell Commands:**
 ```powershell
@@ -54,13 +54,13 @@ Remove-VMSnapshot -VMName "VMName" -Name "SnapshotName"
 **Command:** `quickvm clone`
 
 ```bash
-quickvm clone <vm-index> <new-name>           # Clone VM với tên mới
-quickvm clone 1 "WebServer-Test"              # Ví dụ
+quickvm clone <vm-index> <new-name>           # Clone VM with a new name
+quickvm clone 1 "WebServer-Test"              # Example
 ```
 
-**Lý do:** Clone VM nhanh để test/dev mà không ảnh hưởng VM gốc.
+**Rationale:** Quickly clone VMs for testing/development without affecting the original VM.
 
-**Độ phức tạp:** ⭐⭐⭐ (Medium)
+**Complexity:** ⭐⭐⭐ (Medium)
 
 **PowerShell Commands:**
 ```powershell
@@ -76,16 +76,16 @@ Rename-VM -Name "SourceVM" -NewName "NewVMName"
 **Command:** `quickvm export` / `quickvm import`
 
 ```bash
-quickvm export <vm-index> <path>              # Export VM ra thư mục
+quickvm export <vm-index> <path>              # Export VM to a directory
 quickvm export 1 "D:\Backups\VMs"
 
-quickvm import <path>                          # Import VM từ file
+quickvm import <path>                          # Import VM from file
 quickvm import "D:\Backups\VMs\WebServer"
 ```
 
-**Lý do:** Backup và di chuyển VM giữa các máy.
+**Rationale:** Backup and move VMs between machines.
 
-**Độ phức tạp:** ⭐⭐⭐ (Medium)
+**Complexity:** ⭐⭐⭐ (Medium)
 
 **PowerShell Commands:**
 ```powershell
@@ -100,15 +100,15 @@ Import-VM -Path "D:\Backups\VMName\Virtual Machines\*.vmcx"
 **Command:** `quickvm config`
 
 ```bash
-quickvm config <vm-index> --memory 4GB        # Thay đổi RAM
-quickvm config <vm-index> --cpu 2             # Thay đổi số CPU
-quickvm config <vm-index> --memory 8GB --cpu 4  # Cả hai
-quickvm config show <vm-index>                # Xem config hiện tại
+quickvm config <vm-index> --memory 4GB        # Change RAM
+quickvm config <vm-index> --cpu 2             # Change CPU count
+quickvm config <vm-index> --memory 8GB --cpu 4  # Both
+quickvm config show <vm-index>                # View current config
 ```
 
-**Lý do:** Thay đổi RAM/CPU của VM mà không cần mở Hyper-V Manager.
+**Rationale:** Change VM RAM/CPU without opening Hyper-V Manager.
 
-**Độ phức tạp:** ⭐⭐ (Low-Medium)
+**Complexity:** ⭐⭐ (Low-Medium)
 
 **PowerShell Commands:**
 ```powershell
@@ -121,24 +121,24 @@ Get-VM -Name "VMName" | Select-Object *
 
 ## ⚡ Tier 2: Quick Wins
 
-> **Làm nhanh, giá trị cao** - Các feature đơn giản nhưng hữu ích.
+> **Fast to implement, high value** - Simple but useful features.
 
 ### 5. Connect to VM ⭐
 
 **Command:** `quickvm connect`
 
 ```bash
-quickvm connect <vm-index>                    # Mở VM Connect GUI
+quickvm connect <vm-index>                    # Open VM Connect GUI
 quickvm connect 1
 ```
 
-**Lý do:** Mở VMConnect.exe trực tiếp từ terminal, không cần mở Hyper-V Manager.
+**Rationale:** Open VMConnect.exe directly from terminal, no need to open Hyper-V Manager.
 
-**Độ phức tạp:** ⭐ (Low)
+**Complexity:** ⭐ (Low)
 
 **Implementation:**
 ```go
-// Đơn giản: gọi vmconnect.exe
+// Simple: call vmconnect.exe
 exec.Command("vmconnect.exe", "localhost", vmName).Start()
 ```
 
@@ -149,18 +149,18 @@ exec.Command("vmconnect.exe", "localhost", vmName).Start()
 **Command:** `quickvm ssh` / `quickvm rdp`
 
 ```bash
-quickvm ssh <vm-index>                        # SSH vào VM (Linux)
-quickvm ssh 1 -u admin                        # Với username
+quickvm ssh <vm-index>                        # SSH into VM (Linux)
+quickvm ssh 1 -u admin                        # With username
 
-quickvm rdp <vm-index>                        # RDP vào VM (Windows)
+quickvm rdp <vm-index>                        # RDP into VM (Windows)
 quickvm rdp 1
 ```
 
-**Lý do:** Kết nối nhanh vào VM nếu biết IP address.
+**Rationale:** Quick connection to VM if IP address is known.
 
-**Độ phức tạp:** ⭐⭐ (Low-Medium)
+**Complexity:** ⭐⭐ (Low-Medium)
 
-**Yêu cầu:** Cần lấy IP của VM trước:
+**Requirement:** Need to get VM IP first:
 ```powershell
 (Get-VMNetworkAdapter -VMName "VMName").IPAddresses
 ```
@@ -172,14 +172,14 @@ quickvm rdp 1
 **Command:** `quickvm logs`
 
 ```bash
-quickvm logs <vm-index>                       # Xem event logs của VM
-quickvm logs 1 --tail 50                      # Chỉ 50 dòng cuối
+quickvm logs <vm-index>                       # View VM event logs
+quickvm logs 1 --tail 50                      # Only last 50 lines
 quickvm logs 1 --follow                       # Follow mode (real-time)
 ```
 
-**Lý do:** Debug và troubleshoot VM issues.
+**Rationale:** Debug and troubleshoot VM issues.
 
-**Độ phức tạp:** ⭐⭐ (Low-Medium)
+**Complexity:** ⭐⭐ (Low-Medium)
 
 ---
 
@@ -188,17 +188,17 @@ quickvm logs 1 --follow                       # Follow mode (real-time)
 **Command:** `quickvm start/stop/restart --all`
 
 ```bash
-quickvm start --all                           # Start tất cả VMs
-quickvm stop --all                            # Stop tất cả VMs
-quickvm restart --all                         # Restart tất cả VMs
+quickvm start --all                           # Start all VMs
+quickvm stop --all                            # Stop all VMs
+quickvm restart --all                         # Restart all VMs
 
-quickvm start --filter "Running"              # Start VMs đang Running
-quickvm stop --filter "Web*"                  # Stop VMs có tên bắt đầu bằng "Web"
+quickvm start --filter "Running"              # Start VMs that are Running
+quickvm stop --filter "Web*"                  # Stop VMs with names starting with "Web"
 ```
 
-**Lý do:** Quản lý nhiều VMs cùng lúc.
+**Rationale:** Manage multiple VMs at once.
 
-**Độ phức tạp:** ⭐ (Low)
+**Complexity:** ⭐ (Low)
 
 ---
 
@@ -208,34 +208,34 @@ quickvm stop --filter "Web*"                  # Stop VMs có tên bắt đầu b
 
 ```bash
 quickvm watch                                 # Real-time monitoring TUI
-quickvm watch --interval 5                    # Refresh mỗi 5 giây
-quickvm list --watch                          # Watch mode cho list command
+quickvm watch --interval 5                    # Refresh every 5 seconds
+quickvm list --watch                          # Watch mode for list command
 ```
 
-**Lý do:** Theo dõi trạng thái VMs real-time, đặc biệt hữu ích khi waiting cho VM start/stop.
+**Rationale:** Monitor VM status in real-time, especially useful when waiting for VM start/stop.
 
-**Độ phức tạp:** ⭐⭐ (Low-Medium)
+**Complexity:** ⭐⭐ (Low-Medium)
 
 ---
 
 ## 🔧 Tier 3: Advanced Features
 
-> **Nâng cao** - Các feature phức tạp hơn, dành cho power users.
+> **Advanced** - More complex features for power users.
 
 ### 10. VM Templates
 
 **Command:** `quickvm template`
 
 ```bash
-quickvm template create <vm-index> "TemplateName"   # Tạo template từ VM
-quickvm template list                               # Liệt kê templates
-quickvm template apply "TemplateName" "NewVMName"   # Tạo VM từ template
-quickvm template delete "TemplateName"              # Xóa template
+quickvm template create <vm-index> "TemplateName"   # Create template from VM
+quickvm template list                               # List templates
+quickvm template apply "TemplateName" "NewVMName"   # Create VM from template
+quickvm template delete "TemplateName"              # Delete template
 ```
 
-**Lý do:** Tạo VMs mới nhanh từ template đã chuẩn bị sẵn.
+**Rationale:** Quickly create new VMs from pre-configured templates.
 
-**Độ phức tạp:** ⭐⭐⭐⭐ (High)
+**Complexity:** ⭐⭐⭐⭐ (High)
 
 ---
 
@@ -244,15 +244,15 @@ quickvm template delete "TemplateName"              # Xóa template
 **Command:** `quickvm network`
 
 ```bash
-quickvm network list                          # Liệt kê Virtual Switches
+quickvm network list                          # List Virtual Switches
 quickvm network create "SwitchName" --type internal
 quickvm network attach <vm-index> "SwitchName"
 quickvm network detach <vm-index>
 ```
 
-**Lý do:** Quản lý Virtual Switch và network cho VMs.
+**Rationale:** Manage Virtual Switches and networking for VMs.
 
-**Độ phức tạp:** ⭐⭐⭐ (Medium)
+**Complexity:** ⭐⭐⭐ (Medium)
 
 ---
 
@@ -261,16 +261,16 @@ quickvm network detach <vm-index>
 **Command:** `quickvm disk`
 
 ```bash
-quickvm disk list <vm-index>                  # Liệt kê disks của VM
-quickvm disk create "disk.vhdx" --size 50GB   # Tạo VHD mới
+quickvm disk list <vm-index>                  # List disks of a VM
+quickvm disk create "disk.vhdx" --size 50GB   # Create new VHD
 quickvm disk resize "disk.vhdx" --size 100GB  # Resize VHD
-quickvm disk attach <vm-index> "disk.vhdx"    # Attach disk vào VM
+quickvm disk attach <vm-index> "disk.vhdx"    # Attach disk to VM
 quickvm disk detach <vm-index> "disk.vhdx"    # Detach disk
 ```
 
-**Lý do:** Quản lý VHD/VHDX files.
+**Rationale:** Manage VHD/VHDX files.
 
-**Độ phức tạp:** ⭐⭐⭐ (Medium)
+**Complexity:** ⭐⭐⭐ (Medium)
 
 ---
 
@@ -279,14 +279,14 @@ quickvm disk detach <vm-index> "disk.vhdx"    # Detach disk
 **Command:** `quickvm quota`
 
 ```bash
-quickvm quota set <vm-index> --max-cpu 50%    # Giới hạn CPU
-quickvm quota set <vm-index> --max-memory 4GB # Giới hạn RAM
-quickvm quota show <vm-index>                 # Xem quotas hiện tại
+quickvm quota set <vm-index> --max-cpu 50%    # Limit CPU
+quickvm quota set <vm-index> --max-memory 4GB # Limit RAM
+quickvm quota show <vm-index>                 # View current quotas
 ```
 
-**Lý do:** Set giới hạn resource, hữu ích cho lab environments.
+**Rationale:** Set resource limits, useful for lab environments.
 
-**Độ phức tạp:** ⭐⭐⭐ (Medium)
+**Complexity:** ⭐⭐⭐ (Medium)
 
 ---
 
@@ -295,31 +295,31 @@ quickvm quota show <vm-index>                 # Xem quotas hiện tại
 **Command:** `quickvm schedule`
 
 ```bash
-quickvm schedule start <vm-index> --at "08:00"        # Start VM lúc 8h sáng
-quickvm schedule stop <vm-index> --at "18:00"         # Stop VM lúc 6h tối
-quickvm schedule list                                  # Xem schedules
-quickvm schedule delete <schedule-id>                  # Xóa schedule
+quickvm schedule start <vm-index> --at "08:00"        # Start VM at 8 AM
+quickvm schedule stop <vm-index> --at "18:00"         # Stop VM at 6 PM
+quickvm schedule list                                  # View schedules
+quickvm schedule delete <schedule-id>                  # Delete schedule
 ```
 
-**Lý do:** Tự động start/stop VMs theo lịch.
+**Rationale:** Automatically start/stop VMs on schedule.
 
-**Độ phức tạp:** ⭐⭐⭐⭐ (High)
+**Complexity:** ⭐⭐⭐⭐ (High)
 
 ---
 
 ## 🎯 Tier 4: Nice to Have
 
-> **Tương lai** - Các feature bổ sung khi có thời gian.
+> **Future** - Additional features when time permits.
 
 ### 15. Profile/Workspace
 
 ```bash
-quickvm workspace create "Development"        # Tạo workspace
-quickvm workspace add 1 2 3                   # Thêm VMs vào workspace
-quickvm workspace start "Development"         # Start tất cả VMs trong workspace
+quickvm workspace create "Development"        # Create workspace
+quickvm workspace add 1 2 3                   # Add VMs to workspace
+quickvm workspace start "Development"         # Start all VMs in workspace
 ```
 
-**Lý do:** Nhóm VMs theo project/mục đích.
+**Rationale:** Group VMs by project/purpose.
 
 ---
 
@@ -328,10 +328,10 @@ quickvm workspace start "Development"         # Start tất cả VMs trong works
 ```bash
 quickvm remote add "server1" --host 192.168.1.100
 quickvm remote list
-quickvm --host server1 list                   # Quản lý VMs trên máy khác
+quickvm --host server1 list                   # Manage VMs on another machine
 ```
 
-**Lý do:** Quản lý Hyper-V trên các máy khác (remote management).
+**Rationale:** Manage Hyper-V on other machines (remote management).
 
 ---
 
@@ -339,16 +339,16 @@ quickvm --host server1 list                   # Quản lý VMs trên máy khác
 
 ```bash
 quickvm metrics export --format prometheus    # Export metrics
-quickvm metrics serve --port 9090             # HTTP endpoint cho metrics
+quickvm metrics serve --port 9090             # HTTP endpoint for metrics
 ```
 
-**Lý do:** Integration với monitoring tools (Prometheus/Grafana).
+**Rationale:** Integration with monitoring tools (Prometheus/Grafana).
 
 ---
 
 ### 18. Configuration File
 
-**File:** `~/.quickvmrc` hoặc `quickvm.yaml`
+**File:** `~/.quickvmrc` or `quickvm.yaml`
 
 ```yaml
 # quickvm.yaml
@@ -365,40 +365,40 @@ autostart:
   - db
 ```
 
-**Lý do:** Lưu settings và preferences.
+**Rationale:** Save settings and preferences.
 
 ---
 
 ### 19. Plugin System
 
 ```bash
-quickvm plugin install quickvm-docker         # Cài plugin
-quickvm plugin list                           # Liệt kê plugins
-quickvm docker ps                             # Command từ plugin
+quickvm plugin install quickvm-docker         # Install plugin
+quickvm plugin list                           # List plugins
+quickvm docker ps                             # Command from plugin
 ```
 
-**Lý do:** Extensible architecture cho custom commands.
+**Rationale:** Extensible architecture for custom commands.
 
 ---
 
 ## 📋 Implementation Priority
 
-### Phase 1 (Tuần 1-2)
+### Phase 1 (Week 1-2)
 - [ ] VM Connect (Tier 2, #5)
 - [ ] Bulk Operations (Tier 2, #8)
 - [x] VM Snapshots (Tier 1, #1) ✅ **Completed 2026-01-07**
 
-### Phase 2 (Tuần 3-4)
+### Phase 2 (Week 3-4)
 - [ ] VM Config (Tier 1, #4)
 - [ ] Watch Mode (Tier 2, #9)
 - [ ] VM Logs (Tier 2, #7)
 
-### Phase 3 (Tuần 5-6)
+### Phase 3 (Week 5-6)
 - [ ] VM Clone (Tier 1, #2)
 - [ ] Export/Import (Tier 1, #3)
 - [ ] SSH/RDP Connect (Tier 2, #6)
 
-### Phase 4 (Tương lai)
+### Phase 4 (Future)
 - [ ] Tier 3 & 4 features
 
 ---
@@ -411,4 +411,4 @@ quickvm docker ps                             # Command từ plugin
 
 ---
 
-> 💡 **Ghi chú:** Đây là roadmap dự kiến và có thể thay đổi dựa trên feedback từ users.
+> 💡 **Note:** This is a planned roadmap and may change based on user feedback.
