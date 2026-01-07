@@ -170,6 +170,34 @@ quickvm enable --no-restart
 
 > ⚠️ **Note**: The `enable` command requires Administrator privileges.
 
+#### Snapshot Management
+```bash
+# List all snapshots for a VM
+quickvm snapshot list 1
+
+# Create a new snapshot
+quickvm snapshot create 1 "Before Update"
+
+# Restore a VM to a snapshot
+quickvm snapshot restore 1 "Before Update"
+
+# Delete a snapshot
+quickvm snapshot delete 1 "Old Snapshot"
+```
+
+#### Export/Import VMs
+```bash
+# Export a VM to a directory
+quickvm export 1 "D:\Backups\VMs"
+
+# Import a VM from an exported directory
+quickvm import "D:\Backups\VMs\MyVM"
+
+# Import with options
+quickvm import "D:\Backups\VMs\MyVM" --copy        # Copy VM files
+quickvm import "D:\Backups\VMs\MyVM" --new-id      # Generate new VM ID
+```
+
 ## 🎯 Quick Examples
 
 ```bash
@@ -202,11 +230,16 @@ quickvm/
 │   ├── restart.go  # Restart VM command
 │   ├── list.go     # List VMs command
 │   ├── info.go     # System info command
+│   ├── snapshot.go # Snapshot management commands
+│   ├── export.go   # Export VM command
+│   ├── import.go   # Import VM command
 │   ├── enable.go   # Enable Hyper-V command
 │   ├── update.go   # Update command
 │   └── version.go  # Version command
 ├── hyperv/         # Hyper-V integration layer
 │   ├── hyperv.go   # VM management via PowerShell
+│   ├── snapshot.go # Snapshot operations
+│   ├── export.go   # Export/Import VM operations
 │   └── sysinfo.go  # System information (CPU, RAM, Disk, Hyper-V)
 ├── ui/             # TUI components
 │   └── table.go    # Interactive table view (Bubble Tea)

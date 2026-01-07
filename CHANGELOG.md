@@ -8,6 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- 📸 **VM Snapshot Management** (2026-01-07)
+  - `quickvm snapshot list <vm-index>` - List snapshots for a VM
+  - `quickvm snapshot create <vm-index> <name>` - Create a new snapshot
+  - `quickvm snapshot restore <vm-index> <name>` - Restore VM to a snapshot
+  - `quickvm snapshot delete <vm-index> <name>` - Delete a snapshot
+
+- 📦 **Export/Import VMs** (2026-01-07)
+  - `quickvm export <vm-index> <path>` - Export VM to a directory
+  - `quickvm import <path>` - Import VM from an export
+  - `--copy` flag to copy VM files instead of registering in place
+  - `--new-id` flag to generate a new unique ID
+  - `--vhd-path` flag to specify custom VHD destination
+
 - 🔄 Auto-update functionality
   - `quickvm update` command to check and install updates
   - `--update` flag to check for updates before running any command
@@ -16,10 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Support for both AMD64 and ARM64 architectures
 
 ### Planned Features
-- VM snapshot management
-- Create new VMs
-- Configuration file support
-- Remote Hyper-V server support
+- VM clone
 
 ## [1.0.0] - 2026-01-05
 

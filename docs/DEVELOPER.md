@@ -333,7 +333,7 @@ powershell -File test-script.ps1
 ## Future Improvements
 
 ### High Priority
-- [ ] Add snapshot management
+- [x] Add snapshot management ✅
 - [ ] Support for VM creation
 - [ ] Config file support (.quickvm.yaml)
 - [ ] Better error messages
@@ -341,7 +341,7 @@ powershell -File test-script.ps1
 ### Medium Priority
 - [ ] Remote Hyper-V server support
 - [ ] VM grouping/tagging
-- [ ] Export/import VM configs
+- [x] Export/import VM configs ✅
 - [ ] Performance metrics
 
 ### Low Priority
