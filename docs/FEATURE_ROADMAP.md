@@ -21,7 +21,7 @@
 
 > **Ưu tiên cao** - Các feature mang lại giá trị lớn, nên triển khai sớm.
 
-### 1. VM Snapshots/Checkpoints ⭐
+### 1. VM Snapshots/Checkpoints ⭐ ✅ DONE
 
 **Command:** `quickvm snapshot`
 
@@ -386,7 +386,7 @@ quickvm docker ps                             # Command từ plugin
 ### Phase 1 (Tuần 1-2)
 - [ ] VM Connect (Tier 2, #5)
 - [ ] Bulk Operations (Tier 2, #8)
-- [ ] VM Snapshots (Tier 1, #1)
+- [x] VM Snapshots (Tier 1, #1) ✅ **Completed 2026-01-07**
 
 ### Phase 2 (Tuần 3-4)
 - [ ] VM Config (Tier 1, #4)
