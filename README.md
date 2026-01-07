@@ -246,6 +246,7 @@ For more detailed information, check out our comprehensive documentation:
 
 ### Developer Documentation
 - **[Developer Guide](docs/DEVELOPER.md)** - Architecture and development notes
+- **[Feature Roadmap](docs/FEATURE_ROADMAP.md)** - Planned features and priorities
 - **[Workflow Guide](docs/WORKFLOW.md)** - Development and deployment workflow
 - **[Contributing Guide](docs/CONTRIBUTING.md)** - How to contribute to QuickVM
 - **[Project Summary](docs/PROJECT_SUMMARY.md)** - Complete project overview
