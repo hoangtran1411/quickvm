@@ -269,12 +269,10 @@ quickvm/
 For more detailed information, check out our comprehensive documentation:
 
 ### Getting Started
-- **[Installation Guide](docs/INSTALLATION.md)** - Detailed installation instructions (English)
-- **[Hướng Dẫn Cài Đặt](docs/CAI_DAT.md)** - Chi tiết cài đặt (Tiếng Việt)
+- **[Installation Guide](docs/INSTALLATION.md)** - Detailed installation instructions
 - **[Quick Reference](docs/QUICK_REFERENCE.md)** - All commands and shortcuts at a glance
 
 ### User Guides
-- **[Vietnamese Guide](docs/HUONG_DAN.md)** - Hướng dẫn chi tiết bằng tiếng Việt
 - **[Demo & Examples](docs/DEMO.md)** - Real-world use cases and power user tips
 
 ### Developer Documentation

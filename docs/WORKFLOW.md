@@ -103,7 +103,6 @@ quickvm/
 ├── go.mod                 # Go modules
 ├── go.sum                 # Dependencies checksums
 ├── README.md              # English documentation
-├── HUONG_DAN.md          # Vietnamese guide
 └── .gitignore            # Git ignore rules
 ```
 

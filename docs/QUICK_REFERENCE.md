@@ -87,7 +87,6 @@ golangci-lint run          # Run linter
 | File | Purpose |
 |------|---------|
 | `README.md` | Main documentation (English) |
-| `HUONG_DAN.md` | Vietnamese user guide |
 | `DEMO.md` | Examples & use cases |
 | `DEVELOPER.md` | Developer notes |
 | `WORKFLOW.md` | Dev & deploy workflow |
