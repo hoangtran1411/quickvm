@@ -2,7 +2,7 @@
 
 > This document describes proposed features for QuickVM, organized by priority and complexity.
 
-**Last Updated:** 2026-01-07
+**Last Updated:** 2026-01-10
 
 ---
 
@@ -381,7 +381,9 @@ quickvm docker ps                             # Command from plugin
 
 ---
 
-## 📋 Implementation Priority
+## 📋 Implementation Priority (Original)
+
+> ⚠️ **Note:** See [Refined Priority Roadmap](#-refined-priority-roadmap-brainstorming-2026-01-10) below for updated priorities based on user workflow analysis.
 
 ### Phase 1 (Week 1-2)
 - [ ] VM Connect (Tier 2, #5)
@@ -400,6 +402,185 @@ quickvm docker ps                             # Command from plugin
 
 ### Phase 4 (Future)
 - [ ] Tier 3 & 4 features
+
+---
+
+## 🎯 Refined Priority Roadmap (Brainstorming 2026-01-10)
+
+> **Context:** Based on user workflow analysis - managing 3-5 VMs daily, RDP for monitoring, full clone for anti-VM detection bypass, emphasis on test coverage and error handling.
+
+### P0: Immediate Priority
+
+#### VM Clone (Full Clone Only)
+
+**Command:** `quickvm clone`
+
+```bash
+quickvm clone <vm-index> <new-name>           # Full clone with new name
+quickvm clone 1 "WebServer-Copy"              # Example
+```
+
+**Implementation Notes:**
+- Full clone only (Export → Import → Rename)
+- Linked clone NOT supported (anti-VM detection concerns)
+- Generate new VM ID
+- Estimated time: Several minutes depending on disk size
+
+**PowerShell Flow:**
+```powershell
+# 1. Export VM
+Export-VM -Name "SourceVM" -Path "$env:TEMP\quickvm-clone"
+
+# 2. Import with new ID
+Import-VM -Path "...\*.vmcx" -Copy -GenerateNewId
+
+# 3. Rename
+Rename-VM -Name "SourceVM" -NewName "NewVMName"
+
+# 4. Cleanup temp export
+Remove-Item -Recurse "$env:TEMP\quickvm-clone"
+```
+
+---
+
+#### RDP Quick Connect
+
+**Command:** `quickvm rdp`
+
+```bash
+quickvm rdp <vm-index>                        # RDP into VM
+quickvm rdp 1                                 # Example
+quickvm rdp 1 -u admin                        # With username (optional)
+```
+
+**Implementation Notes:**
+- Manual trigger only (no auto-connect after start)
+- Get VM IP first, then call mstsc.exe
+- Error if VM not running or no IP available
+
+**PowerShell to get IP:**
+```powershell
+(Get-VMNetworkAdapter -VMName "VMName").IPAddresses | Where-Object { $_ -match '^\d+\.\d+\.\d+\.\d+$' }
+```
+
+---
+
+### P1: High Priority
+
+#### Bulk Operations Enhancement
+
+**Command:** Enhanced `quickvm start/stop/restart`
+
+```bash
+# Current (already implemented)
+quickvm start 1
+quickvm start --range 1-5
+
+# New additions
+quickvm start 1 2 3                           # Multiple indexes
+quickvm start --all                           # All VMs
+quickvm stop --all
+quickvm restart --all
+
+quickvm start --filter "Web*"                 # By name pattern (optional)
+```
+
+---
+
+#### Workspace/Profile System
+
+**Command:** `quickvm workspace` (alias: `quickvm ws`)
+
+```bash
+# Workspace management
+quickvm workspace list                        # List all workspaces
+quickvm workspace create <name>               # Create (interactive wizard)
+quickvm workspace show <name>                 # View workspace details
+quickvm workspace edit <name>                 # Open YAML in editor
+quickvm workspace delete <name>               # Delete workspace
+
+# Daily usage
+quickvm workspace start <name>                # Start all VMs in workspace
+quickvm workspace stop <name>                 # Stop all VMs
+quickvm ws start dev                          # Short alias
+```
+
+**Config Location:** `~/.quickvm/workspaces/<name>.yaml`
+
+**YAML Structure:**
+```yaml
+# ~/.quickvm/workspaces/dev.yaml
+name: "Development Environment"
+description: "Daily development VMs"
+
+vms:
+  - name: "SQL-Server"        # VM name in Hyper-V
+    alias: db                 # Short alias for reference
+    
+  - name: "API-Server"
+    alias: api
+    
+  - name: "Web-Frontend"
+    alias: web
+
+# Optional settings (future)
+# settings:
+#   start_delay: 5            # Delay between VM starts
+#   stop_order: reverse       # Stop in reverse order
+```
+
+**Implementation Notes:**
+- Support both wizard mode and direct YAML editing
+- VMs identified by Hyper-V name (not index, as index may change)
+- Alias is optional, for user convenience
+- Start/stop all VMs in workspace with single command
+
+---
+
+### P2: Medium Priority
+
+#### Snapshot Improvements
+
+**Command:** Enhanced `quickvm snapshot`
+
+```bash
+# Current (keep backward compatible)
+quickvm snapshot list <vm-index>
+quickvm snapshot create <vm-index> "name"
+quickvm snapshot restore <vm-index> "name"
+quickvm snapshot delete <vm-index> "name"
+
+# New additions
+quickvm snapshot create <vm-index>            # Auto-name: "quickvm-2026-01-10-120000"
+quickvm snapshot quick <vm-index>             # Alias for auto-named snapshot
+quickvm snapshot restore <vm-index> --latest  # Restore most recent snapshot
+```
+
+**Implementation Notes:**
+- Must maintain backward compatibility
+- Auto-naming format: `quickvm-YYYY-MM-DD-HHMMSS`
+- `--latest` finds snapshot with most recent creation time
+
+---
+
+#### VM Config
+
+Already defined in Tier 1, #4. No changes needed.
+
+---
+
+### Optional/Future Enhancements
+
+> Features to consider when time permits. Not critical for core workflow.
+
+| Feature | Description | Complexity |
+|---------|-------------|------------|
+| Auto-snapshot | Snapshot before workspace start | Medium |
+| Health check | Verify VM running before RDP | Low |
+| Workspace import/export | Share config with team | Low |
+| Default workspace | Set one workspace as default | Low |
+| Global aliases | Use VM alias without workspace context | Medium |
+| Workspace RDP | `quickvm ws rdp dev db` - RDP to specific VM | Low |
 
 ---
 
