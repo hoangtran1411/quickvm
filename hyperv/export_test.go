@@ -97,9 +97,7 @@ func TestFindVMCXFile_InVirtualMachinesSubdir(t *testing.T) {
 }
 
 func TestImportVMOptions_Defaults(t *testing.T) {
-	opts := ImportVMOptions{
-		Path: "C:\\Test\\VM",
-	}
+	opts := ImportVMOptions{}
 
 	if opts.Copy != false {
 		t.Error("Expected Copy to default to false")
