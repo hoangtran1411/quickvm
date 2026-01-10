@@ -21,7 +21,7 @@
 
 > **High Priority** - Features that provide great value, should be implemented early.
 
-### 1. VM Snapshots/Checkpoints ⭐ ✅ DONE
+### 1. VM Snapshots/Checkpoints ⭐ ✅ DONE (2026-01-07)
 
 **Command:** `quickvm snapshot`
 
@@ -49,7 +49,7 @@ Remove-VMSnapshot -VMName "VMName" -Name "SnapshotName"
 
 ---
 
-### 2. VM Clone
+### 2. VM Clone ⭐ ✅ DONE (2026-01-10)
 
 **Command:** `quickvm clone`
 
@@ -123,7 +123,7 @@ Get-VM -Name "VMName" | Select-Object *
 
 > **Fast to implement, high value** - Simple but useful features.
 
-### 5. Connect to VM ⭐
+### 5. Connect to VM ⭐ ✅ DONE (Implemented via RDP & VMConnect)
 
 **Command:** `quickvm connect`
 
@@ -144,30 +144,40 @@ exec.Command("vmconnect.exe", "localhost", vmName).Start()
 
 ---
 
-### 6. SSH/RDP Quick Connect
+### 6. RDP Quick Connect ⭐ ✅ DONE (2026-01-10)
 
-**Command:** `quickvm ssh` / `quickvm rdp`
+**Command:** `quickvm rdp`
 
 ```bash
-quickvm ssh <vm-index>                        # SSH into VM (Linux)
-quickvm ssh 1 -u admin                        # With username
-
-quickvm rdp <vm-index>                        # RDP into VM (Windows)
-quickvm rdp 1
+quickvm rdp <vm-index>                        # RDP into VM
+quickvm rdp 1                                 # Example
+quickvm rdp 1 -u admin                        # With username
 ```
 
-**Rationale:** Quick connection to VM if IP address is known.
+**Rationale:** Quick connection to VM via Windows RDP client.
 
 **Complexity:** ⭐⭐ (Low-Medium)
 
-**Requirement:** Need to get VM IP first:
-```powershell
-(Get-VMNetworkAdapter -VMName "VMName").IPAddresses
+---
+
+### 7. GPU Partitioning (GPU-P) ⭐ ✅ DONE (2026-01-08)
+
+**Command:** `quickvm gpu`
+
+```bash
+quickvm gpu status                           # Check GPU-P support
+quickvm gpu add <vm-index>                   # Add GPU to VM
+quickvm gpu remove <vm-index>                # Remove GPU from VM
+quickvm gpu drivers                          # Show driver paths for guest
 ```
+
+**Rationale:** High-performance graphics acceleration for VMs. Essential for bypass anti-VM and heavy workloads.
+
+**Complexity:** ⭐⭐⭐⭐ (High)
 
 ---
 
-### 7. VM Logs
+### 8. VM Logs
 
 **Command:** `quickvm logs`
 
@@ -386,14 +396,15 @@ quickvm docker ps                             # Command from plugin
 > ⚠️ **Note:** See [Refined Priority Roadmap](#-refined-priority-roadmap-brainstorming-2026-01-10) below for updated priorities based on user workflow analysis.
 
 ### Phase 1 (Week 1-2)
-- [ ] VM Connect (Tier 2, #5)
-- [ ] Bulk Operations (Tier 2, #8)
-- [x] VM Snapshots (Tier 1, #1) ✅ **Completed 2026-01-07**
+- [x] VM Snapshots (Tier 1, #1) ✅
+- [x] VM Clone (P0) ✅
+- [x] RDP Connect (P0) ✅
+- [x] GPU Partitioning ✅
 
 ### Phase 2 (Week 3-4)
+- [ ] Bulk Operations Enhancement (Multi-index, --all)
 - [ ] VM Config (Tier 1, #4)
 - [ ] Watch Mode (Tier 2, #9)
-- [ ] VM Logs (Tier 2, #7)
 
 ### Phase 3 (Week 5-6)
 - [ ] VM Clone (Tier 1, #2)

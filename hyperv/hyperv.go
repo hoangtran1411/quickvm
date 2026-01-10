@@ -9,14 +9,26 @@ import (
 
 // VM represents a Hyper-V virtual machine
 type VM struct {
-	Index       int    `json:"-"`
-	Name        string `json:"name"`
-	State       string `json:"state"`
-	CPUUsage    int    `json:"cpuUsage"`
-	MemoryMB    int64  `json:"memoryMB"`
-	Uptime      string `json:"uptime"`
-	Status      string `json:"status"`
-	Version     string `json:"version"`
+	Index    int    `json:"-"`
+	Name     string `json:"name"`
+	State    string `json:"state"`
+	CPUUsage int    `json:"cpuUsage"`
+	MemoryMB int64  `json:"memoryMB"`
+	Uptime   string `json:"uptime"`
+	Status   string `json:"status"`
+	Version  string `json:"version"`
+}
+
+// VMManager defines the interface for Hyper-V operations to allow mocking in tests
+type VMManager interface {
+	GetVMs() ([]VM, error)
+	StartVM(index int) error
+	StartVMByName(name string) error
+	StopVM(index int) error
+	StopVMByName(name string) error
+	RestartVM(index int) error
+	RestartVMByName(name string) error
+	GetVMStatus(name string) (string, error)
 }
 
 // Manager handles Hyper-V operations
@@ -49,7 +61,7 @@ func (m *Manager) GetVMs() ([]VM, error) {
 	// Parse JSON output
 	var vms []VM
 	outputStr := strings.TrimSpace(string(output))
-	
+
 	// Handle single VM case (PowerShell returns object, not array)
 	if strings.HasPrefix(outputStr, "{") {
 		var vm VM

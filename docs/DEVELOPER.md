@@ -227,6 +227,9 @@ go tool cover -html=coverage.out
 - [ ] `quickvm start 1` - Starts first VM
 - [ ] `quickvm stop 1` - Stops first VM
 - [ ] `quickvm restart 1` - Restarts first VM
+- [ ] `quickvm clone 1 "NewVM"` - Clones a VM
+- [ ] `quickvm rdp 1` - Opens RDP connection
+- [ ] `quickvm gpu status` - Shows GPU support
 - [ ] `quickvm version` - Shows version info
 - [ ] `quickvm` (no args) - Launches TUI
 - [ ] TUI: Arrow navigation works
@@ -333,15 +336,17 @@ powershell -File test-script.ps1
 ## Future Improvements
 
 ### High Priority
-- [x] Add snapshot management ✅
-- [ ] Support for VM creation
-- [ ] Config file support (.quickvm.yaml)
+- [ ] Bulk Operations Enhancement (Multi-index, --all)
+- [ ] Workspace/Profile System (.quickvm/workspaces/*.yaml)
+- [ ] VM Config (RAM/CPU management)
 - [ ] Better error messages
 
 ### Medium Priority
 - [ ] Remote Hyper-V server support
 - [ ] VM grouping/tagging
 - [x] Export/import VM configs ✅
+- [x] VM Clone (Full Clone) ✅
+- [x] GPU Partitioning (GPU-P) ✅
 - [ ] Performance metrics
 
 ### Low Priority

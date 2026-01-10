@@ -6,11 +6,14 @@ import (
 	"testing"
 )
 
-// skipIfNoHyperVEnv skips the test if running in CI/CD environment without Hyper-V
+// skipIfNoHyperVEnv skips the test if running in CI/CD environment without Hyper-V or without Admin privileges
 func skipIfNoHyperVEnv(t *testing.T) {
 	t.Helper()
 	if os.Getenv("CI") != "" || os.Getenv("GITHUB_ACTIONS") != "" {
 		t.Skip("Skipping test: Hyper-V not available in CI/CD environment")
+	}
+	if !IsRunningAsAdmin() {
+		t.Skip("Skipping test: Administrator privileges required for Hyper-V operations")
 	}
 }
 
