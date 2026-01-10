@@ -14,13 +14,6 @@ func skipIfNoHyperVMain(t *testing.T) {
 	}
 }
 
-func TestNewManager(t *testing.T) {
-	manager := NewManager()
-	if manager == nil {
-		t.Error("NewManager() returned nil")
-	}
-}
-
 // TestVM_Struct tests VM struct fields
 func TestVM_Struct(t *testing.T) {
 	vm := VM{
@@ -57,14 +50,6 @@ func TestVM_Struct(t *testing.T) {
 	}
 	if vm.Version != "9.0" {
 		t.Errorf("Expected Version=9.0, got %s", vm.Version)
-	}
-}
-
-// TestManager_Struct tests Manager struct
-func TestManager_Struct(t *testing.T) {
-	manager := &Manager{}
-	if manager == nil {
-		t.Error("Manager struct is nil")
 	}
 }
 
