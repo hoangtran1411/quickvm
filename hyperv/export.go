@@ -3,7 +3,6 @@ package hyperv
 import (
 	"encoding/json"
 	"fmt"
-	"os/exec"
 	"path/filepath"
 	"strings"
 )
@@ -42,8 +41,7 @@ func (m *Manager) ExportVMByName(vmName, path string) error {
 	// PowerShell script to export VM
 	psScript := fmt.Sprintf(`Export-VM -Name "%s" -Path "%s"`, vmName, path)
 
-	cmd := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-Command", psScript)
-	output, err := cmd.CombinedOutput()
+	output, err := m.Exec.RunCommand(psScript)
 	if err != nil {
 		return fmt.Errorf("failed to export VM '%s': %v\nOutput: %s", vmName, err, string(output))
 	}
@@ -78,8 +76,7 @@ func (m *Manager) ImportVM(opts ImportVMOptions) (string, error) {
 
 	psScriptBuilder.WriteString("; $vm.Name")
 
-	cmd := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-Command", psScriptBuilder.String())
-	output, err := cmd.CombinedOutput()
+	output, err := m.Exec.RunCommand(psScriptBuilder.String())
 	if err != nil {
 		return "", fmt.Errorf("failed to import VM from '%s': %v\nOutput: %s", opts.Path, err, string(output))
 	}
@@ -141,8 +138,7 @@ func (m *Manager) GetExportedVMInfo(path string) (map[string]string, error) {
 		} | ConvertTo-Json
 	`, vmcxPath)
 
-	cmd := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-Command", psScript)
-	output, err := cmd.CombinedOutput()
+	output, err := m.Exec.RunCommand(psScript)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get VM info from '%s': %v\nOutput: %s", path, err, string(output))
 	}

@@ -3,7 +3,6 @@ package hyperv
 import (
 	"encoding/json"
 	"fmt"
-	"os/exec"
 	"strings"
 )
 
@@ -46,8 +45,7 @@ func (m *Manager) GetSnapshotsByVMName(vmName string) ([]Snapshot, error) {
 		}
 	`, vmName)
 
-	cmd := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-Command", psScript)
-	output, err := cmd.CombinedOutput()
+	output, err := m.Exec.RunCommand(psScript)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get snapshots for VM '%s': %v\nOutput: %s", vmName, err, string(output))
 	}
@@ -95,8 +93,7 @@ func (m *Manager) CreateSnapshot(vmIndex int, snapshotName string) error {
 // CreateSnapshotByVMName creates a new snapshot for a VM by name
 func (m *Manager) CreateSnapshotByVMName(vmName, snapshotName string) error {
 	psScript := fmt.Sprintf(`Checkpoint-VM -Name "%s" -SnapshotName "%s"`, vmName, snapshotName)
-	cmd := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-Command", psScript)
-	output, err := cmd.CombinedOutput()
+	output, err := m.Exec.RunCommand(psScript)
 	if err != nil {
 		return fmt.Errorf("failed to create snapshot '%s' for VM '%s': %v\nOutput: %s", snapshotName, vmName, err, string(output))
 	}
@@ -121,8 +118,7 @@ func (m *Manager) RestoreSnapshot(vmIndex int, snapshotName string) error {
 // RestoreSnapshotByVMName restores a VM to a specific snapshot by name
 func (m *Manager) RestoreSnapshotByVMName(vmName, snapshotName string) error {
 	psScript := fmt.Sprintf(`Restore-VMSnapshot -VMName "%s" -Name "%s" -Confirm:$false`, vmName, snapshotName)
-	cmd := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-Command", psScript)
-	output, err := cmd.CombinedOutput()
+	output, err := m.Exec.RunCommand(psScript)
 	if err != nil {
 		return fmt.Errorf("failed to restore snapshot '%s' for VM '%s': %v\nOutput: %s", snapshotName, vmName, err, string(output))
 	}
@@ -147,8 +143,7 @@ func (m *Manager) DeleteSnapshot(vmIndex int, snapshotName string) error {
 // DeleteSnapshotByVMName deletes a snapshot from a VM by name
 func (m *Manager) DeleteSnapshotByVMName(vmName, snapshotName string) error {
 	psScript := fmt.Sprintf(`Remove-VMSnapshot -VMName "%s" -Name "%s" -Confirm:$false`, vmName, snapshotName)
-	cmd := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-Command", psScript)
-	output, err := cmd.CombinedOutput()
+	output, err := m.Exec.RunCommand(psScript)
 	if err != nil {
 		return fmt.Errorf("failed to delete snapshot '%s' from VM '%s': %v\nOutput: %s", snapshotName, vmName, err, string(output))
 	}

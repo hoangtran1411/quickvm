@@ -9,10 +9,10 @@ import (
 
 // SystemInfo contains system information
 type SystemInfo struct {
-	CPU       CPUInfo       `json:"cpu"`
-	Memory    MemoryInfo    `json:"memory"`
-	Disks     []DiskInfo    `json:"disks"`
-	HyperV    HyperVStatus  `json:"hyperV"`
+	CPU    CPUInfo      `json:"cpu"`
+	Memory MemoryInfo   `json:"memory"`
+	Disks  []DiskInfo   `json:"disks"`
+	HyperV HyperVStatus `json:"hyperV"`
 }
 
 // CPUInfo contains CPU information
@@ -23,23 +23,23 @@ type CPUInfo struct {
 
 // MemoryInfo contains memory information
 type MemoryInfo struct {
-	TotalMB   int64 `json:"totalMB"`
-	TotalGB   float64 `json:"totalGB"`
-	FreeMB    int64 `json:"freeMB"`
-	FreeGB    float64 `json:"freeGB"`
-	UsedMB    int64 `json:"usedMB"`
-	UsedGB    float64 `json:"usedGB"`
+	TotalMB int64   `json:"totalMB"`
+	TotalGB float64 `json:"totalGB"`
+	FreeMB  int64   `json:"freeMB"`
+	FreeGB  float64 `json:"freeGB"`
+	UsedMB  int64   `json:"usedMB"`
+	UsedGB  float64 `json:"usedGB"`
 }
 
 // DiskInfo contains disk information
 type DiskInfo struct {
-	Name      string  `json:"name"`
-	FreeMB    int64   `json:"freeMB"`
-	FreeGB    float64 `json:"freeGB"`
-	TotalMB   int64   `json:"totalMB"`
-	TotalGB   float64 `json:"totalGB"`
-	UsedMB    int64   `json:"usedMB"`
-	UsedGB    float64 `json:"usedGB"`
+	Name    string  `json:"name"`
+	FreeMB  int64   `json:"freeMB"`
+	FreeGB  float64 `json:"freeGB"`
+	TotalMB int64   `json:"totalMB"`
+	TotalGB float64 `json:"totalGB"`
+	UsedMB  int64   `json:"usedMB"`
+	UsedGB  float64 `json:"usedGB"`
 }
 
 // HyperVStatus contains Hyper-V status information
@@ -93,8 +93,7 @@ func (m *Manager) getCPUInfo() (*CPUInfo, error) {
 		} | ConvertTo-Json
 	`
 
-	cmd := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-Command", psScript)
-	output, err := cmd.CombinedOutput()
+	output, err := m.Exec.RunCommand(psScript)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute PowerShell command: %v\nOutput: %s", err, string(output))
 	}
@@ -130,8 +129,7 @@ func (m *Manager) getMemoryInfo() (*MemoryInfo, error) {
 		} | ConvertTo-Json
 	`
 
-	cmd := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-Command", psScript)
-	output, err := cmd.CombinedOutput()
+	output, err := m.Exec.RunCommand(psScript)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute PowerShell command: %v\nOutput: %s", err, string(output))
 	}
@@ -163,8 +161,7 @@ func (m *Manager) getDiskInfo() ([]DiskInfo, error) {
 		} | ConvertTo-Json
 	`
 
-	cmd := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-Command", psScript)
-	output, err := cmd.CombinedOutput()
+	output, err := m.Exec.RunCommand(psScript)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute PowerShell command: %v\nOutput: %s", err, string(output))
 	}
@@ -205,8 +202,7 @@ func (m *Manager) getHyperVStatus() (*HyperVStatus, error) {
 		}
 	`
 
-	cmd := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-Command", psScript)
-	output, err := cmd.CombinedOutput()
+	output, err := m.Exec.RunCommand(psScript)
 	if err != nil {
 		// If error, try alternative method using Get-Service
 		return m.getHyperVStatusAlternative()
@@ -238,8 +234,7 @@ func (m *Manager) getHyperVStatusAlternative() (*HyperVStatus, error) {
 		}
 	`
 
-	cmd := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-Command", psScript)
-	output, err := cmd.CombinedOutput()
+	output, err := m.Exec.RunCommand(psScript)
 	if err != nil {
 		return &HyperVStatus{
 			Enabled: false,
@@ -307,8 +302,7 @@ func (m *Manager) EnableHyperV() (bool, error) {
 		} | ConvertTo-Json
 	`
 
-	cmd := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-Command", psScript)
-	output, err := cmd.CombinedOutput()
+	output, err := m.Exec.RunCommand(psScript)
 	if err != nil {
 		return false, fmt.Errorf("failed to enable Hyper-V: %v\nOutput: %s", err, string(output))
 	}

@@ -1,6 +1,7 @@
 package hyperv
 
 import (
+	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -257,5 +258,75 @@ func BenchmarkGetVMs(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, _ = manager.GetVMs()
+	}
+}
+
+// MockRunner is a mock implementation of ShellExecutor for testing
+type MockRunner struct {
+	MockOutput string
+	MockError  error
+	LastScript string
+}
+
+func (m *MockRunner) RunCommand(script string) ([]byte, error) {
+	m.LastScript = script
+	if m.MockError != nil {
+		return nil, m.MockError
+	}
+	return []byte(m.MockOutput), nil
+}
+
+func TestGetVMs_WithMock(t *testing.T) {
+	// Mock JSON output from PowerShell
+	mockJSON := `
+	[
+		{
+			"Name": "TestVM1",
+			"State": "Running",
+			"CPUUsage": 10,
+			"MemoryMB": 2048,
+			"Uptime": "01:00:00",
+			"Status": "Operating normally",
+			"Version": "9.0"
+		},
+		{
+			"Name": "TestVM2",
+			"State": "Off",
+			"CPUUsage": 0,
+			"MemoryMB": 4096,
+			"Uptime": "00:00:00",
+			"Status": "Operating normally",
+			"Version": "9.0"
+		}
+	]`
+
+	mock := &MockRunner{MockOutput: mockJSON}
+	manager := &Manager{Exec: mock}
+
+	vms, err := manager.GetVMs()
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	if len(vms) != 2 {
+		t.Errorf("Expected 2 VMs, got %d", len(vms))
+	}
+
+	if vms[0].Name != "TestVM1" {
+		t.Errorf("Expected first VM to be TestVM1, got %s", vms[0].Name)
+	}
+
+	if vms[1].State != "Off" {
+		t.Errorf("Expected second VM state to be Off, got %s", vms[1].State)
+	}
+}
+
+func TestGetVMs_MockError(t *testing.T) {
+	mock := &MockRunner{MockError: fmt.Errorf("PowerShell failed")}
+	manager := &Manager{Exec: mock}
+
+	_, err := manager.GetVMs()
+	if err == nil {
+		t.Error("Expected error, got nil")
 	}
 }

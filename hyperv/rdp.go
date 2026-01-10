@@ -70,8 +70,7 @@ func (m *Manager) GetVMIPAddressByName(vmName string) (string, error) {
 		if ($ipv4) { $ipv4 } else { "" }
 	`, vmName)
 
-	cmd := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-Command", psScript)
-	output, err := cmd.CombinedOutput()
+	output, err := m.Exec.RunCommand(psScript)
 	if err != nil {
 		return "", fmt.Errorf("failed to get VM IP address: %v\nOutput: %s", err, string(output))
 	}
@@ -136,8 +135,7 @@ func (m *Manager) SaveRDPCredentials(target, username, password string) error {
 	// cmdkey /generic:TERMSRV/<target> /user:<username> /pass:<password>
 	psScript := fmt.Sprintf(`cmdkey /generic:TERMSRV/%s /user:%s /pass:%s`, target, username, password)
 
-	cmd := exec.Command("cmd", "/c", psScript)
-	output, err := cmd.CombinedOutput()
+	output, err := m.Exec.RunCommand(psScript)
 	if err != nil {
 		return fmt.Errorf("failed to save credentials: %v\nOutput: %s", err, string(output))
 	}
@@ -149,8 +147,7 @@ func (m *Manager) SaveRDPCredentials(target, username, password string) error {
 func (m *Manager) DeleteRDPCredentials(target string) error {
 	psScript := fmt.Sprintf(`cmdkey /delete:TERMSRV/%s`, target)
 
-	cmd := exec.Command("cmd", "/c", psScript)
-	output, err := cmd.CombinedOutput()
+	output, err := m.Exec.RunCommand(psScript)
 	if err != nil {
 		return fmt.Errorf("failed to delete credentials: %v\nOutput: %s", err, string(output))
 	}

@@ -603,4 +603,11 @@ Already defined in Tier 1, #4. No changes needed.
 
 ---
 
+## 🛠️ Technical Improvements & Refactoring
+
+### 2026-01-10: Dependency Injection for PowerShell
+- **Change**: Refactored `hyperv` package to use `ShellExecutor` interface.
+- **Reason**: Improved unit test coverage and testability without requiring a Windows environment.
+- **Impact**: Developers can now mock PowerShell output in tests using `MockRunner`.
+
 > 💡 **Note:** This is a planned roadmap and may change based on user feedback.

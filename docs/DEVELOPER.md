@@ -80,12 +80,16 @@ go test ./...
 
 #### `hyperv/` - Hyper-V Integration Layer
 - **Purpose**: Interact with Hyper-V through PowerShell
+- **Key Components**:
+  - `Manager` struct: Main entry point
+  - `ShellExecutor` interface: Abstraction for command execution
+  - `PowerShellRunner`: Production implementation using `os/exec`
 - **Key Functions**:
   - `GetVMs()` - Fetch all VMs and their status
   - `StartVM(index)` - Start a VM by index
   - `StopVM(index)` - Stop a VM by index
   - `RestartVM(index)` - Restart a VM by index
-- **Technology**: PowerShell execution via `os/exec`
+- **Technology**: PowerShell execution via `ShellExecutor` interface (allows mocking)
 
 #### `ui/` - TUI Layer
 - **Purpose**: Interactive terminal UI
@@ -176,8 +180,8 @@ go build -o quickvm.exe
 ```go
 func (m *Manager) MyNewFunction(vmIndex int) error {
     psScript := `Your-PowerShell-Command`
-    cmd := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-Command", psScript)
-    output, err := cmd.CombinedOutput()
+    // Use m.Exec.RunCommand instead of exec.Command
+    output, err := m.Exec.RunCommand(psScript)
     if err != nil {
         return fmt.Errorf("operation failed: %v\nOutput: %s", err, string(output))
     }

@@ -3,7 +3,6 @@ package hyperv
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 )
@@ -94,8 +93,7 @@ func (m *Manager) CloneVMByName(sourceName, newName string) error {
 // RenameVM renames a VM
 func (m *Manager) RenameVM(oldName, newName string) error {
 	psScript := fmt.Sprintf(`Rename-VM -Name "%s" -NewName "%s"`, oldName, newName)
-	cmd := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-Command", psScript)
-	output, err := cmd.CombinedOutput()
+	output, err := m.Exec.RunCommand(psScript)
 	if err != nil {
 		return fmt.Errorf("failed to rename VM from '%s' to '%s': %v\nOutput: %s", oldName, newName, err, string(output))
 	}
@@ -105,8 +103,7 @@ func (m *Manager) RenameVM(oldName, newName string) error {
 // VMExists checks if a VM with the given name exists
 func (m *Manager) VMExists(name string) (bool, error) {
 	psScript := fmt.Sprintf(`(Get-VM -Name "%s" -ErrorAction SilentlyContinue) -ne $null`, name)
-	cmd := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-Command", psScript)
-	output, err := cmd.CombinedOutput()
+	output, err := m.Exec.RunCommand(psScript)
 	if err != nil {
 		return false, fmt.Errorf("failed to check VM existence: %v\nOutput: %s", err, string(output))
 	}
@@ -118,8 +115,7 @@ func (m *Manager) VMExists(name string) (bool, error) {
 // DeleteVM deletes a VM by name (used for cleanup on error)
 func (m *Manager) DeleteVM(name string) error {
 	psScript := fmt.Sprintf(`Remove-VM -Name "%s" -Force`, name)
-	cmd := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-Command", psScript)
-	output, err := cmd.CombinedOutput()
+	output, err := m.Exec.RunCommand(psScript)
 	if err != nil {
 		return fmt.Errorf("failed to delete VM '%s': %v\nOutput: %s", name, err, string(output))
 	}

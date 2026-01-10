@@ -31,12 +31,30 @@ type VMManager interface {
 	GetVMStatus(name string) (string, error)
 }
 
-// Manager handles Hyper-V operations
-type Manager struct{}
+// ShellExecutor defines an interface for executing shell commands
+type ShellExecutor interface {
+	RunCommand(script string) ([]byte, error)
+}
 
-// NewManager creates a new Hyper-V manager
+// PowerShellRunner implements ShellExecutor for actual PowerShell execution
+type PowerShellRunner struct{}
+
+// RunCommand executes a PowerShell command
+func (p *PowerShellRunner) RunCommand(script string) ([]byte, error) {
+	cmd := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-Command", script)
+	return cmd.CombinedOutput()
+}
+
+// Manager handles Hyper-V operations
+type Manager struct {
+	Exec ShellExecutor
+}
+
+// NewManager creates a new Hyper-V manager with default PowerShell runner
 func NewManager() *Manager {
-	return &Manager{}
+	return &Manager{
+		Exec: &PowerShellRunner{},
+	}
 }
 
 // GetVMs retrieves all Hyper-V virtual machines
@@ -52,8 +70,7 @@ func (m *Manager) GetVMs() ([]VM, error) {
 		@{Name='Version';Expression={$_.Version.ToString()}} | ConvertTo-Json
 	`
 
-	cmd := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-Command", psScript)
-	output, err := cmd.CombinedOutput()
+	output, err := m.Exec.RunCommand(psScript)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute PowerShell command: %v\nOutput: %s", err, string(output))
 	}
@@ -74,6 +91,12 @@ func (m *Manager) GetVMs() ([]VM, error) {
 			return nil, fmt.Errorf("failed to parse VMs data: %v", err)
 		}
 	} else {
+		// If output is empty or doesn't start with JSON structure, check if it's an error or just no VMs.
+		// If no VMs are present, PowerShell might return nothing or "[]".
+		// Get-VM returns nothing if no VMs exist.
+		if outputStr == "" {
+			return []VM{}, nil
+		}
 		return nil, fmt.Errorf("no VMs found or invalid output format")
 	}
 
@@ -103,8 +126,7 @@ func (m *Manager) StartVM(index int) error {
 // StartVMByName starts a virtual machine by name
 func (m *Manager) StartVMByName(name string) error {
 	psScript := fmt.Sprintf(`Start-VM -Name "%s"`, name)
-	cmd := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-Command", psScript)
-	output, err := cmd.CombinedOutput()
+	output, err := m.Exec.RunCommand(psScript)
 	if err != nil {
 		return fmt.Errorf("failed to start VM '%s': %v\nOutput: %s", name, err, string(output))
 	}
@@ -129,8 +151,7 @@ func (m *Manager) StopVM(index int) error {
 // StopVMByName stops a virtual machine by name
 func (m *Manager) StopVMByName(name string) error {
 	psScript := fmt.Sprintf(`Stop-VM -Name "%s" -Force`, name)
-	cmd := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-Command", psScript)
-	output, err := cmd.CombinedOutput()
+	output, err := m.Exec.RunCommand(psScript)
 	if err != nil {
 		return fmt.Errorf("failed to stop VM '%s': %v\nOutput: %s", name, err, string(output))
 	}
@@ -155,8 +176,7 @@ func (m *Manager) RestartVM(index int) error {
 // RestartVMByName restarts a virtual machine by name
 func (m *Manager) RestartVMByName(name string) error {
 	psScript := fmt.Sprintf(`Restart-VM -Name "%s" -Force`, name)
-	cmd := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-Command", psScript)
-	output, err := cmd.CombinedOutput()
+	output, err := m.Exec.RunCommand(psScript)
 	if err != nil {
 		return fmt.Errorf("failed to restart VM '%s': %v\nOutput: %s", name, err, string(output))
 	}
@@ -166,8 +186,7 @@ func (m *Manager) RestartVMByName(name string) error {
 // GetVMStatus gets the status of a specific VM by name
 func (m *Manager) GetVMStatus(name string) (string, error) {
 	psScript := fmt.Sprintf(`(Get-VM -Name "%s").State`, name)
-	cmd := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-Command", psScript)
-	output, err := cmd.CombinedOutput()
+	output, err := m.Exec.RunCommand(psScript)
 	if err != nil {
 		return "", fmt.Errorf("failed to get VM status: %v", err)
 	}
