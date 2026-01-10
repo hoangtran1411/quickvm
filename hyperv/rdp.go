@@ -6,6 +6,41 @@ import (
 	"strings"
 )
 
+// RDPCredentials contains parsed RDP credentials
+type RDPCredentials struct {
+	Username string
+	Password string
+}
+
+// ParseCredentials parses "user@pass" or "user" format into RDPCredentials
+// Format: "username" or "username@password"
+func ParseCredentials(input string) RDPCredentials {
+	if input == "" {
+		return RDPCredentials{}
+	}
+
+	// Find the last @ to handle usernames like "domain\user@password" or "user@domain@password"
+	lastAtIndex := strings.LastIndex(input, "@")
+	if lastAtIndex == -1 {
+		// No @ found, treat as username only
+		return RDPCredentials{Username: input}
+	}
+
+	// Split at last @
+	username := input[:lastAtIndex]
+	password := input[lastAtIndex+1:]
+
+	// If password is empty after @, treat entire input as username
+	if password == "" {
+		return RDPCredentials{Username: input}
+	}
+
+	return RDPCredentials{
+		Username: username,
+		Password: password,
+	}
+}
+
 // GetVMIPAddress gets the IPv4 address of a VM by index
 func (m *Manager) GetVMIPAddress(vmIndex int) (string, error) {
 	vmName, err := m.GetVMNameByIndex(vmIndex)
@@ -53,40 +88,71 @@ func (m *Manager) GetVMIPAddressByName(vmName string) (string, error) {
 }
 
 // ConnectRDP opens an RDP connection to a VM by index
-func (m *Manager) ConnectRDP(vmIndex int, username string) error {
+func (m *Manager) ConnectRDP(vmIndex int, credentials string) error {
 	ip, err := m.GetVMIPAddress(vmIndex)
 	if err != nil {
 		return err
 	}
 
-	return m.ConnectRDPByIP(ip, username)
+	return m.ConnectRDPByIP(ip, credentials)
 }
 
 // ConnectRDPByName opens an RDP connection to a VM by name
-func (m *Manager) ConnectRDPByName(vmName, username string) error {
+func (m *Manager) ConnectRDPByName(vmName, credentials string) error {
 	ip, err := m.GetVMIPAddressByName(vmName)
 	if err != nil {
 		return err
 	}
 
-	return m.ConnectRDPByIP(ip, username)
+	return m.ConnectRDPByIP(ip, credentials)
 }
 
 // ConnectRDPByIP opens an RDP connection to a specific IP address
-func (m *Manager) ConnectRDPByIP(ip, username string) error {
-	var cmd *exec.Cmd
+// credentials can be "username" or "username@password"
+func (m *Manager) ConnectRDPByIP(ip, credentials string) error {
+	creds := ParseCredentials(credentials)
 
-	if username != "" {
-		// With username: mstsc /v:IP /admin (username will be prompted)
-		// Note: For auto-login, Windows Credential Manager would be needed
-		cmd = exec.Command("mstsc", "/v:"+ip)
-	} else {
-		cmd = exec.Command("mstsc", "/v:"+ip)
+	// If password is provided, save to Windows Credential Manager first
+	if creds.Password != "" {
+		if err := m.SaveRDPCredentials(ip, creds.Username, creds.Password); err != nil {
+			return fmt.Errorf("failed to save RDP credentials: %v", err)
+		}
 	}
+
+	// Build mstsc command
+	cmd := exec.Command("mstsc", "/v:"+ip)
 
 	// Start mstsc without waiting for it to finish
 	if err := cmd.Start(); err != nil {
 		return fmt.Errorf("failed to start RDP client: %v", err)
+	}
+
+	return nil
+}
+
+// SaveRDPCredentials saves RDP credentials to Windows Credential Manager
+func (m *Manager) SaveRDPCredentials(target, username, password string) error {
+	// Use cmdkey to save credentials
+	// cmdkey /generic:TERMSRV/<target> /user:<username> /pass:<password>
+	psScript := fmt.Sprintf(`cmdkey /generic:TERMSRV/%s /user:%s /pass:%s`, target, username, password)
+
+	cmd := exec.Command("cmd", "/c", psScript)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to save credentials: %v\nOutput: %s", err, string(output))
+	}
+
+	return nil
+}
+
+// DeleteRDPCredentials removes RDP credentials from Windows Credential Manager
+func (m *Manager) DeleteRDPCredentials(target string) error {
+	psScript := fmt.Sprintf(`cmdkey /delete:TERMSRV/%s`, target)
+
+	cmd := exec.Command("cmd", "/c", psScript)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to delete credentials: %v\nOutput: %s", err, string(output))
 	}
 
 	return nil

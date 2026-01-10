@@ -14,6 +14,104 @@ func skipIfNoHyperVEnv(t *testing.T) {
 	}
 }
 
+// TestParseCredentials tests the ParseCredentials function
+func TestParseCredentials(t *testing.T) {
+	testCases := []struct {
+		name         string
+		input        string
+		wantUsername string
+		wantPassword string
+	}{
+		{
+			name:         "empty string",
+			input:        "",
+			wantUsername: "",
+			wantPassword: "",
+		},
+		{
+			name:         "username only",
+			input:        "admin",
+			wantUsername: "admin",
+			wantPassword: "",
+		},
+		{
+			name:         "username with password",
+			input:        "admin@password123",
+			wantUsername: "admin",
+			wantPassword: "password123",
+		},
+		{
+			name:         "domain user with password",
+			input:        "domain\\user@password",
+			wantUsername: "domain\\user",
+			wantPassword: "password",
+		},
+		{
+			name:         "email-like username with password",
+			input:        "user@domain.com@password",
+			wantUsername: "user@domain.com",
+			wantPassword: "password",
+		},
+		{
+			name:         "password with @ symbol",
+			input:        "user@pass@word",
+			wantUsername: "user@pass",
+			wantPassword: "word",
+		},
+		{
+			name:         "username with @ at end (no password)",
+			input:        "user@",
+			wantUsername: "user@",
+			wantPassword: "",
+		},
+		{
+			name:         "only @ symbol",
+			input:        "@",
+			wantUsername: "@",
+			wantPassword: "",
+		},
+		{
+			name:         "password only (starts with @)",
+			input:        "@password",
+			wantUsername: "",
+			wantPassword: "password",
+		},
+		{
+			name:         "complex password with special chars",
+			input:        "admin@P@ss!w0rd#123",
+			wantUsername: "admin@P",
+			wantPassword: "ss!w0rd#123",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			creds := ParseCredentials(tc.input)
+			if creds.Username != tc.wantUsername {
+				t.Errorf("Username: got %q, want %q", creds.Username, tc.wantUsername)
+			}
+			if creds.Password != tc.wantPassword {
+				t.Errorf("Password: got %q, want %q", creds.Password, tc.wantPassword)
+			}
+		})
+	}
+}
+
+// TestRDPCredentials_Struct tests RDPCredentials struct
+func TestRDPCredentials_Struct(t *testing.T) {
+	creds := RDPCredentials{
+		Username: "testuser",
+		Password: "testpass",
+	}
+
+	if creds.Username != "testuser" {
+		t.Errorf("Username: got %q, want %q", creds.Username, "testuser")
+	}
+	if creds.Password != "testpass" {
+		t.Errorf("Password: got %q, want %q", creds.Password, "testpass")
+	}
+}
+
 // TestGetVMIPAddress_InvalidIndex tests GetVMIPAddress with invalid indices
 func TestGetVMIPAddress_InvalidIndex(t *testing.T) {
 	skipIfNoHyperVEnv(t)

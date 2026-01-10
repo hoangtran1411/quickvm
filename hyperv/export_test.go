@@ -6,7 +6,16 @@ import (
 	"testing"
 )
 
+// skipIfNoHyperVExport skips test in CI/CD environment
+func skipIfNoHyperVExport(t *testing.T) {
+	t.Helper()
+	if os.Getenv("CI") != "" || os.Getenv("GITHUB_ACTIONS") != "" {
+		t.Skip("Skipping test: Hyper-V not available in CI/CD environment")
+	}
+}
+
 func TestExportVM_InvalidIndex(t *testing.T) {
+	skipIfNoHyperVExport(t)
 	manager := NewManager()
 
 	testCases := []struct {
@@ -252,6 +261,7 @@ func TestFindVMCXFile_DirectlyInBasePath(t *testing.T) {
 }
 
 func TestExportVMByName_EmptyName(t *testing.T) {
+	skipIfNoHyperVExport(t)
 	manager := NewManager()
 
 	// Test with empty VM name - should fail at PowerShell level

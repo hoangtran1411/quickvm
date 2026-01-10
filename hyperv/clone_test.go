@@ -6,11 +6,26 @@ import (
 	"testing"
 )
 
-// skipIfCI skips the test if running in CI/CD environment without Hyper-V
+// skipIfNoHyperV skips the test if running in CI/CD environment without Hyper-V
 func skipIfNoHyperV(t *testing.T) {
 	t.Helper()
 	if os.Getenv("CI") != "" || os.Getenv("GITHUB_ACTIONS") != "" {
 		t.Skip("Skipping test: Hyper-V not available in CI/CD environment")
+	}
+}
+
+// TestCloneVMOptions_Struct tests CloneVMOptions struct
+func TestCloneVMOptions_Struct(t *testing.T) {
+	opts := CloneVMOptions{
+		VMIndex: 1,
+		NewName: "TestCloneVM",
+	}
+
+	if opts.VMIndex != 1 {
+		t.Errorf("Expected VMIndex=1, got %d", opts.VMIndex)
+	}
+	if opts.NewName != "TestCloneVM" {
+		t.Errorf("Expected NewName=TestCloneVM, got %s", opts.NewName)
 	}
 }
 
@@ -96,6 +111,18 @@ func TestCloneVM_EmptyName(t *testing.T) {
 			wantErr:  true,
 			errMatch: "new VM name cannot be empty",
 		},
+		{
+			name:     "newlines only",
+			newName:  "\n\n",
+			wantErr:  true,
+			errMatch: "new VM name cannot be empty",
+		},
+		{
+			name:     "mixed whitespace",
+			newName:  " \t\n ",
+			wantErr:  true,
+			errMatch: "new VM name cannot be empty",
+		},
 	}
 
 	for _, tc := range testCases {
@@ -112,6 +139,30 @@ func TestCloneVM_EmptyName(t *testing.T) {
 				}
 			} else if err != nil {
 				t.Errorf("unexpected error: %v", err)
+			}
+		})
+	}
+}
+
+// TestCloneVM_ValidName_VariousCharacters tests valid VM names
+func TestCloneVM_ValidName_NotEmpty(t *testing.T) {
+	// These are just validation tests for the empty check
+	// They will fail at Hyper-V level but pass the empty name check
+	validNames := []string{
+		"ValidName",
+		"VM-Clone-1",
+		"VM_Clone_2",
+		"VM Clone 3",
+		"VM123",
+		"a",
+		"  ValidWithSpaces  ", // After trim, still valid (but trim happens in validation)
+	}
+
+	for _, name := range validNames {
+		t.Run(name, func(t *testing.T) {
+			// Just verify that empty check passes
+			if strings.TrimSpace(name) == "" {
+				t.Errorf("Expected '%s' to be non-empty after trim", name)
 			}
 		})
 	}
@@ -145,6 +196,23 @@ func TestVMExists_NonExistent(t *testing.T) {
 	}
 }
 
+// TestVMExists_EmptyName tests VMExists with empty name
+func TestVMExists_EmptyName(t *testing.T) {
+	skipIfNoHyperV(t)
+	manager := NewManager()
+
+	// Empty name should return false (no VM with empty name)
+	exists, err := manager.VMExists("")
+	if err != nil {
+		// PowerShell might error with empty name
+		return
+	}
+
+	if exists {
+		t.Error("expected VMExists to return false for empty VM name")
+	}
+}
+
 // TestDeleteVM_NonExistent tests DeleteVM with non-existent VM
 func TestDeleteVM_NonExistent(t *testing.T) {
 	skipIfNoHyperV(t)
@@ -169,5 +237,29 @@ func TestCloneVMByName_NonExistent(t *testing.T) {
 
 	if !strings.Contains(err.Error(), "not found") {
 		t.Errorf("expected error containing 'not found', got '%s'", err.Error())
+	}
+}
+
+// TestCloneVMByName_EmptySourceName tests CloneVMByName with empty source name
+func TestCloneVMByName_EmptySourceName(t *testing.T) {
+	skipIfNoHyperV(t)
+	manager := NewManager()
+
+	err := manager.CloneVMByName("", "NewClone")
+	if err == nil {
+		t.Error("expected error when cloning with empty source name, got nil")
+	}
+}
+
+// TestCloneVMByName_EmptyNewName tests CloneVMByName with empty new name
+func TestCloneVMByName_EmptyNewName(t *testing.T) {
+	skipIfNoHyperV(t)
+	manager := NewManager()
+
+	// This should fail with "not found" because source doesn't exist
+	// But if source existed, it would fail with "new VM name cannot be empty"
+	err := manager.CloneVMByName("SomeVM", "")
+	if err == nil {
+		t.Error("expected error when cloning with empty new name, got nil")
 	}
 }

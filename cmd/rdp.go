@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var rdpUsername string
+var rdpCredentials string
 
 var rdpCmd = &cobra.Command{
 	Use:   "rdp <vm-index>",
@@ -24,9 +24,18 @@ Requirements:
   - VM must have an IPv4 address assigned
   - Remote Desktop must be enabled in the VM
 
+Credentials format:
+  - Username only: -u "username"
+  - Username with password: -u "username@password"
+  - Domain user: -u "domain\username@password"
+
+When password is provided, credentials are saved to Windows Credential Manager
+for seamless login.
+
 Examples:
   quickvm rdp 1                               # RDP into VM 1
-  quickvm rdp 2 -u admin                      # RDP with username hint`,
+  quickvm rdp 2 -u admin                      # RDP with username
+  quickvm rdp 1 -u "admin@password123"        # RDP with auto-login`,
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		manager := hyperv.NewManager()
@@ -54,7 +63,13 @@ Examples:
 
 		fmt.Printf("🔗 Connecting to VM '%s' at %s...\n", vmName, ip)
 
-		if err := manager.ConnectRDPByIP(ip, rdpUsername); err != nil {
+		// Parse credentials for display
+		creds := hyperv.ParseCredentials(rdpCredentials)
+		if creds.Password != "" {
+			fmt.Println("🔐 Saving credentials to Windows Credential Manager...")
+		}
+
+		if err := manager.ConnectRDPByIP(ip, rdpCredentials); err != nil {
 			fmt.Printf("❌ Failed to open RDP: %v\n", err)
 			return
 		}
@@ -63,14 +78,17 @@ Examples:
 		fmt.Println()
 		fmt.Println("💡 Tips:")
 		fmt.Printf("   - IP address: %s\n", ip)
-		if rdpUsername != "" {
-			fmt.Printf("   - Username: %s\n", rdpUsername)
+		if creds.Username != "" {
+			fmt.Printf("   - Username: %s\n", creds.Username)
+		}
+		if creds.Password != "" {
+			fmt.Println("   - Credentials saved for auto-login")
 		}
 		fmt.Println("   - If connection fails, ensure Remote Desktop is enabled in the VM")
 	},
 }
 
 func init() {
-	rdpCmd.Flags().StringVarP(&rdpUsername, "username", "u", "", "Username for RDP connection (optional)")
+	rdpCmd.Flags().StringVarP(&rdpCredentials, "user", "u", "", "Credentials: \"username\" or \"username@password\"")
 	rootCmd.AddCommand(rdpCmd)
 }
