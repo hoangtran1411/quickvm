@@ -9,6 +9,7 @@ Welcome to the QuickVM documentation! This directory contains comprehensive guid
 | Document | Description |
 |----------|-------------|
 | [Installation Guide](INSTALLATION.md) | Step-by-step installation instructions |
+| [Newbie Guide](NEWBIE_GUIDE.md) | Understanding the code flow for new Go developers |
 | [Quick Reference](QUICK_REFERENCE.md) | Command cheat sheet and keyboard shortcuts |
 
 ### User Guides
@@ -52,7 +53,8 @@ Welcome to the QuickVM documentation! This directory contains comprehensive guid
 
 ### For New Users
 1. [Installation Guide](INSTALLATION.md) - Get QuickVM installed
-2. [Quick Reference](QUICK_REFERENCE.md) - Learn the basics
+2. [Newbie Guide](NEWBIE_GUIDE.md) - Understand the codebase structure
+3. [Quick Reference](QUICK_REFERENCE.md) - Learn the basics
 3. [Demo & Examples](DEMO.md) - See it in action
 
 ### For Developers
