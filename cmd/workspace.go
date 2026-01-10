@@ -152,7 +152,7 @@ var wsStopCmd = &cobra.Command{
 
 func init() {
 	wsCreateCmd.Flags().StringVarP(&wsVms, "vms", "v", "", "Comma-separated list of VM names")
-	wsCreateCmd.MarkFlagRequired("vms")
+	_ = wsCreateCmd.MarkFlagRequired("vms")
 
 	workspaceCmd.AddCommand(wsListCmd)
 	workspaceCmd.AddCommand(wsCreateCmd)
