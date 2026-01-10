@@ -21,6 +21,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `--new-id` flag to generate a new unique ID
   - `--vhd-path` flag to specify custom VHD destination
 
+- 🔄 **VM Clone** (2026-01-10)
+  - `quickvm clone <vm-index> <new-name>` - Full clone VM with new identity
+  - Export → Import with Copy → Generate new ID → Rename workflow
+  - Completely independent clone (no linked disks)
+  - Automatic temp cleanup
+
+- 🔗 **RDP Quick Connect** (2026-01-10)
+  - `quickvm rdp <vm-index>` - Open RDP connection to a VM
+  - `quickvm rdp <vm-index> -u <username>` - With username hint
+  - Automatically gets VM IP address
+  - Opens Windows Remote Desktop client (mstsc.exe)
+
 - 🔄 Auto-update functionality
   - `quickvm update` command to check and install updates
   - `--update` flag to check for updates before running any command
@@ -29,7 +41,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Support for both AMD64 and ARM64 architectures
 
 ### Planned Features
-- VM clone
+- Bulk operations (`--all` flag)
+- Workspace/Profile system
 
 ## [1.0.0] - 2026-01-05
 
