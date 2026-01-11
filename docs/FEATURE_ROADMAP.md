@@ -399,7 +399,9 @@ quickvm docker ps                             # Command from plugin
 - [x] VM Snapshots (Tier 1, #1) ✅
 - [x] VM Clone (P0) ✅
 - [x] RDP Connect (P0) ✅
-- [x] GPU Partitioning ✅
+- [x] GPU Partitioning (Hidden/Advanced) ✅
+- [x] Lazy Loading Disk Info (Performance) ✅ 2026-01-11
+- [x] IP Address in TUI ✅ 2026-01-11
 
 ### Phase 2 (Week 3-4)
 - [ ] Bulk Operations Enhancement (Multi-index, --all)
@@ -609,5 +611,11 @@ Already defined in Tier 1, #4. No changes needed.
 - **Change**: Refactored `hyperv` package to use `ShellExecutor` interface.
 - **Reason**: Improved unit test coverage and testability without requiring a Windows environment.
 - **Impact**: Developers can now mock PowerShell output in tests using `MockRunner`.
+
+### 2026-01-11: Pivot to Simplicity
+- **Decision**: Remove/Hide complex features (GPU, detailed Disk mgmt) from main view.
+- **Change**: `GetSystemInfo` now accepts `includeDisk` flag to speed up default loading.
+- **Change**: Added `IP Address` column to TUI for better utility.
+- **Goal**: Focus on being a "Quick" VM manager, not a comprehensive infrastructure tool.
 
 > 💡 **Note:** This is a planned roadmap and may change based on user feedback.

@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"os"
 
+	"quickvm/hyperv"
+
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
-	"quickvm/hyperv"
 )
 
 var (
@@ -27,9 +28,9 @@ Examples:
   quickvm enable --no-restart # Enable Hyper-V without restarting`,
 	Run: func(cmd *cobra.Command, args []string) {
 		manager := hyperv.NewManager()
-		
+
 		// First check current status
-		info, err := manager.GetSystemInfo()
+		info, err := manager.GetSystemInfo(false)
 		if err != nil {
 			color.Red("❌ Error checking Hyper-V status: %v", err)
 			os.Exit(1)
@@ -45,7 +46,7 @@ Examples:
 		// Hyper-V is not enabled, proceed to enable it
 		color.Yellow("⚠️  Hyper-V is currently disabled on this system.")
 		fmt.Println()
-		
+
 		color.Cyan("🔧 Enabling Hyper-V...")
 		fmt.Println()
 
@@ -78,7 +79,7 @@ Examples:
 				color.Yellow("🔄 Restarting your computer in 10 seconds...")
 				color.White("   Press Ctrl+C to cancel the restart.")
 				fmt.Println()
-				
+
 				if err := manager.ScheduleRestart(10); err != nil {
 					color.Red("❌ Failed to schedule restart: %v", err)
 					color.Yellow("💡 Please restart your computer manually.")
@@ -87,17 +88,17 @@ Examples:
 				color.Yellow("⚠️  A system restart is required to complete the installation.")
 				fmt.Println()
 				fmt.Print("❓ Do you want to restart now? [y/N]: ")
-				
+
 				var response string
 				if _, err := fmt.Scanln(&response); err != nil {
 					response = "n"
 				}
-				
+
 				if response == "y" || response == "Y" {
 					color.Yellow("🔄 Restarting your computer in 10 seconds...")
 					color.White("   Press Ctrl+C to cancel the restart.")
 					fmt.Println()
-					
+
 					if err := manager.ScheduleRestart(10); err != nil {
 						color.Red("❌ Failed to schedule restart: %v", err)
 						color.Yellow("💡 Please restart your computer manually.")

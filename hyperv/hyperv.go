@@ -9,14 +9,15 @@ import (
 
 // VM represents a Hyper-V virtual machine
 type VM struct {
-	Index    int    `json:"-"`
-	Name     string `json:"name"`
-	State    string `json:"state"`
-	CPUUsage int    `json:"cpuUsage"`
-	MemoryMB int64  `json:"memoryMB"`
-	Uptime   string `json:"uptime"`
-	Status   string `json:"status"`
-	Version  string `json:"version"`
+	Index       int      `json:"-"`
+	Name        string   `json:"name"`
+	State       string   `json:"state"`
+	CPUUsage    int      `json:"cpuUsage"`
+	MemoryMB    int64    `json:"memoryMB"`
+	Uptime      string   `json:"uptime"`
+	Status      string   `json:"status"`
+	Version     string   `json:"version"`
+	IPAddresses []string `json:"ipAddresses"`
 }
 
 // VMManager defines the interface for Hyper-V operations to allow mocking in tests
@@ -67,7 +68,8 @@ func (m *Manager) GetVMs() ([]VM, error) {
 		@{Name='MemoryMB';Expression={[int]($_.MemoryAssigned/1MB)}},
 		@{Name='Uptime';Expression={$_.Uptime.ToString()}},
 		@{Name='Status';Expression={$_.Status.ToString()}},
-		@{Name='Version';Expression={$_.Version.ToString()}} | ConvertTo-Json
+		@{Name='Version';Expression={$_.Version.ToString()}},
+		@{Name='IPAddresses';Expression={($_.NetworkAdapters.IPAddresses | Where-Object { $_ -match '^\d+\.\d+\.\d+\.\d+$' })}} | ConvertTo-Json
 	`
 
 	output, err := m.Exec.RunCommand(psScript)
@@ -81,14 +83,77 @@ func (m *Manager) GetVMs() ([]VM, error) {
 
 	// Handle single VM case (PowerShell returns object, not array)
 	if strings.HasPrefix(outputStr, "{") {
-		var vm VM
-		if err := json.Unmarshal(output, &vm); err != nil {
+		var vmRaw struct {
+			Name        string      `json:"name"`
+			State       string      `json:"state"`
+			CPUUsage    int         `json:"cpuUsage"`
+			MemoryMB    int64       `json:"memoryMB"`
+			Uptime      string      `json:"uptime"`
+			Status      string      `json:"status"`
+			Version     string      `json:"version"`
+			IPAddresses interface{} `json:"ipAddresses"`
+		}
+		if err := json.Unmarshal(output, &vmRaw); err != nil {
 			return nil, fmt.Errorf("failed to parse VM data: %v", err)
 		}
+
+		vm := VM{
+			Name:     vmRaw.Name,
+			State:    vmRaw.State,
+			CPUUsage: vmRaw.CPUUsage,
+			MemoryMB: vmRaw.MemoryMB,
+			Uptime:   vmRaw.Uptime,
+			Status:   vmRaw.Status,
+			Version:  vmRaw.Version,
+		}
+
+		if ips, ok := vmRaw.IPAddresses.([]interface{}); ok {
+			for _, ip := range ips {
+				if str, ok := ip.(string); ok {
+					vm.IPAddresses = append(vm.IPAddresses, str)
+				}
+			}
+		} else if ip, ok := vmRaw.IPAddresses.(string); ok {
+			vm.IPAddresses = []string{ip}
+		}
+
 		vms = append(vms, vm)
 	} else if strings.HasPrefix(outputStr, "[") {
-		if err := json.Unmarshal(output, &vms); err != nil {
+		var vmsRaw []struct {
+			Name        string      `json:"name"`
+			State       string      `json:"state"`
+			CPUUsage    int         `json:"cpuUsage"`
+			MemoryMB    int64       `json:"memoryMB"`
+			Uptime      string      `json:"uptime"`
+			Status      string      `json:"status"`
+			Version     string      `json:"version"`
+			IPAddresses interface{} `json:"ipAddresses"`
+		}
+		if err := json.Unmarshal(output, &vmsRaw); err != nil {
 			return nil, fmt.Errorf("failed to parse VMs data: %v", err)
+		}
+
+		for _, vmRaw := range vmsRaw {
+			vm := VM{
+				Name:     vmRaw.Name,
+				State:    vmRaw.State,
+				CPUUsage: vmRaw.CPUUsage,
+				MemoryMB: vmRaw.MemoryMB,
+				Uptime:   vmRaw.Uptime,
+				Status:   vmRaw.Status,
+				Version:  vmRaw.Version,
+			}
+
+			if ips, ok := vmRaw.IPAddresses.([]interface{}); ok {
+				for _, ip := range ips {
+					if str, ok := ip.(string); ok {
+						vm.IPAddresses = append(vm.IPAddresses, str)
+					}
+				}
+			} else if ip, ok := vmRaw.IPAddresses.(string); ok {
+				vm.IPAddresses = []string{ip}
+			}
+			vms = append(vms, vm)
 		}
 	} else {
 		// If output is empty or doesn't start with JSON structure, check if it's an error or just no VMs.

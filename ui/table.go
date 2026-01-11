@@ -14,42 +14,42 @@ import (
 var (
 	// Styles
 	baseStyle = lipgloss.NewStyle().
-		BorderStyle(lipgloss.RoundedBorder()).
-		BorderForeground(lipgloss.Color("240"))
+			BorderStyle(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color("240"))
 
 	headerStyle = lipgloss.NewStyle().
-		Bold(true).
-		Foreground(lipgloss.Color("205")).
-		Background(lipgloss.Color("235")).
-		Padding(0, 1)
+			Bold(true).
+			Foreground(lipgloss.Color("205")).
+			Background(lipgloss.Color("235")).
+			Padding(0, 1)
 
 	selectedStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("229")).
-		Background(lipgloss.Color("57")).
-		Bold(true)
+			Foreground(lipgloss.Color("229")).
+			Background(lipgloss.Color("57")).
+			Bold(true)
 
 	titleStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("205")).
-		Background(lipgloss.Color("235")).
-		Bold(true).
-		Padding(0, 1).
-		MarginBottom(1)
+			Foreground(lipgloss.Color("205")).
+			Background(lipgloss.Color("235")).
+			Bold(true).
+			Padding(0, 1).
+			MarginBottom(1)
 
 	helpStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("241")).
-		MarginTop(1)
+			Foreground(lipgloss.Color("241")).
+			MarginTop(1)
 
 	statusRunningStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("46")).
-		Bold(true)
+				Foreground(lipgloss.Color("46")).
+				Bold(true)
 
 	statusStoppedStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("196")).
-		Bold(true)
+				Foreground(lipgloss.Color("196")).
+				Bold(true)
 
 	statusOtherStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("226")).
-		Bold(true)
+				Foreground(lipgloss.Color("226")).
+				Bold(true)
 )
 
 type Model struct {
@@ -68,11 +68,12 @@ func (e errMsg) Error() string { return e.err.Error() }
 func NewModel() Model {
 	columns := []table.Column{
 		{Title: "Index", Width: 7},
-		{Title: "Name", Width: 30},
-		{Title: "State", Width: 12},
-		{Title: "CPU%", Width: 8},
+		{Title: "Name", Width: 25},
+		{Title: "State", Width: 10},
+		{Title: "IP Address", Width: 15},
+		{Title: "CPU%", Width: 6},
 		{Title: "Memory(MB)", Width: 12},
-		{Title: "Uptime", Width: 20},
+		{Title: "Uptime", Width: 18},
 		{Title: "Status", Width: 15},
 	}
 
@@ -175,10 +176,16 @@ func (m *Model) updateTable() {
 			state = statusOtherStyle.Render(vm.State)
 		}
 
+		ip := ""
+		if len(vm.IPAddresses) > 0 {
+			ip = vm.IPAddresses[0] // Show first IP
+		}
+
 		rows = append(rows, table.Row{
 			fmt.Sprintf("%d", vm.Index),
 			vm.Name,
 			state,
+			ip,
 			fmt.Sprintf("%d%%", vm.CPUUsage),
 			fmt.Sprintf("%d", vm.MemoryMB),
 			vm.Uptime,

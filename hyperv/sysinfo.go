@@ -48,8 +48,9 @@ type HyperVStatus struct {
 	Status  string `json:"status"`
 }
 
-// GetSystemInfo retrieves system information including CPU, RAM, Disk, and Hyper-V status
-func (m *Manager) GetSystemInfo() (*SystemInfo, error) {
+// GetSystemInfo retrieves system information including CPU, RAM, and Hyper-V status.
+// diskInfo is optional and only retrieved if includeDisk is true.
+func (m *Manager) GetSystemInfo(includeDisk bool) (*SystemInfo, error) {
 	info := &SystemInfo{}
 
 	// Get CPU info
@@ -66,12 +67,16 @@ func (m *Manager) GetSystemInfo() (*SystemInfo, error) {
 	}
 	info.Memory = *memInfo
 
-	// Get Disk info
-	diskInfo, err := m.getDiskInfo()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get disk info: %v", err)
+	// Get Disk info only if requested
+	if includeDisk {
+		diskInfo, err := m.getDiskInfo()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get disk info: %v", err)
+		}
+		info.Disks = diskInfo
+	} else {
+		info.Disks = []DiskInfo{}
 	}
-	info.Disks = diskInfo
 
 	// Get Hyper-V status
 	hyperVStatus, err := m.getHyperVStatus()

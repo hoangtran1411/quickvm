@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"strings"
 
+	"quickvm/hyperv"
+
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
-	"quickvm/hyperv"
 )
 
 var infoCmd = &cobra.Command{
@@ -19,7 +20,10 @@ var infoCmd = &cobra.Command{
 - Hyper-V status`,
 	Run: func(cmd *cobra.Command, args []string) {
 		manager := hyperv.NewManager()
-		info, err := manager.GetSystemInfo()
+
+		includeDisk, _ := cmd.Flags().GetBool("disk")
+
+		info, err := manager.GetSystemInfo(includeDisk)
 		if err != nil {
 			color.Red("❌ Error getting system info: %v", err)
 			return
@@ -30,6 +34,7 @@ var infoCmd = &cobra.Command{
 }
 
 func init() {
+	infoCmd.Flags().BoolP("disk", "d", false, "Include disk usage information (slower)")
 	rootCmd.AddCommand(infoCmd)
 }
 
@@ -79,7 +84,7 @@ func printSystemInfo(info *hyperv.SystemInfo) {
 		valueColor.Printf("      Total: %d MB (%.2f GB)\n", disk.TotalMB, disk.TotalGB)
 		valueColor.Printf("      Used:  %d MB (%.2f GB)\n", disk.UsedMB, disk.UsedGB)
 		successColor.Printf("      Free:  %d MB (%.2f GB)\n", disk.FreeMB, disk.FreeGB)
-		
+
 		diskUsedPercent := float64(disk.UsedMB) / float64(disk.TotalMB) * 100
 		printProgressBar("      Usage", diskUsedPercent, 35)
 		fmt.Println()
