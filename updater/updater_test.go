@@ -96,7 +96,7 @@ func TestCheckForUpdates_MockServer(t *testing.T) {
 						}
 					]
 				}`
-				w.Write([]byte(response))
+				_, _ = w.Write([]byte(response))
 			}))
 			defer server.Close()
 
@@ -425,12 +425,12 @@ func BenchmarkCopyFile(b *testing.B) {
 	srcPath := filepath.Join(tmpDir, "source.bin")
 	// Create 1MB file
 	data := make([]byte, 1024*1024)
-	os.WriteFile(srcPath, data, 0644)
+	_ = os.WriteFile(srcPath, data, 0644)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		dstPath := filepath.Join(tmpDir, "dest.bin")
-		copyFile(srcPath, dstPath)
+		_ = copyFile(srcPath, dstPath)
 		os.Remove(dstPath)
 	}
 }
@@ -440,13 +440,13 @@ func BenchmarkExtractZip(b *testing.B) {
 	defer os.RemoveAll(tmpDir)
 
 	zipPath := filepath.Join(tmpDir, "test.zip")
-	createTestZip(zipPath)
+	_ = createTestZip(zipPath)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		extractDir := filepath.Join(tmpDir, "extract")
-		os.MkdirAll(extractDir, 0755)
-		extractZip(zipPath, extractDir)
+		_ = os.MkdirAll(extractDir, 0755)
+		_ = extractZip(zipPath, extractDir)
 		os.RemoveAll(extractDir)
 	}
 }
