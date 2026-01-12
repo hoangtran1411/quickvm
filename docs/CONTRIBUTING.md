@@ -1,31 +1,68 @@
 # Contributing to QuickVM
 
-First off, thank you for considering contributing to QuickVM! It's people like you that make QuickVM such a great tool.
+> How to contribute to QuickVM - from bug reports to pull requests.
+
+**Last Updated:** 2026-01-12
+
+---
+
+## 📋 Table of Contents
+
+- [Code of Conduct](#code-of-conduct)
+- [Quick Start for Contributors](#-quick-start-for-contributors)
+- [Reporting Bugs](#-reporting-bugs)
+- [Suggesting Features](#-suggesting-features)
+- [Development Setup](#-development-setup)
+- [Development Workflow](#-development-workflow)
+- [Coding Guidelines](#-coding-guidelines)
+- [Pull Request Process](#-pull-request-process)
+
+---
 
 ## Code of Conduct
 
-This project and everyone participating in it is governed by respect and professionalism. By participating, you are expected to uphold this standard.
+This project is governed by respect and professionalism. Be kind and constructive.
 
-## How Can I Contribute?
+---
 
-### Reporting Bugs
+## 🚀 Quick Start for Contributors
 
-Before creating bug reports, please check existing issues as you might find that you don't need to create one. When you are creating a bug report, please include as many details as possible:
+```powershell
+# 1. Fork & clone
+git clone https://github.com/YOUR-USERNAME/quickvm.git
+cd quickvm
 
-* **Use a clear and descriptive title**
-* **Describe the exact steps which reproduce the problem**
-* **Provide specific examples to demonstrate the steps**
-* **Describe the behavior you observed after following the steps**
-* **Explain which behavior you expected to see instead and why**
-* **Include screenshots if possible**
+# 2. Install dependencies
+go mod download
 
-**Bug Report Template:**
+# 3. Create feature branch
+git checkout -b feature/my-feature
+
+# 4. Make changes & test
+go build -o quickvm.exe
+go test ./...
+go fmt ./...
+
+# 5. Commit & push
+git commit -m "feat: add my feature"
+git push origin feature/my-feature
+
+# 6. Create Pull Request on GitHub
+```
+
+---
+
+## 🐛 Reporting Bugs
+
+Before creating a bug report, check existing issues first.
+
+### Bug Report Template
+
 ```markdown
 **Environment:**
 - OS: Windows 10/11
 - QuickVM Version: x.x.x
 - Go Version: x.x.x
-- Hyper-V Version: x.x
 
 **Description:**
 A clear description of the bug.
@@ -36,186 +73,207 @@ A clear description of the bug.
 3. ...
 
 **Expected Behavior:**
-What you expected to happen.
+What you expected.
 
 **Actual Behavior:**
 What actually happened.
 
-**Additional Context:**
-Any other context about the problem.
+**Screenshots:**
+If applicable.
 ```
 
-### Suggesting Enhancements
+---
 
-Enhancement suggestions are tracked as GitHub issues. When creating an enhancement suggestion, please include:
+## 💡 Suggesting Features
 
-* **Use a clear and descriptive title**
-* **Provide a step-by-step description of the suggested enhancement**
-* **Provide specific examples to demonstrate the steps**
-* **Describe the current behavior and why it's insufficient**
-* **Explain why this enhancement would be useful**
+> ⚠️ **Important**: Check [FEATURE_ROADMAP.md](FEATURE_ROADMAP.md) first!
+> 
+> Features in **Tier 3 & 4 are ARCHIVED** and won't be implemented.
+> QuickVM is intentionally a "Quick" VM manager, not a Hyper-V replacement.
 
-### Pull Requests
+When suggesting features:
+- Explain the use case
+- Describe how it fits the "Quick" philosophy
+- Provide examples of usage
 
-* Fill in the required template
-* Follow the Go coding style
-* Include thoughtful comments in your code
-* Write clear commit messages
-* Include tests when adding new features
-* Update documentation as needed
-* End all files with a newline
+---
 
-## Development Setup
+## 🛠️ Development Setup
 
 ### Prerequisites
 
-1. Go 1.21 or higher
-2. Windows 10/11 with Hyper-V enabled
-3. Git
-4. (Optional) golangci-lint for code quality checks
+- **Go 1.21+**: [Download Go](https://golang.org/dl/)
+- **Windows 10/11** with Hyper-V enabled
+- **Git**: [Download Git](https://git-scm.com/)
+- **(Optional)** golangci-lint for linting
 
-### Setting Up Your Development Environment
+### First Time Setup
 
 ```powershell
-# 1. Fork and clone the repository
+# Clone your fork
 git clone https://github.com/YOUR-USERNAME/quickvm.git
 cd quickvm
 
-# 2. Install dependencies
+# Install dependencies
 go mod download
+go mod tidy
 
-# 3. Create a new branch for your feature
-git checkout -b feature/my-new-feature
-
-# 4. Make your changes and test
+# Build
 go build -o quickvm.exe
-.\quickvm.exe list
 
-# 5. Run tests
+# Test
 go test ./...
-
-# 6. Format your code
-go fmt ./...
-
-# 7. (Optional) Run linter
-golangci-lint run
 ```
 
-## Coding Guidelines
+---
 
-### Go Style Guide
+## 📝 Development Workflow
 
-Follow the official [Go Code Review Comments](https://github.com/golang/go/wiki/CodeReviewComments) and:
+### Build Commands
 
-1. **Use gofmt**: Always format your code with `go fmt`
-2. **Write tests**: Add tests for new functionality
-3. **Handle errors**: Never ignore errors, handle them appropriately
-4. **Comment exports**: All exported functions, types, and constants should have comments
-5. **Keep it simple**: Write clear, readable code over clever code
+```powershell
+# Normal build
+go build -o quickvm.exe
 
-### Code Organization
+# Optimized build (smaller binary)
+go build -ldflags="-s -w" -o quickvm.exe
 
-```
-quickvm/
-├── cmd/         # CLI commands (one file per command)
-├── hyperv/      # Hyper-V integration logic
-├── ui/          # TUI components
-└── main.go      # Entry point
+# Cross-compile
+$env:GOOS="windows"; $env:GOARCH="amd64"; go build -o quickvm-amd64.exe
+$env:GOOS="windows"; $env:GOARCH="arm64"; go build -o quickvm-arm64.exe
 ```
 
-### Commit Messages
-
-Write clear, concise commit messages:
-
-```
-feat: add support for VM snapshots
-fix: correct memory calculation in list command
-docs: update README with new examples
-test: add tests for hyperv package
-refactor: simplify PowerShell script generation
-```
-
-Use prefixes:
-- `feat:` - New feature
-- `fix:` - Bug fix
-- `docs:` - Documentation changes
-- `test:` - Adding or updating tests
-- `refactor:` - Code refactoring
-- `style:` - Code style changes (formatting, etc.)
-- `perf:` - Performance improvements
-- `chore:` - Maintenance tasks
-
-### PowerShell Scripts
-
-When modifying PowerShell scripts:
-
-1. Test scripts independently before integrating
-2. Use explicit type conversions `[int]`, `[string]`
-3. Handle errors with proper error messages
-4. Keep scripts simple and readable
-5. Comment complex PowerShell logic
-
-### Testing
-
-Run tests before submitting:
+### Test Commands
 
 ```powershell
 # Run all tests
 go test ./...
 
-# Run tests with coverage
+# With coverage
 go test -cover ./...
 
-# Run specific package tests
-go test ./hyperv
+# Coverage report
+go test -coverprofile=coverage.out ./...
+go tool cover -html=coverage.out
 
-# Run benchmarks
-go test -bench=. ./...
+# Specific package
+go test ./hyperv
 ```
 
-## Pull Request Process
+### Code Quality
 
-1. **Update your fork**
-   ```powershell
-   git remote add upstream https://github.com/original/quickvm.git
-   git fetch upstream
-   git checkout main
-   git merge upstream/main
-   ```
+```powershell
+# Format code
+go fmt ./...
 
-2. **Create a feature branch**
-   ```powershell
-   git checkout -b feature/my-feature
-   ```
+# Run linter
+golangci-lint run
 
-3. **Make your changes**
-   - Write code
-   - Add tests
-   - Update documentation
+# Verify dependencies
+go mod verify
+```
 
-4. **Test thoroughly**
-   ```powershell
-   go test ./...
-   go build -o quickvm.exe
-   # Manual testing
-   ```
+### Manual Testing Checklist
 
-5. **Commit your changes**
-   ```powershell
-   git add .
-   git commit -m "feat: add my amazing feature"
-   ```
+- [ ] `quickvm list`
+- [ ] `quickvm start 1`
+- [ ] `quickvm stop 1`
+- [ ] `quickvm` (TUI mode)
+- [ ] TUI navigation works
+- [ ] `quickvm version`
 
-6. **Push to your fork**
-   ```powershell
-   git push origin feature/my-feature
-   ```
+---
 
-7. **Create Pull Request**
-   - Go to GitHub
-   - Click "New Pull Request"
-   - Provide clear description
-   - Link related issues
+## 📏 Coding Guidelines
+
+### Go Style
+
+Follow [Go Code Review Comments](https://github.com/golang/go/wiki/CodeReviewComments):
+
+1. **Use `gofmt`**: Always format code
+2. **Handle errors**: Never ignore errors
+3. **Comment exports**: Document all exported functions/types
+4. **Keep simple**: Readable code over clever code
+
+### Error Handling
+
+```go
+if err := vm.Start(); err != nil {
+    return fmt.Errorf("failed to start vm: %w", err)  // Wrap with %w
+}
+```
+
+### PowerShell Scripts
+
+1. Test scripts independently first
+2. Use explicit type conversions: `[int]`, `[string]`
+3. Handle errors with clear messages
+4. Keep scripts simple
+
+### Commit Messages
+
+Use conventional commits:
+
+```
+feat: add support for VM snapshots
+fix: correct memory calculation
+docs: update README
+test: add tests for hyperv package
+refactor: simplify PowerShell generation
+```
+
+Prefixes:
+- `feat:` - New feature
+- `fix:` - Bug fix
+- `docs:` - Documentation
+- `test:` - Tests
+- `refactor:` - Code refactoring
+- `chore:` - Maintenance
+
+---
+
+## 🔄 Pull Request Process
+
+### 1. Update your fork
+
+```powershell
+git remote add upstream https://github.com/hoangtran1411/quickvm.git
+git fetch upstream
+git checkout main
+git merge upstream/main
+```
+
+### 2. Create feature branch
+
+```powershell
+git checkout -b feature/my-feature
+```
+
+### 3. Make changes
+
+- Write code
+- Add tests
+- Update docs
+
+### 4. Test thoroughly
+
+```powershell
+go test ./...
+go build -o quickvm.exe
+# Manual testing
+```
+
+### 5. Commit & push
+
+```powershell
+git add .
+git commit -m "feat: add my feature"
+git push origin feature/my-feature
+```
+
+### 6. Create Pull Request
+
+Go to GitHub and create a PR with clear description.
 
 ### Pull Request Template
 
@@ -233,33 +291,32 @@ Brief description of changes
 Describe testing performed
 
 ## Checklist
-- [ ] Code follows project style guidelines
+- [ ] Code follows project style
 - [ ] Self-review performed
-- [ ] Comments added for complex code
-- [ ] Documentation updated
 - [ ] Tests added/updated
+- [ ] Documentation updated
 - [ ] All tests pass
-- [ ] No new warnings
 ```
 
-## Project Structure
+---
+
+## 🏗️ Adding New Features
 
 ### Adding a New Command
 
 1. Create `cmd/mycommand.go`:
+
 ```go
 package cmd
 
-import (
-    "github.com/spf13/cobra"
-)
+import "github.com/spf13/cobra"
 
 var myCmd = &cobra.Command{
     Use:   "mycommand",
     Short: "Short description",
-    Long:  `Long description`,
-    Run: func(cmd *cobra.Command, args []string) {
+    RunE: func(cmd *cobra.Command, args []string) error {
         // Implementation
+        return nil
     },
 }
 
@@ -269,54 +326,54 @@ func init() {
 ```
 
 2. Add tests in `cmd/mycommand_test.go`
+3. Update documentation
 
 ### Adding Hyper-V Functionality
 
-1. Add methods to `hyperv/hyperv.go`
-2. Follow existing patterns for PowerShell execution
-3. Handle errors appropriately
-4. Add tests in `hyperv/hyperv_test.go`
+1. Add method to `hyperv/hyperv.go`
+2. Use `m.Exec.RunCommand()` for PowerShell
+3. Add tests with mock executor
+4. Handle errors properly
 
-### Modifying TUI
+---
 
-1. Update `ui/table.go`
-2. Follow Bubble Tea patterns
-3. Test interactive features manually
+## 🐞 Troubleshooting Development
 
-## Documentation
+### Import issues
+```powershell
+go clean -modcache
+go mod download
+go mod tidy
+```
 
-Update documentation when:
-- Adding new features
-- Changing existing behavior
-- Fixing bugs that affect usage
-- Adding configuration options
+### Build issues
+```powershell
+go clean -cache
+go build -v -o quickvm.exe
+```
 
-Files to consider:
-- `README.md` - Main documentation
-- `HUONG_DAN.md` - Vietnamese guide
-- `DEMO.md` - Examples and use cases
-- `WORKFLOW.md` - Development workflow
-- Code comments
+### PowerShell execution policy
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
 
-## Release Process
+---
 
-Maintainers will handle releases, but contributors should:
-1. Update version in `cmd/version.go` if needed
-2. Update CHANGELOG.md (if exists)
-3. Tag releases with semantic versioning
+## 📞 Questions?
 
-## Questions?
-
-Feel free to:
 - Open an issue for questions
 - Join discussions in existing issues
-- Reach out to maintainers
+- Check existing documentation
 
-## Recognition
+---
 
-Contributors will be recognized in:
+## 🌟 Recognition
+
+Contributors are recognized in:
 - GitHub contributors list
 - Release notes
-- Project README (for significant contributions)
+- Project README (significant contributions)
 
-Thank you for contributing to QuickVM! 🚀
+---
+
+**Thank you for contributing to QuickVM! 🚀**

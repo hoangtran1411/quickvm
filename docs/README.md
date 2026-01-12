@@ -1,67 +1,52 @@
 # QuickVM Documentation
 
-Welcome to the QuickVM documentation! This directory contains comprehensive guides and references for using and developing QuickVM.
+Welcome to the QuickVM documentation! This directory contains guides and references for using and developing QuickVM.
+
+**Last Updated:** 2026-01-12
+
+---
 
 ## 📚 Documentation Index
 
-### Getting Started
-
 | Document | Description |
 |----------|-------------|
-| [Installation Guide](INSTALLATION.md) | Step-by-step installation instructions |
-| [Newbie Guide](NEWBIE_GUIDE.md) | Understanding the code flow for new Go developers |
-| [Quick Reference](QUICK_REFERENCE.md) | Command cheat sheet and keyboard shortcuts |
-
-### User Guides
-
-| Document | Description |
-|----------|-------------|
+| [Getting Started](GETTING_STARTED.md) | Installation, commands, shortcuts, and codebase overview |
 | [Demo & Examples](DEMO.md) | Real-world use cases and power user tips |
-| [Auto-Update Guide](AUTO_UPDATE.md) | Keep QuickVM up-to-date automatically |
+| [Developer Guide](DEVELOPER.md) | Architecture and development notes |
+| [Contributing](CONTRIBUTING.md) | How to contribute + development workflow |
+| [Feature Roadmap](FEATURE_ROADMAP.md) | Planned features and design philosophy |
+| [Auto-Update Guide](AUTO_UPDATE.md) | Keep QuickVM up-to-date |
 | [GPU Passthrough](GPU_PASSTHROUGH.md) | Share GPU between host and guest VMs |
-
-### Developer Guides
-
-| Document | Description |
-|----------|-------------|
-| [Developer Guide](DEVELOPER.md) | Architecture, design decisions, and development setup |
-| [Contributing Guide](CONTRIBUTING.md) | How to contribute to QuickVM |
-| [Workflow Guide](WORKFLOW.md) | Development and deployment processes |
-| [Feature Roadmap](FEATURE_ROADMAP.md) | Planned features and implementation priority |
 
 ---
 
 ## 🎯 Quick Navigation
 
-### I want to...
-
-| Goal | Document |
-|------|----------|
-| **Install QuickVM** | [Installation Guide](INSTALLATION.md) |
-| **Learn all commands quickly** | [Quick Reference](QUICK_REFERENCE.md) |
+| I want to... | Go to... |
+|--------------|----------|
+| **Install QuickVM** | [Getting Started](GETTING_STARTED.md#-quick-install) |
+| **Learn all commands** | [Getting Started](GETTING_STARTED.md#-all-commands-at-a-glance) |
+| **See keyboard shortcuts** | [Getting Started](GETTING_STARTED.md#-tui-keyboard-shortcuts) |
 | **See real examples** | [Demo & Examples](DEMO.md) |
+| **Understand the architecture** | [Developer Guide](DEVELOPER.md) |
+| **Contribute code** | [Contributing](CONTRIBUTING.md) |
+| **See planned features** | [Feature Roadmap](FEATURE_ROADMAP.md) |
 | **Update QuickVM** | [Auto-Update Guide](AUTO_UPDATE.md) |
 | **Use GPU in VMs** | [GPU Passthrough](GPU_PASSTHROUGH.md) |
-| **Understand the architecture** | [Developer Guide](DEVELOPER.md) |
-| **Contribute code** | [Contributing Guide](CONTRIBUTING.md) |
-| **Build from source** | [Workflow Guide](WORKFLOW.md) |
-| **See planned features** | [Feature Roadmap](FEATURE_ROADMAP.md) |
 
 ---
 
 ## 📖 Recommended Reading Order
 
 ### For New Users
-1. [Installation Guide](INSTALLATION.md) - Get QuickVM installed
-2. [Newbie Guide](NEWBIE_GUIDE.md) - Understand the codebase structure
-3. [Quick Reference](QUICK_REFERENCE.md) - Learn the basics
-3. [Demo & Examples](DEMO.md) - See it in action
+1. [Getting Started](GETTING_STARTED.md) - Install and learn basics
+2. [Demo & Examples](DEMO.md) - See it in action
 
 ### For Developers
-1. [Developer Guide](DEVELOPER.md) - Understand the architecture
-2. [Contributing Guide](CONTRIBUTING.md) - How to contribute
-3. [Workflow Guide](WORKFLOW.md) - Development processes
-4. [Feature Roadmap](FEATURE_ROADMAP.md) - What's planned
+1. [Getting Started](GETTING_STARTED.md#-understanding-the-codebase-for-developers) - Codebase overview
+2. [Developer Guide](DEVELOPER.md) - Deep architecture details
+3. [Contributing](CONTRIBUTING.md) - How to contribute
+4. [Feature Roadmap](FEATURE_ROADMAP.md) - What's planned (and what's NOT)
 
 ---
 
@@ -76,20 +61,11 @@ Welcome to the QuickVM documentation! This directory contains comprehensive guid
 
 ## 📝 Documentation Standards
 
-All documentation follows these principles:
 - **Clear and concise** - Easy to understand
 - **Well-organized** - Logical structure
 - **Up-to-date** - Reflects current version
 - **Examples included** - Practical demonstrations
 - **English only** - EN-US language
-
----
-
-## 🤝 Help Improve Documentation
-
-Found a typo? Have a suggestion? Want to add examples?
-
-Please open an issue or pull request on our [GitHub repository](https://github.com/hoangtran1411/quickvm).
 
 ---
 
