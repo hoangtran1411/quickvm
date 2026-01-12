@@ -2,18 +2,40 @@
 
 > This document describes proposed features for QuickVM, organized by priority and complexity.
 
-**Last Updated:** 2026-01-10
+**Last Updated:** 2026-01-12
+
+---
+
+## 🎯 Design Philosophy
+
+> **QuickVM is a "Quick" VM manager, NOT a Hyper-V replacement.**
+
+### What QuickVM IS ✅
+- A fast CLI wrapper for common Hyper-V tasks
+- A beautiful TUI for visual VM management
+- A productivity tool for developers managing 3-5 VMs daily
+- Quick actions: list, start, stop, restart, clone, snapshot, rdp
+
+### What QuickVM is NOT ❌
+- A full Hyper-V Manager replacement
+- An infrastructure management tool
+- A networking/storage configuration tool
+- A remote management solution
+
+### Decision Principle
+> If the feature is already well-handled by Hyper-V Manager GUI, 
+> we DON'T implement it. Use the right tool for the job.
 
 ---
 
 ## 📊 Overview
 
-| Tier | Description | Feature Count |
-|------|-------------|---------------|
-| Tier 1 | High Value, Medium Effort | 4 |
-| Tier 2 | Quick Wins | 5 |
-| Tier 3 | Advanced Features | 5 |
-| Tier 4 | Nice to Have | 5 |
+| Tier | Description | Feature Count | Status |
+|------|-------------|---------------|--------|
+| Tier 1 | High Value, Medium Effort | 4 | ✅ Active |
+| Tier 2 | Quick Wins | 5 | ✅ Active |
+| Tier 3 | Advanced Features | 5 | ❌ Archived |
+| Tier 4 | Nice to Have | 5 | ❌ Archived |
 
 ---
 
@@ -228,11 +250,17 @@ quickvm list --watch                          # Watch mode for list command
 
 ---
 
-## 🔧 Tier 3: Advanced Features
+## 🔧 Tier 3: Advanced Features ❌ ARCHIVED
 
-> **Advanced** - More complex features for power users.
+> ⚠️ **ARCHIVED (2026-01-12)**: These features are intentionally NOT implemented.
+>
+> **Rationale**: QuickVM is a "Quick" VM manager, not a Hyper-V replacement. 
+> These features are already well-handled by Hyper-V Manager GUI, and implementing 
+> them would lead to scope creep and maintenance burden.
+>
+> **Philosophy**: Use QuickVM for quick tasks (start/stop/clone/rdp), use Hyper-V Manager for infrastructure changes.
 
-### 10. VM Templates
+### 10. VM Templates ❌ WON'T DO
 
 **Command:** `quickvm template`
 
@@ -249,7 +277,9 @@ quickvm template delete "TemplateName"              # Delete template
 
 ---
 
-### 11. Network Management
+### 11. Network Management ❌ WON'T DO
+
+> Use Hyper-V Manager for Virtual Switch configuration.
 
 **Command:** `quickvm network`
 
@@ -266,7 +296,9 @@ quickvm network detach <vm-index>
 
 ---
 
-### 12. Storage Management
+### 12. Storage Management ❌ WON'T DO
+
+> Disk operations are risky; use Hyper-V Manager for safety.
 
 **Command:** `quickvm disk`
 
@@ -284,7 +316,9 @@ quickvm disk detach <vm-index> "disk.vhdx"    # Detach disk
 
 ---
 
-### 13. Resource Quotas
+### 13. Resource Quotas ❌ WON'T DO
+
+> Rarely used; available in Hyper-V Manager settings.
 
 **Command:** `quickvm quota`
 
@@ -300,7 +334,9 @@ quickvm quota show <vm-index>                 # View current quotas
 
 ---
 
-### 14. Scheduled Tasks
+### 14. Scheduled Tasks ❌ WON'T DO
+
+> Use Windows Task Scheduler with `quickvm start <index>` commands instead.
 
 **Command:** `quickvm schedule`
 
@@ -317,11 +353,12 @@ quickvm schedule delete <schedule-id>                  # Delete schedule
 
 ---
 
-## 🎯 Tier 4: Nice to Have
+## 🎯 Tier 4: Nice to Have ❌ ARCHIVED
 
-> **Future** - Additional features when time permits.
+> ⚠️ **ARCHIVED (2026-01-12)**: These features are out of scope for a "Quick" VM manager.
+> They introduce significant complexity without matching the core use case.
 
-### 15. Profile/Workspace
+### 15. Profile/Workspace 🟡 MAYBE
 
 ```bash
 quickvm workspace create "Development"        # Create workspace
@@ -333,7 +370,9 @@ quickvm workspace start "Development"         # Start all VMs in workspace
 
 ---
 
-### 16. Remote Host Management
+### 16. Remote Host Management ❌ WON'T DO
+
+> Massive scope creep; use dedicated tools like Hyper-V Manager remote or Windows Admin Center.
 
 ```bash
 quickvm remote add "server1" --host 192.168.1.100
@@ -345,7 +384,9 @@ quickvm --host server1 list                   # Manage VMs on another machine
 
 ---
 
-### 17. Metrics Export
+### 17. Metrics Export ❌ WON'T DO
+
+> Over-engineering; use dedicated monitoring solutions.
 
 ```bash
 quickvm metrics export --format prometheus    # Export metrics
@@ -356,7 +397,9 @@ quickvm metrics serve --port 9090             # HTTP endpoint for metrics
 
 ---
 
-### 18. Configuration File
+### 18. Configuration File 🟡 MAYBE
+
+> Could be useful for aliases, but keep minimal.
 
 **File:** `~/.quickvmrc` or `quickvm.yaml`
 
@@ -379,7 +422,9 @@ autostart:
 
 ---
 
-### 19. Plugin System
+### 19. Plugin System ❌ WON'T DO
+
+> Over-engineering for a simple CLI tool.
 
 ```bash
 quickvm plugin install quickvm-docker         # Install plugin
