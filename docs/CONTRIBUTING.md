@@ -210,6 +210,63 @@ if err := vm.Start(); err != nil {
 3. Handle errors with clear messages
 4. Keep scripts simple
 
+### ⚠️ Linting Rules (IMPORTANT)
+
+This project uses `golangci-lint` in CI. **All PRs must pass linting.**
+
+#### Common Lint Errors to Avoid
+
+| Rule | Error | Fix |
+|------|-------|-----|
+| `errcheck` | Error return value not checked | Always check or explicitly ignore with `_ =` |
+| `ineffassign` | Ineffectual assignment | Remove unused assignments |
+| `staticcheck` | Various static analysis | Follow suggestions |
+
+#### Error Return Values (`errcheck`)
+
+**❌ Wrong** - Will fail CI:
+```go
+os.WriteFile(path, data, 0644)
+w.Write([]byte(response))
+copyFile(src, dst)
+```
+
+**✅ Correct** - Production code:
+```go
+if err := os.WriteFile(path, data, 0644); err != nil {
+    return fmt.Errorf("failed to write file: %w", err)
+}
+```
+
+**✅ Correct** - Test/Benchmark code (when error handling not needed):
+```go
+_ = os.WriteFile(path, data, 0644)
+_, _ = w.Write([]byte(response))
+_ = copyFile(src, dst)
+```
+
+#### Run Lint Locally Before Push
+
+```powershell
+# Install golangci-lint (one time)
+go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+
+# Run lint
+golangci-lint run ./...
+
+# Run with timeout (for large codebases)
+golangci-lint run --timeout=5m ./...
+```
+
+#### If You Don't Have golangci-lint
+
+At minimum, run these before pushing:
+```powershell
+go vet ./...      # Basic static analysis
+go build ./...    # Ensure code compiles
+go test ./...     # Ensure tests pass
+```
+
 ### Commit Messages
 
 Use conventional commits:
