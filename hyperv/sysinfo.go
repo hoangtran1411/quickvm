@@ -50,40 +50,82 @@ type HyperVStatus struct {
 
 // GetSystemInfo retrieves system information including CPU, RAM, and Hyper-V status.
 // diskInfo is optional and only retrieved if includeDisk is true.
+// Uses parallel queries to improve performance.
 func (m *Manager) GetSystemInfo(includeDisk bool) (*SystemInfo, error) {
 	info := &SystemInfo{}
 
-	// Get CPU info
-	cpuInfo, err := m.getCPUInfo()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get CPU info: %v", err)
+	// Use channels to collect results from parallel goroutines
+	type cpuResult struct {
+		data *CPUInfo
+		err  error
 	}
-	info.CPU = *cpuInfo
-
-	// Get Memory info
-	memInfo, err := m.getMemoryInfo()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get memory info: %v", err)
+	type memResult struct {
+		data *MemoryInfo
+		err  error
 	}
-	info.Memory = *memInfo
+	type diskResult struct {
+		data []DiskInfo
+		err  error
+	}
+	type hypervResult struct {
+		data *HyperVStatus
+		err  error
+	}
 
-	// Get Disk info only if requested
-	if includeDisk {
-		diskInfo, err := m.getDiskInfo()
-		if err != nil {
-			return nil, fmt.Errorf("failed to get disk info: %v", err)
+	cpuChan := make(chan cpuResult, 1)
+	memChan := make(chan memResult, 1)
+	diskChan := make(chan diskResult, 1)
+	hypervChan := make(chan hypervResult, 1)
+
+	// Launch parallel goroutines for each query
+	go func() {
+		data, err := m.getCPUInfo()
+		cpuChan <- cpuResult{data, err}
+	}()
+
+	go func() {
+		data, err := m.getMemoryInfo()
+		memChan <- memResult{data, err}
+	}()
+
+	go func() {
+		if includeDisk {
+			data, err := m.getDiskInfo()
+			diskChan <- diskResult{data, err}
+		} else {
+			diskChan <- diskResult{[]DiskInfo{}, nil}
 		}
-		info.Disks = diskInfo
-	} else {
-		info.Disks = []DiskInfo{}
-	}
+	}()
 
-	// Get Hyper-V status
-	hyperVStatus, err := m.getHyperVStatus()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get Hyper-V status: %v", err)
+	go func() {
+		data, err := m.getHyperVStatus()
+		hypervChan <- hypervResult{data, err}
+	}()
+
+	// Collect results from all channels
+	cpuRes := <-cpuChan
+	if cpuRes.err != nil {
+		return nil, fmt.Errorf("failed to get CPU info: %v", cpuRes.err)
 	}
-	info.HyperV = *hyperVStatus
+	info.CPU = *cpuRes.data
+
+	memRes := <-memChan
+	if memRes.err != nil {
+		return nil, fmt.Errorf("failed to get memory info: %v", memRes.err)
+	}
+	info.Memory = *memRes.data
+
+	diskRes := <-diskChan
+	if diskRes.err != nil {
+		return nil, fmt.Errorf("failed to get disk info: %v", diskRes.err)
+	}
+	info.Disks = diskRes.data
+
+	hypervRes := <-hypervChan
+	if hypervRes.err != nil {
+		return nil, fmt.Errorf("failed to get Hyper-V status: %v", hypervRes.err)
+	}
+	info.HyperV = *hypervRes.data
 
 	return info, nil
 }
