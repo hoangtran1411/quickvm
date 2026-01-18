@@ -2,7 +2,7 @@
 
 Welcome to the QuickVM documentation! This directory contains guides and references for using and developing QuickVM.
 
-**Last Updated:** 2026-01-12
+**Last Updated:** 2026-01-19
 
 ---
 
@@ -17,6 +17,9 @@ Welcome to the QuickVM documentation! This directory contains guides and referen
 | [Feature Roadmap](FEATURE_ROADMAP.md) | Planned features and design philosophy |
 | [Auto-Update Guide](AUTO_UPDATE.md) | Keep QuickVM up-to-date |
 | [GPU Passthrough](GPU_PASSTHROUGH.md) | Share GPU between host and guest VMs |
+| [AI Agent Setup](AI_AGENT.md) | Skills, workflows, and AI assistant configuration |
+| [Skills Reference](SKILLS_REFERENCE.md) | Quick reference for all AI skills |
+| [Workflows Reference](WORKFLOWS_REFERENCE.md) | Quick reference for all AI workflows |
 
 ---
 
@@ -33,6 +36,7 @@ Welcome to the QuickVM documentation! This directory contains guides and referen
 | **See planned features** | [Feature Roadmap](FEATURE_ROADMAP.md) |
 | **Update QuickVM** | [Auto-Update Guide](AUTO_UPDATE.md) |
 | **Use GPU in VMs** | [GPU Passthrough](GPU_PASSTHROUGH.md) |
+| **Use AI workflows** | [AI Agent Setup](AI_AGENT.md) |
 
 ---
 
@@ -47,6 +51,11 @@ Welcome to the QuickVM documentation! This directory contains guides and referen
 2. [Developer Guide](DEVELOPER.md) - Deep architecture details
 3. [Contributing](CONTRIBUTING.md) - How to contribute
 4. [Feature Roadmap](FEATURE_ROADMAP.md) - What's planned (and what's NOT)
+
+### For AI-Assisted Development
+1. [AI Agent Setup](AI_AGENT.md) - Understand skills and workflows
+2. [Skills Reference](SKILLS_REFERENCE.md) - Available code patterns
+3. [Workflows Reference](WORKFLOWS_REFERENCE.md) - Available task automation
 
 ---
 

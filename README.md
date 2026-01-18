@@ -281,6 +281,7 @@ For more detailed information, check out our comprehensive documentation:
 - **[Workflow Guide](docs/WORKFLOW.md)** - Development and deployment workflow
 - **[Contributing Guide](docs/CONTRIBUTING.md)** - How to contribute to QuickVM
 - **[Project Summary](docs/PROJECT_SUMMARY.md)** - Complete project overview
+- **[AI Agent Setup](docs/AI_AGENT.md)** - Skills, workflows, and AI assistant configuration
 
 ## 🔒 Permissions
 

@@ -372,6 +372,12 @@ powershell -File test-script.ps1
 - Multipass (Ubuntu VMs)
 - Docker (containers)
 
+### AI-Assisted Development
+This project includes AI agent configuration for enhanced development:
+- **Skills**: Reusable patterns in `.agent/skills/`
+- **Workflows**: Task automation in `.agent/workflows/`
+- **Documentation**: [AI Agent Setup](AI_AGENT.md)
+
 ### Community
 - GitHub Discussions
 - Stack Overflow
