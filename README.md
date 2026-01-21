@@ -309,8 +309,9 @@ For questions, suggestions, or issues, please open an issue on GitHub.
 
 <div align="center">
 
-**Made with ❤️ by a Go enthusiast with 10 years of experience**
+**Made with ❤️ by a Go enthusiast <a href="https://github.com/hoangtran1411">Hoang Tran</a>**
 
 ⭐ Star this repo if you find it useful!
 
 </div>
+
