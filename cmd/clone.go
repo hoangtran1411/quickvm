@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"quickvm/hyperv"
+	"quickvm/internal/hyperv"
 
 	"github.com/spf13/cobra"
 )
@@ -46,14 +46,14 @@ Examples:
 		}
 
 		// Get source VM name for display
-		sourceName, err := manager.GetVMNameByIndex(index)
+		sourceName, err := manager.GetVMNameByIndex(cmd.Context(), index)
 		if err != nil {
 			fmt.Printf("❌ Failed to get source VM: %v\n", err)
 			return
 		}
 
 		// Check if new name already exists
-		exists, err := manager.VMExists(newName)
+		exists, err := manager.VMExists(cmd.Context(), newName)
 		if err != nil {
 			fmt.Printf("❌ Failed to check VM name: %v\n", err)
 			return
@@ -69,7 +69,7 @@ Examples:
 		fmt.Println("Steps:")
 		fmt.Println("  1. Exporting source VM...")
 
-		if err := manager.CloneVM(index, newName); err != nil {
+		if err := manager.CloneVM(cmd.Context(), index, newName); err != nil {
 			fmt.Printf("\n❌ Failed to clone VM: %v\n", err)
 			return
 		}

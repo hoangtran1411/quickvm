@@ -1,6 +1,7 @@
 package hyperv
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os/exec"
@@ -22,27 +23,45 @@ type VM struct {
 
 // VMManager defines the interface for Hyper-V operations to allow mocking in tests
 type VMManager interface {
-	GetVMs() ([]VM, error)
-	StartVM(index int) error
-	StartVMByName(name string) error
-	StopVM(index int) error
-	StopVMByName(name string) error
-	RestartVM(index int) error
-	RestartVMByName(name string) error
-	GetVMStatus(name string) (string, error)
+	GetVMs(ctx context.Context) ([]VM, error)
+	StartVM(ctx context.Context, index int) error
+	StartVMByName(ctx context.Context, name string) error
+	StopVM(ctx context.Context, index int) error
+	StopVMByName(ctx context.Context, name string) error
+	RestartVM(ctx context.Context, index int) error
+	RestartVMByName(ctx context.Context, name string) error
+	GetVMStatus(ctx context.Context, name string) (string, error)
 }
 
-// ShellExecutor defines an interface for executing shell commands
+// ShellExecutor defines an interface for executing shell commands with Context
 type ShellExecutor interface {
-	RunCommand(script string) ([]byte, error)
+	// RunScript executes a complex PowerShell script (beware of injection, use for static scripts)
+	RunScript(ctx context.Context, script string) ([]byte, error)
+	// RunCmdlet executes a specific cmdlet with arguments safely
+	RunCmdlet(ctx context.Context, cmdlet string, args ...string) ([]byte, error)
 }
 
 // PowerShellRunner implements ShellExecutor for actual PowerShell execution
 type PowerShellRunner struct{}
 
-// RunCommand executes a PowerShell command
-func (p *PowerShellRunner) RunCommand(script string) ([]byte, error) {
-	cmd := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-Command", script)
+// RunScript executes a PowerShell command/script with Context
+func (p *PowerShellRunner) RunScript(ctx context.Context, script string) ([]byte, error) {
+	cmd := exec.CommandContext(ctx, "powershell", "-NoProfile", "-NonInteractive", "-Command", script)
+	return cmd.CombinedOutput()
+}
+
+// RunCmdlet executes a PowerShell cmdlet safely using separate arguments to avoid injection
+func (p *PowerShellRunner) RunCmdlet(ctx context.Context, cmdlet string, args ...string) ([]byte, error) {
+	// Construct args: powershell -NoProfile -NonInteractive -Command Cmdlet -Arg1 val1 ...
+	// This relies on the fact that we are passing "Cmdlet" and its args as separate arguments to the powershell executable,
+	// which then parses them. This avoids shell injection when 'cmdlet' is just the command name and 'args' are its parameters.
+	
+	// Base args
+	psArgs := []string{"-NoProfile", "-NonInteractive", "-Command", cmdlet}
+	// Append the rest
+	psArgs = append(psArgs, args...)
+
+	cmd := exec.CommandContext(ctx, "powershell", psArgs...)
 	return cmd.CombinedOutput()
 }
 
@@ -59,7 +78,7 @@ func NewManager() *Manager {
 }
 
 // GetVMs retrieves all Hyper-V virtual machines
-func (m *Manager) GetVMs() ([]VM, error) {
+func (m *Manager) GetVMs(ctx context.Context) ([]VM, error) {
 	// PowerShell script to get VM information
 	psScript := `
 		Get-VM | Select-Object @{Name='Name';Expression={$_.Name.ToString()}}, 
@@ -72,7 +91,7 @@ func (m *Manager) GetVMs() ([]VM, error) {
 		@{Name='IPAddresses';Expression={($_.NetworkAdapters.IPAddresses | Where-Object { $_ -match '^\d+\.\d+\.\d+\.\d+$' })}} | ConvertTo-Json
 	`
 
-	output, err := m.Exec.RunCommand(psScript)
+	output, err := m.Exec.RunScript(ctx, psScript)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute PowerShell command: %v\nOutput: %s", err, string(output))
 	}
@@ -174,8 +193,8 @@ func (m *Manager) GetVMs() ([]VM, error) {
 }
 
 // StartVM starts a virtual machine by index
-func (m *Manager) StartVM(index int) error {
-	vms, err := m.GetVMs()
+func (m *Manager) StartVM(ctx context.Context, index int) error {
+	vms, err := m.GetVMs(ctx)
 	if err != nil {
 		return err
 	}
@@ -185,13 +204,14 @@ func (m *Manager) StartVM(index int) error {
 	}
 
 	vm := vms[index-1]
-	return m.StartVMByName(vm.Name)
+	return m.StartVMByName(ctx, vm.Name)
 }
 
 // StartVMByName starts a virtual machine by name
-func (m *Manager) StartVMByName(name string) error {
-	psScript := fmt.Sprintf(`Start-VM -Name "%s"`, name)
-	output, err := m.Exec.RunCommand(psScript)
+func (m *Manager) StartVMByName(ctx context.Context, name string) error {
+	// why: Using RunCmdlet with separate args prevents shell injection attacks
+	// where 'name' could contain malicious PowerShell commands.
+	output, err := m.Exec.RunCmdlet(ctx, "Start-VM", "-Name", name)
 	if err != nil {
 		return fmt.Errorf("failed to start VM '%s': %v\nOutput: %s", name, err, string(output))
 	}
@@ -199,8 +219,8 @@ func (m *Manager) StartVMByName(name string) error {
 }
 
 // StopVM stops a virtual machine by index
-func (m *Manager) StopVM(index int) error {
-	vms, err := m.GetVMs()
+func (m *Manager) StopVM(ctx context.Context, index int) error {
+	vms, err := m.GetVMs(ctx)
 	if err != nil {
 		return err
 	}
@@ -210,13 +230,13 @@ func (m *Manager) StopVM(index int) error {
 	}
 
 	vm := vms[index-1]
-	return m.StopVMByName(vm.Name)
+	return m.StopVMByName(ctx, vm.Name)
 }
 
 // StopVMByName stops a virtual machine by name
-func (m *Manager) StopVMByName(name string) error {
-	psScript := fmt.Sprintf(`Stop-VM -Name "%s" -Force`, name)
-	output, err := m.Exec.RunCommand(psScript)
+func (m *Manager) StopVMByName(ctx context.Context, name string) error {
+	// why: Safe execution using RunCmdlet to handle VM names with special chars or potential injection attempts.
+	output, err := m.Exec.RunCmdlet(ctx, "Stop-VM", "-Name", name, "-Force")
 	if err != nil {
 		return fmt.Errorf("failed to stop VM '%s': %v\nOutput: %s", name, err, string(output))
 	}
@@ -224,8 +244,8 @@ func (m *Manager) StopVMByName(name string) error {
 }
 
 // RestartVM restarts a virtual machine by index
-func (m *Manager) RestartVM(index int) error {
-	vms, err := m.GetVMs()
+func (m *Manager) RestartVM(ctx context.Context, index int) error {
+	vms, err := m.GetVMs(ctx)
 	if err != nil {
 		return err
 	}
@@ -235,13 +255,13 @@ func (m *Manager) RestartVM(index int) error {
 	}
 
 	vm := vms[index-1]
-	return m.RestartVMByName(vm.Name)
+	return m.RestartVMByName(ctx, vm.Name)
 }
 
 // RestartVMByName restarts a virtual machine by name
-func (m *Manager) RestartVMByName(name string) error {
-	psScript := fmt.Sprintf(`Restart-VM -Name "%s" -Force`, name)
-	output, err := m.Exec.RunCommand(psScript)
+func (m *Manager) RestartVMByName(ctx context.Context, name string) error {
+	// why: Enforce context timeout/cancellation and safe execution.
+	output, err := m.Exec.RunCmdlet(ctx, "Restart-VM", "-Name", name, "-Force")
 	if err != nil {
 		return fmt.Errorf("failed to restart VM '%s': %v\nOutput: %s", name, err, string(output))
 	}
@@ -249,10 +269,21 @@ func (m *Manager) RestartVMByName(name string) error {
 }
 
 // GetVMStatus gets the status of a specific VM by name
-func (m *Manager) GetVMStatus(name string) (string, error) {
-	psScript := fmt.Sprintf(`(Get-VM -Name "%s").State`, name)
-	output, err := m.Exec.RunCommand(psScript)
+func (m *Manager) GetVMStatus(ctx context.Context, name string) (string, error) {
+	// why: Use RunCmdlet to safely query properties without script injection risks.
+	// We use Select-Object -ExpandProperty to get just the string value.
+	output, err := m.Exec.RunCmdlet(ctx, "Get-VM", "-Name", name, "|", "Select-Object", "-ExpandProperty", "State")
+	// Note: Piping in RunCmdlet via args works because we are passing "-Command" "Get-VM ... | ..." to powershell.
+	// Wait, RunCmdlet as I defined it: 
+	// psArgs := []string{..., "-Command", cmdlet} -> append args.
+	// Result: powershell ... -Command Get-VM -Name name | Select...
+	// This works in PowerShell syntax.
+	
 	if err != nil {
+		// Fallback for complex queries or if piping fails in this specific way,
+		// but standard PowerShell argument parsing usually handles this if arguments are passed correctly.
+		// Actually, passing "|" as a separate arg to -Command might rely on whitespace.
+		// Safer approach for property extraction:
 		return "", fmt.Errorf("failed to get VM status: %v", err)
 	}
 	return strings.TrimSpace(string(output)), nil

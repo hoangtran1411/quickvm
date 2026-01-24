@@ -1,6 +1,7 @@
 package hyperv
 
 import (
+	"context"
 	"testing"
 )
 
@@ -10,7 +11,14 @@ type MockSysInfoExecutor struct {
 	MockError  error
 }
 
-func (m *MockSysInfoExecutor) RunCommand(script string) ([]byte, error) {
+func (m *MockSysInfoExecutor) RunScript(ctx context.Context, script string) ([]byte, error) {
+	if m.MockError != nil {
+		return nil, m.MockError
+	}
+	return []byte(m.MockOutput), nil
+}
+
+func (m *MockSysInfoExecutor) RunCmdlet(ctx context.Context, cmdlet string, args ...string) ([]byte, error) {
 	if m.MockError != nil {
 		return nil, m.MockError
 	}
@@ -31,7 +39,7 @@ func TestGetSystemInfo(t *testing.T) {
 	manager.Exec = smartMock
 
 	// Test 1: includeDisk = false
-	_, _ = manager.GetSystemInfo(false)
+	_, _ = manager.GetSystemInfo(context.TODO(), false)
 	if smartMock.DiskCheckTriggered {
 		t.Error("Expected GetSystemInfo(false) NOT to scan disks, but it did.")
 	}
@@ -39,7 +47,7 @@ func TestGetSystemInfo(t *testing.T) {
 	// Test 2: includeDisk = true
 	// Reset trigger
 	smartMock.DiskCheckTriggered = false
-	_, _ = manager.GetSystemInfo(true)
+	_, _ = manager.GetSystemInfo(context.TODO(), true)
 	if !smartMock.DiskCheckTriggered {
 		// Note: This test might fail if the previous calls (CPU/Mem) fail first and return early.
 		// So our mock needs to return valid JSON for CPU and Mem.
@@ -51,7 +59,7 @@ type SmartMockVerifyDisk struct {
 	DiskCheckTriggered bool
 }
 
-func (m *SmartMockVerifyDisk) RunCommand(script string) ([]byte, error) {
+func (m *SmartMockVerifyDisk) RunScript(ctx context.Context, script string) ([]byte, error) {
 	// Detect what kind of script is running based on keywords
 	if contains(script, "Win32_Processor") {
 		return []byte(`{"Name": "Mock CPU", "Cores": 4}`), nil
@@ -67,6 +75,10 @@ func (m *SmartMockVerifyDisk) RunCommand(script string) ([]byte, error) {
 		return []byte(`{"Enabled": true, "Status": "Running"}`), nil
 	}
 
+	return []byte("{}"), nil
+}
+
+func (m *SmartMockVerifyDisk) RunCmdlet(ctx context.Context, cmdlet string, args ...string) ([]byte, error) {
 	return []byte("{}"), nil
 }
 

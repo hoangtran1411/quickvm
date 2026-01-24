@@ -5,9 +5,10 @@ import (
 	"os"
 	"strconv"
 
+	"quickvm/internal/hyperv"
+
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
-	"quickvm/hyperv"
 )
 
 var gpuCmd = &cobra.Command{
@@ -34,7 +35,7 @@ var gpuStatusCmd = &cobra.Command{
 		color.Cyan("🔍 Checking GPU partitioning support...")
 		fmt.Println()
 
-		gpus, err := manager.CheckGPUPartitionable()
+		gpus, err := manager.CheckGPUPartitionable(cmd.Context())
 		if err != nil {
 			color.Red("❌ Error checking GPU support: %v", err)
 			os.Exit(1)
@@ -85,7 +86,7 @@ Example: quickvm gpu add 1`,
 		manager := hyperv.NewManager()
 
 		// Check admin privileges
-		if !hyperv.IsRunningAsAdmin() {
+		if !hyperv.IsRunningAsAdmin(cmd.Context()) {
 			color.Red("❌ This command requires Administrator privileges.")
 			fmt.Println()
 			color.Yellow("💡 Please run this command in an elevated PowerShell or Command Prompt.")
@@ -94,7 +95,7 @@ Example: quickvm gpu add 1`,
 
 		// Check GPU support first
 		color.Cyan("🔍 Checking GPU partitioning support...")
-		gpus, err := manager.CheckGPUPartitionable()
+		gpus, err := manager.CheckGPUPartitionable(cmd.Context())
 		if err != nil {
 			color.Red("❌ Error checking GPU support: %v", err)
 			os.Exit(1)
@@ -107,7 +108,7 @@ Example: quickvm gpu add 1`,
 		}
 
 		// Get VMs to validate index
-		vms, err := manager.GetVMs()
+		vms, err := manager.GetVMs(cmd.Context())
 		if err != nil {
 			color.Red("❌ Failed to get VMs: %v", err)
 			os.Exit(1)
@@ -131,7 +132,7 @@ Example: quickvm gpu add 1`,
 
 		// Add GPU partition with default config
 		config := hyperv.DefaultGPUPartitionConfig()
-		if err := manager.AddGPUPartition(vm.Name, config); err != nil {
+		if err := manager.AddGPUPartition(cmd.Context(), vm.Name, config); err != nil {
 			color.Red("❌ Failed to add GPU partition: %v", err)
 			os.Exit(1)
 		}
@@ -145,7 +146,7 @@ Example: quickvm gpu add 1`,
 		color.Cyan("📋 Driver Copy Instructions:")
 		fmt.Println()
 
-		driverPaths, _ := manager.GetGPUDriverPaths()
+		driverPaths, _ := manager.GetGPUDriverPaths(cmd.Context())
 		if len(driverPaths) > 0 {
 			color.White("   1. Copy driver folder from Host to Guest:")
 			for _, path := range driverPaths {
@@ -183,7 +184,7 @@ Example: quickvm gpu remove 1`,
 		manager := hyperv.NewManager()
 
 		// Check admin privileges
-		if !hyperv.IsRunningAsAdmin() {
+		if !hyperv.IsRunningAsAdmin(cmd.Context()) {
 			color.Red("❌ This command requires Administrator privileges.")
 			fmt.Println()
 			color.Yellow("💡 Please run this command in an elevated PowerShell or Command Prompt.")
@@ -191,7 +192,7 @@ Example: quickvm gpu remove 1`,
 		}
 
 		// Get VMs to validate index
-		vms, err := manager.GetVMs()
+		vms, err := manager.GetVMs(cmd.Context())
 		if err != nil {
 			color.Red("❌ Failed to get VMs: %v", err)
 			os.Exit(1)
@@ -214,7 +215,7 @@ Example: quickvm gpu remove 1`,
 		}
 
 		// Remove GPU partition
-		if err := manager.RemoveGPUPartition(vm.Name); err != nil {
+		if err := manager.RemoveGPUPartition(cmd.Context(), vm.Name); err != nil {
 			color.Red("❌ Failed to remove GPU partition: %v", err)
 			os.Exit(1)
 		}
@@ -233,7 +234,7 @@ var gpuDriversCmd = &cobra.Command{
 		color.Cyan("🔍 Searching for GPU driver files...")
 		fmt.Println()
 
-		paths, err := manager.GetGPUDriverPaths()
+		paths, err := manager.GetGPUDriverPaths(cmd.Context())
 		if err != nil {
 			color.Red("❌ Error getting driver paths: %v", err)
 			os.Exit(1)

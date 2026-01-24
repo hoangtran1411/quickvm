@@ -1,73 +1,74 @@
 package cmd
 
 import (
-	"quickvm/hyperv"
+	"context"
+	"quickvm/internal/hyperv"
 )
 
 // MockManager is a mock implementation of VMManager for testing
 type MockManager struct {
-	GetVMsFn          func() ([]hyperv.VM, error)
-	StartVMFn         func(index int) error
-	StartVMByNameFn   func(name string) error
-	StopVMFn          func(index int) error
-	StopVMByNameFn    func(name string) error
-	RestartVMFn       func(index int) error
-	RestartVMByNameFn func(name string) error
-	GetVMStatusFn     func(name string) (string, error)
+	GetVMsFn          func(ctx context.Context) ([]hyperv.VM, error)
+	StartVMFn         func(ctx context.Context, index int) error
+	StartVMByNameFn   func(ctx context.Context, name string) error
+	StopVMFn          func(ctx context.Context, index int) error
+	StopVMByNameFn    func(ctx context.Context, name string) error
+	RestartVMFn       func(ctx context.Context, index int) error
+	RestartVMByNameFn func(ctx context.Context, name string) error
+	GetVMStatusFn     func(ctx context.Context, name string) (string, error)
 }
 
-func (m *MockManager) GetVMs() ([]hyperv.VM, error) {
+func (m *MockManager) GetVMs(ctx context.Context) ([]hyperv.VM, error) {
 	if m.GetVMsFn != nil {
-		return m.GetVMsFn()
+		return m.GetVMsFn(ctx)
 	}
 	return []hyperv.VM{}, nil
 }
 
-func (m *MockManager) StartVM(index int) error {
+func (m *MockManager) StartVM(ctx context.Context, index int) error {
 	if m.StartVMFn != nil {
-		return m.StartVMFn(index)
+		return m.StartVMFn(ctx, index)
 	}
 	return nil
 }
 
-func (m *MockManager) StartVMByName(name string) error {
+func (m *MockManager) StartVMByName(ctx context.Context, name string) error {
 	if m.StartVMByNameFn != nil {
-		return m.StartVMByNameFn(name)
+		return m.StartVMByNameFn(ctx, name)
 	}
 	return nil
 }
 
-func (m *MockManager) StopVM(index int) error {
+func (m *MockManager) StopVM(ctx context.Context, index int) error {
 	if m.StopVMFn != nil {
-		return m.StopVMFn(index)
+		return m.StopVMFn(ctx, index)
 	}
 	return nil
 }
 
-func (m *MockManager) StopVMByName(name string) error {
+func (m *MockManager) StopVMByName(ctx context.Context, name string) error {
 	if m.StopVMByNameFn != nil {
-		return m.StopVMByNameFn(name)
+		return m.StopVMByNameFn(ctx, name)
 	}
 	return nil
 }
 
-func (m *MockManager) RestartVM(index int) error {
+func (m *MockManager) RestartVM(ctx context.Context, index int) error {
 	if m.RestartVMFn != nil {
-		return m.RestartVMFn(index)
+		return m.RestartVMFn(ctx, index)
 	}
 	return nil
 }
 
-func (m *MockManager) RestartVMByName(name string) error {
+func (m *MockManager) RestartVMByName(ctx context.Context, name string) error {
 	if m.RestartVMByNameFn != nil {
-		return m.RestartVMByNameFn(name)
+		return m.RestartVMByNameFn(ctx, name)
 	}
 	return nil
 }
 
-func (m *MockManager) GetVMStatus(name string) (string, error) {
+func (m *MockManager) GetVMStatus(ctx context.Context, name string) (string, error) {
 	if m.GetVMStatusFn != nil {
-		return m.GetVMStatusFn(name)
+		return m.GetVMStatusFn(ctx, name)
 	}
 	return "Running", nil
 }

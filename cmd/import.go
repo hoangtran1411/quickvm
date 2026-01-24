@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"quickvm/hyperv"
+	"quickvm/internal/hyperv"
 
 	"github.com/spf13/cobra"
 )
@@ -84,7 +84,7 @@ Flags:
 			VHDPath:       importVHDPath,
 		}
 
-		vmName, err := manager.ImportVM(opts)
+		vmName, err := manager.ImportVM(cmd.Context(), opts)
 		if err != nil {
 			fmt.Printf("❌ Failed to import VM: %v\n", err)
 			return

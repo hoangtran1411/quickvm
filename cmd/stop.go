@@ -1,9 +1,10 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 
-	"quickvm/hyperv"
+	"quickvm/internal/hyperv"
 
 	"github.com/spf13/cobra"
 )
@@ -24,13 +25,13 @@ Examples:
   quickvm stop --all       # Stop all VMs`,
 	Args: cobra.ArbitraryArgs,
 	Run: func(cmd *cobra.Command, args []string) {
-		runStop(hyperv.NewManager(), args, stopRange, stopAll)
+		runStop(cmd.Context(), hyperv.NewManager(), args, stopRange, stopAll)
 	},
 }
 
-func runStop(manager hyperv.VMManager, args []string, rangeStr string, all bool) {
+func runStop(ctx context.Context, manager hyperv.VMManager, args []string, rangeStr string, all bool) {
 	// Get VMs to validate index and get name
-	vms, err := manager.GetVMs()
+	vms, err := manager.GetVMs(ctx)
 	if err != nil {
 		fmt.Printf("❌ Failed to get VMs: %v\n", err)
 		return
@@ -54,7 +55,7 @@ func runStop(manager hyperv.VMManager, args []string, rangeStr string, all bool)
 		vm := vms[index-1]
 		fmt.Printf("🛑 Stopping VM: %s (Index: %d)...\n", vm.Name, index)
 
-		if err := manager.StopVM(index); err != nil {
+		if err := manager.StopVM(ctx, index); err != nil {
 			fmt.Printf("❌ Failed to stop VM '%s': %v\n", vm.Name, err)
 			failCount++
 		} else {

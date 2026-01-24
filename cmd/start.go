@@ -1,9 +1,10 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 
-	"quickvm/hyperv"
+	"quickvm/internal/hyperv"
 
 	"github.com/spf13/cobra"
 )
@@ -24,13 +25,13 @@ Examples:
   quickvm start --all       # Start all VMs`,
 	Args: cobra.ArbitraryArgs,
 	Run: func(cmd *cobra.Command, args []string) {
-		runStart(hyperv.NewManager(), args, startRange, startAll)
+		runStart(cmd.Context(), hyperv.NewManager(), args, startRange, startAll)
 	},
 }
 
-func runStart(manager hyperv.VMManager, args []string, rangeStr string, all bool) {
+func runStart(ctx context.Context, manager hyperv.VMManager, args []string, rangeStr string, all bool) {
 	// Get VMs to validate index and get name
-	vms, err := manager.GetVMs()
+	vms, err := manager.GetVMs(ctx)
 	if err != nil {
 		fmt.Printf("❌ Failed to get VMs: %v\n", err)
 		return
@@ -54,7 +55,7 @@ func runStart(manager hyperv.VMManager, args []string, rangeStr string, all bool
 		vm := vms[index-1]
 		fmt.Printf("🚀 Starting VM: %s (Index: %d)...\n", vm.Name, index)
 
-		if err := manager.StartVMByName(vm.Name); err != nil {
+		if err := manager.StartVMByName(ctx, vm.Name); err != nil {
 			fmt.Printf("❌ Failed to start VM '%s': %v\n", vm.Name, err)
 			failCount++
 		} else {

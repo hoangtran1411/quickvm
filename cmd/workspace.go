@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"quickvm/hyperv"
+	"quickvm/internal/hyperv"
 
 	"github.com/spf13/cobra"
 )
@@ -115,7 +115,7 @@ var wsStartCmd = &cobra.Command{
 
 		for _, vmName := range ws.VMs {
 			fmt.Printf("🚀 Starting VM: %s...\n", vmName)
-			if err := manager.StartVMByName(vmName); err != nil {
+			if err := manager.StartVMByName(cmd.Context(), vmName); err != nil {
 				fmt.Printf("❌ Failed to start VM '%s': %v\n", vmName, err)
 			} else {
 				fmt.Printf("✅ VM '%s' started.\n", vmName)
@@ -141,7 +141,7 @@ var wsStopCmd = &cobra.Command{
 		for _, vmName := range ws.VMs {
 			fmt.Printf("🛑 Stopping VM: %s...\n", vmName)
 			// Need StopVMByName
-			if err := manager.StopVMByName(vmName); err != nil {
+			if err := manager.StopVMByName(cmd.Context(), vmName); err != nil {
 				fmt.Printf("❌ Failed to stop VM '%s': %v\n", vmName, err)
 			} else {
 				fmt.Printf("✅ VM '%s' stopped.\n", vmName)

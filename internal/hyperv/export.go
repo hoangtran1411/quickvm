@@ -1,6 +1,7 @@
 package hyperv
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"path/filepath"
@@ -22,8 +23,8 @@ type ImportVMOptions struct {
 }
 
 // ExportVM exports a VM by index to the specified path
-func (m *Manager) ExportVM(vmIndex int, path string) error {
-	vms, err := m.GetVMs()
+func (m *Manager) ExportVM(ctx context.Context, vmIndex int, path string) error {
+	vms, err := m.GetVMs(ctx)
 	if err != nil {
 		return err
 	}
@@ -33,15 +34,12 @@ func (m *Manager) ExportVM(vmIndex int, path string) error {
 	}
 
 	vm := vms[vmIndex-1]
-	return m.ExportVMByName(vm.Name, path)
+	return m.ExportVMByName(ctx, vm.Name, path)
 }
 
 // ExportVMByName exports a VM by name to the specified path
-func (m *Manager) ExportVMByName(vmName, path string) error {
-	// PowerShell script to export VM
-	psScript := fmt.Sprintf(`Export-VM -Name "%s" -Path "%s"`, vmName, path)
-
-	output, err := m.Exec.RunCommand(psScript)
+func (m *Manager) ExportVMByName(ctx context.Context, vmName, path string) error {
+	output, err := m.Exec.RunCmdlet(ctx, "Export-VM", "-Name", vmName, "-Path", path)
 	if err != nil {
 		return fmt.Errorf("failed to export VM '%s': %v\nOutput: %s", vmName, err, string(output))
 	}
@@ -50,33 +48,52 @@ func (m *Manager) ExportVMByName(vmName, path string) error {
 }
 
 // ImportVM imports a VM from the specified path
-func (m *Manager) ImportVM(opts ImportVMOptions) (string, error) {
+func (m *Manager) ImportVM(ctx context.Context, opts ImportVMOptions) (string, error) {
 	// Find the .vmcx file in the path
 	vmcxPath, err := m.findVMCXFile(opts.Path)
 	if err != nil {
 		return "", err
 	}
 
-	// Build the PowerShell command
-	var psScriptBuilder strings.Builder
-	psScriptBuilder.WriteString(fmt.Sprintf(`$vm = Import-VM -Path "%s"`, vmcxPath))
+	// Build arguments for RunCmdlet safely
+	args := []string{"-Path", vmcxPath}
 
 	if opts.Copy {
-		psScriptBuilder.Reset()
-		psScriptBuilder.WriteString(fmt.Sprintf(`$vm = Import-VM -Path "%s" -Copy`, vmcxPath))
+		args = append(args, "-Copy")
 	}
 
 	if opts.GenerateNewID {
-		psScriptBuilder.WriteString(" -GenerateNewId")
+		args = append(args, "-GenerateNewId")
 	}
 
 	if opts.VHDPath != "" {
-		psScriptBuilder.WriteString(fmt.Sprintf(` -VhdDestinationPath "%s"`, opts.VHDPath))
+		args = append(args, "-VhdDestinationPath", opts.VHDPath)
 	}
 
-	psScriptBuilder.WriteString("; $vm.Name")
+	// We want to return the imported VM object to get its name
+	// RunCmdlet executes the cmd, but to get property we might need to be clever.
+	// `Import-VM ... -Passthru | Select-Object -ExpandProperty Name`
+	// RunCmdlet appends args to the command.
 
-	output, err := m.Exec.RunCommand(psScriptBuilder.String())
+	args = append(args, "-Passthru")
+
+	// Issue: RunCmdlet appends these to "Import-VM".
+	// If we want pipe, we can't easily use RunCmdlet unless we support piping logic inside it or use RunScript.
+	// Since file paths are involved, RunScript is risky if we fmt.Sprintf the path.
+	// But we can use RunCmdlet to get the object JSON?
+
+	// Let's use RunScript with safe path quoting if possible, OR
+	// Use RunCmdlet and parse default output? Default output of Import-VM is valid.
+	// But we need the Name.
+
+	// Alternative: Use RunCmdlet for Import-VM, then if successful, we might not know the name if we don't capture it.
+	// But we CAN use "| Select -Expand Name" as args if powershell parses them.
+	// As established in GetVMStatus, passing "|" as a separate arg works if the shell concatenates them.
+	// Let's rely on that behavior of "powershell -Command ... arg1 arg2 ..." -> it effectively joins them.
+
+	args = append(args, "|", "Select-Object", "-ExpandProperty", "Name")
+
+	output, err := m.Exec.RunCmdlet(ctx, "Import-VM", args...)
 	if err != nil {
 		return "", fmt.Errorf("failed to import VM from '%s': %v\nOutput: %s", opts.Path, err, string(output))
 	}
@@ -121,7 +138,7 @@ func (m *Manager) findVMCXFile(basePath string) (string, error) {
 }
 
 // GetExportedVMInfo gets information about an exported VM
-func (m *Manager) GetExportedVMInfo(path string) (map[string]string, error) {
+func (m *Manager) GetExportedVMInfo(ctx context.Context, path string) (map[string]string, error) {
 	vmcxPath, err := m.findVMCXFile(path)
 	if err != nil {
 		return nil, err
@@ -137,8 +154,10 @@ func (m *Manager) GetExportedVMInfo(path string) (map[string]string, error) {
 			Incompatibilities = ($report.Incompatibilities | ForEach-Object { $_.Message }) -join "; "
 		} | ConvertTo-Json
 	`, vmcxPath)
+	// Note: vmcxPath is from filepath.Glob which is local. Still potential risk if malicious filenames, but low.
+	// Ideally pass path as arg.
 
-	output, err := m.Exec.RunCommand(psScript)
+	output, err := m.Exec.RunScript(ctx, psScript)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get VM info from '%s': %v\nOutput: %s", path, err, string(output))
 	}

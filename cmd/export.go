@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"quickvm/hyperv"
+	"quickvm/internal/hyperv"
 
 	"github.com/spf13/cobra"
 )
@@ -50,7 +50,7 @@ The exported VM will be placed in a subdirectory named after the VM.`,
 		}
 
 		// Get VM name for display
-		vmName, err := manager.GetVMNameByIndex(index)
+		vmName, err := manager.GetVMNameByIndex(cmd.Context(), index)
 		if err != nil {
 			fmt.Printf("❌ Failed to get VM: %v\n", err)
 			return
@@ -68,7 +68,7 @@ The exported VM will be placed in a subdirectory named after the VM.`,
 		fmt.Printf("📦 Exporting VM '%s' to '%s'...\n", vmName, exportPath)
 		fmt.Println("⏳ This may take a while depending on VM size...")
 
-		if err := manager.ExportVM(index, exportPath); err != nil {
+		if err := manager.ExportVM(cmd.Context(), index, exportPath); err != nil {
 			fmt.Printf("❌ Failed to export VM: %v\n", err)
 			return
 		}

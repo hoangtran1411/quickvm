@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"quickvm/hyperv"
+	"quickvm/internal/hyperv"
 
 	"github.com/spf13/cobra"
 )
@@ -48,14 +48,14 @@ Examples:
 		}
 
 		// Get VM name for display
-		vmName, err := manager.GetVMNameByIndex(index)
+		vmName, err := manager.GetVMNameByIndex(cmd.Context(), index)
 		if err != nil {
 			fmt.Printf("❌ Failed to get VM: %v\n", err)
 			return
 		}
 
 		// Get IP address first to show to user
-		ip, err := manager.GetVMIPAddress(index)
+		ip, err := manager.GetVMIPAddress(cmd.Context(), index)
 		if err != nil {
 			fmt.Printf("❌ Failed to get VM IP address: %v\n", err)
 			return
@@ -69,7 +69,7 @@ Examples:
 			fmt.Println("🔐 Saving credentials to Windows Credential Manager...")
 		}
 
-		if err := manager.ConnectRDPByIP(ip, rdpCredentials); err != nil {
+		if err := manager.ConnectRDPByIP(cmd.Context(), ip, rdpCredentials); err != nil {
 			fmt.Printf("❌ Failed to open RDP: %v\n", err)
 			return
 		}

@@ -1,8 +1,9 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
-	"quickvm/hyperv"
+	"quickvm/internal/hyperv"
 	"testing"
 )
 
@@ -23,7 +24,7 @@ func TestRunRestart(t *testing.T) {
 			name: "Restart single VM",
 			args: []string{"1"},
 			setup: func(m *MockManager) {
-				m.RestartVMFn = func(index int) error {
+				m.RestartVMFn = func(ctx context.Context, index int) error {
 					if index != 1 {
 						return fmt.Errorf("wrong index")
 					}
@@ -36,7 +37,7 @@ func TestRunRestart(t *testing.T) {
 			all:  true,
 			setup: func(m *MockManager) {
 				count := 0
-				m.RestartVMFn = func(index int) error {
+				m.RestartVMFn = func(ctx context.Context, index int) error {
 					count++
 					return nil
 				}
@@ -46,7 +47,7 @@ func TestRunRestart(t *testing.T) {
 			name: "Failed to get VMs",
 			args: []string{"1"},
 			setup: func(m *MockManager) {
-				m.GetVMsFn = func() ([]hyperv.VM, error) {
+				m.GetVMsFn = func(ctx context.Context) ([]hyperv.VM, error) {
 					return nil, fmt.Errorf("hyper-v error")
 				}
 			},
@@ -56,7 +57,7 @@ func TestRunRestart(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &MockManager{
-				GetVMsFn: func() ([]hyperv.VM, error) {
+				GetVMsFn: func(ctx context.Context) ([]hyperv.VM, error) {
 					return mockVMs, nil
 				},
 			}
@@ -64,7 +65,7 @@ func TestRunRestart(t *testing.T) {
 				tt.setup(m)
 			}
 
-			runRestart(m, tt.args, tt.rangeStr, tt.all)
+			runRestart(context.Background(), m, tt.args, tt.rangeStr, tt.all)
 		})
 	}
 }

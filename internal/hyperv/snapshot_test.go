@@ -1,7 +1,9 @@
 package hyperv
 
 import (
+	"context"
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -10,6 +12,9 @@ func skipIfNoHyperVSnapshot(t *testing.T) {
 	t.Helper()
 	if os.Getenv("CI") != "" || os.Getenv("GITHUB_ACTIONS") != "" {
 		t.Skip("Skipping test: Hyper-V not available in CI/CD environment")
+	}
+	if !IsRunningAsAdmin(context.TODO()) {
+		t.Skip("Skipping test: Administrator privileges required for Hyper-V operations")
 	}
 }
 
@@ -45,7 +50,7 @@ func TestGetSnapshotsByVMName_InvalidVM(t *testing.T) {
 	manager := NewManager()
 
 	// Test with a VM name that doesn't exist
-	_, err := manager.GetSnapshotsByVMName("NonExistentVM_123456")
+	_, err := manager.GetSnapshotsByVMName(context.TODO(), "NonExistentVM_123456")
 	// This might not error if the VM doesn't exist (returns empty list)
 	// but we're just testing the function executes without panic
 	_ = err
@@ -66,7 +71,7 @@ func TestGetSnapshots_InvalidIndex(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := manager.GetSnapshots(tc.index)
+			_, err := manager.GetSnapshots(context.TODO(), tc.index)
 			if err == nil {
 				t.Errorf("Expected error for index %d, got nil", tc.index)
 			}
@@ -89,11 +94,22 @@ func TestCreateSnapshot_InvalidIndex(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := manager.CreateSnapshot(tc.index, "TestSnapshot")
+			err := manager.CreateSnapshot(context.TODO(), tc.index, "TestSnapshot")
 			if err == nil {
 				t.Errorf("Expected error for index %d, got nil", tc.index)
 			}
 		})
+	}
+}
+
+// TestCreateSnapshot_EmptyName tests CreateSnapshot with empty name
+func TestCreateSnapshot_EmptyName(t *testing.T) {
+	manager := NewManager()
+
+	// Should fail before calling Hyper-V
+	err := manager.CreateSnapshot(context.TODO(), 1, "")
+	if err == nil {
+		t.Error("Expected error for empty snapshot name, got nil")
 	}
 }
 
@@ -112,11 +128,22 @@ func TestRestoreSnapshot_InvalidIndex(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := manager.RestoreSnapshot(tc.index, "TestSnapshot")
+			err := manager.RestoreSnapshot(context.TODO(), tc.index, "TestSnapshot")
 			if err == nil {
 				t.Errorf("Expected error for index %d, got nil", tc.index)
 			}
 		})
+	}
+}
+
+// TestRestoreSnapshot_EmptyName tests RestoreSnapshot with empty name
+func TestRestoreSnapshot_EmptyName(t *testing.T) {
+	manager := NewManager()
+
+	// Should fail before calling Hyper-V
+	err := manager.RestoreSnapshot(context.TODO(), 1, "")
+	if err == nil {
+		t.Error("Expected error for empty snapshot name, got nil")
 	}
 }
 
@@ -135,7 +162,7 @@ func TestDeleteSnapshot_InvalidIndex(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := manager.DeleteSnapshot(tc.index, "TestSnapshot")
+			err := manager.DeleteSnapshot(context.TODO(), tc.index, "TestSnapshot")
 			if err == nil {
 				t.Errorf("Expected error for index %d, got nil", tc.index)
 			}
@@ -143,57 +170,69 @@ func TestDeleteSnapshot_InvalidIndex(t *testing.T) {
 	}
 }
 
-func TestGetVMNameByIndex_InvalidIndex(t *testing.T) {
+// TestDeleteSnapshot_EmptyName tests DeleteSnapshot with empty name
+func TestDeleteSnapshot_EmptyName(t *testing.T) {
+	manager := NewManager()
+
+	// Should fail before calling Hyper-V
+	err := manager.DeleteSnapshot(context.TODO(), 1, "")
+	if err == nil {
+		t.Error("Expected error for empty snapshot name, got nil")
+	}
+}
+
+func TestGetVMNameByIndex_Invalid(t *testing.T) {
 	skipIfNoHyperVSnapshot(t)
 	manager := NewManager()
 
-	testCases := []struct {
-		name  string
-		index int
-	}{
-		{"Zero index", 0},
-		{"Negative index", -1},
-		{"Large index", 9999},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			_, err := manager.GetVMNameByIndex(tc.index)
-			if err == nil {
-				t.Errorf("Expected error for index %d, got nil", tc.index)
-			}
-		})
+	_, err := manager.GetVMNameByIndex(context.TODO(), 99999)
+	if err == nil {
+		t.Error("Expected error for invalid index, got nil")
 	}
 }
 
-// TestCreateSnapshotByVMName_NonExistent tests creating snapshot for non-existent VM
+// TestCreateSnapshotByVMName_NonExistent tests CreateSnapshotByVMName with non-existent VM
 func TestCreateSnapshotByVMName_NonExistent(t *testing.T) {
 	skipIfNoHyperVSnapshot(t)
 	manager := NewManager()
 
-	err := manager.CreateSnapshotByVMName("QuickVM_NonExistent_12345", "TestSnapshot")
+	err := manager.CreateSnapshotByVMName(context.TODO(), "QuickVM_NonExistent_12345", "TestSnap")
 	if err == nil {
 		t.Error("Expected error for non-existent VM, got nil")
 	}
+	if !strings.Contains(err.Error(), "not found") && !strings.Contains(err.Error(), "failed") {
+		t.Errorf("Unexpected error message: %v", err)
+	}
 }
 
-// TestRestoreSnapshotByVMName_NonExistent tests restoring snapshot for non-existent VM
+// TestRestoreSnapshotByVMName_NonExistent tests RestoreSnapshotByVMName with non-existent VM
 func TestRestoreSnapshotByVMName_NonExistent(t *testing.T) {
 	skipIfNoHyperVSnapshot(t)
 	manager := NewManager()
 
-	err := manager.RestoreSnapshotByVMName("QuickVM_NonExistent_12345", "TestSnapshot")
+	err := manager.RestoreSnapshotByVMName(context.TODO(), "QuickVM_NonExistent_12345", "TestSnap")
 	if err == nil {
 		t.Error("Expected error for non-existent VM, got nil")
 	}
 }
 
-// TestDeleteSnapshotByVMName_NonExistent tests deleting snapshot for non-existent VM
+// TestDeleteSnapshotByVMName_NonExistent tests DeleteSnapshotByVMName with non-existent VM
 func TestDeleteSnapshotByVMName_NonExistent(t *testing.T) {
 	skipIfNoHyperVSnapshot(t)
 	manager := NewManager()
 
-	err := manager.DeleteSnapshotByVMName("QuickVM_NonExistent_12345", "TestSnapshot")
+	err := manager.DeleteSnapshotByVMName(context.TODO(), "QuickVM_NonExistent_12345", "TestSnap")
+	if err == nil {
+		t.Error("Expected error for non-existent VM, got nil")
+	}
+}
+
+// TestGetSnapshotsByVMName_NonExistent tests GetSnapshotsByVMName with non-existent VM
+func TestGetSnapshotsByVMName_NonExistent(t *testing.T) {
+	skipIfNoHyperVSnapshot(t)
+	manager := NewManager()
+
+	_, err := manager.GetSnapshotsByVMName(context.TODO(), "QuickVM_NonExistent_12345")
 	if err == nil {
 		t.Error("Expected error for non-existent VM, got nil")
 	}

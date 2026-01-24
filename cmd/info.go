@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"quickvm/hyperv"
+	"quickvm/internal/hyperv"
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
@@ -23,7 +23,7 @@ var infoCmd = &cobra.Command{
 
 		includeDisk, _ := cmd.Flags().GetBool("disk")
 
-		info, err := manager.GetSystemInfo(includeDisk)
+		info, err := manager.GetSystemInfo(cmd.Context(), includeDisk)
 		if err != nil {
 			color.Red("❌ Error getting system info: %v", err)
 			return

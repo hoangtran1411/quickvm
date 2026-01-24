@@ -6,6 +6,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
+
 	"quickvm/ui"
 	"quickvm/updater"
 )
@@ -47,7 +48,7 @@ func init() {
 // checkAndUpdate checks for updates and prompts to install if available
 func checkAndUpdate() {
 	u := updater.NewUpdater(Version)
-	
+
 	release, hasUpdate, err := u.CheckForUpdates()
 	if err != nil {
 		// Silently fail on update check errors
@@ -62,13 +63,13 @@ func checkAndUpdate() {
 
 	fmt.Printf("🎉 New version available: %s (current: %s)\n", release.TagName, Version)
 	fmt.Print("❓ Do you want to update now? [Y/n]: ")
-	
+
 	var response string
 	if _, err := fmt.Scanln(&response); err != nil {
 		// Default to 'yes' if can't read input
 		response = ""
 	}
-	
+
 	if response == "n" || response == "N" {
 		fmt.Println("⏭️  Continuing with current version...")
 		fmt.Println()

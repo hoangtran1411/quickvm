@@ -1,6 +1,7 @@
 package hyperv
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os/exec"
@@ -51,7 +52,7 @@ type HyperVStatus struct {
 // GetSystemInfo retrieves system information including CPU, RAM, and Hyper-V status.
 // diskInfo is optional and only retrieved if includeDisk is true.
 // Uses parallel queries to improve performance.
-func (m *Manager) GetSystemInfo(includeDisk bool) (*SystemInfo, error) {
+func (m *Manager) GetSystemInfo(ctx context.Context, includeDisk bool) (*SystemInfo, error) {
 	info := &SystemInfo{}
 
 	// Use channels to collect results from parallel goroutines
@@ -78,60 +79,100 @@ func (m *Manager) GetSystemInfo(includeDisk bool) (*SystemInfo, error) {
 	hypervChan := make(chan hypervResult, 1)
 
 	// Launch parallel goroutines for each query
-	go func() {
-		data, err := m.getCPUInfo()
-		cpuChan <- cpuResult{data, err}
-	}()
+	// Note: We're ignoring the cancellation of inner contexts for simplicity of specific calls,
+	// but the RunScript methods will respect the passed 'ctx'.
 
 	go func() {
-		data, err := m.getMemoryInfo()
-		memChan <- memResult{data, err}
-	}()
-
-	go func() {
-		if includeDisk {
-			data, err := m.getDiskInfo()
-			diskChan <- diskResult{data, err}
-		} else {
-			diskChan <- diskResult{[]DiskInfo{}, nil}
+		data, err := m.getCPUInfo(ctx)
+		select {
+		case cpuChan <- cpuResult{data, err}:
+		case <-ctx.Done(): // Context cancelled handling
 		}
 	}()
 
 	go func() {
-		data, err := m.getHyperVStatus()
-		hypervChan <- hypervResult{data, err}
+		data, err := m.getMemoryInfo(ctx)
+		select {
+		case memChan <- memResult{data, err}:
+		case <-ctx.Done():
+		}
+	}()
+
+	go func() {
+		if includeDisk {
+			data, err := m.getDiskInfo(ctx)
+			select {
+			case diskChan <- diskResult{data, err}:
+			case <-ctx.Done():
+			}
+		} else {
+			select {
+			case diskChan <- diskResult{[]DiskInfo{}, nil}:
+			case <-ctx.Done():
+			}
+		}
+	}()
+
+	go func() {
+		data, err := m.getHyperVStatus(ctx)
+		select {
+		case hypervChan <- hypervResult{data, err}:
+		case <-ctx.Done():
+		}
 	}()
 
 	// Collect results from all channels
-	cpuRes := <-cpuChan
-	if cpuRes.err != nil {
-		return nil, fmt.Errorf("failed to get CPU info: %v", cpuRes.err)
-	}
-	info.CPU = *cpuRes.data
+	// We handle context cancellation here too.
 
-	memRes := <-memChan
-	if memRes.err != nil {
-		return nil, fmt.Errorf("failed to get memory info: %v", memRes.err)
+	// CPU
+	select {
+	case cpuRes := <-cpuChan:
+		if cpuRes.err != nil {
+			return nil, fmt.Errorf("failed to get CPU info: %v", cpuRes.err)
+		}
+		info.CPU = *cpuRes.data
+	case <-ctx.Done():
+		return nil, ctx.Err()
 	}
-	info.Memory = *memRes.data
 
-	diskRes := <-diskChan
-	if diskRes.err != nil {
-		return nil, fmt.Errorf("failed to get disk info: %v", diskRes.err)
+	// Memory
+	select {
+	case memRes := <-memChan:
+		if memRes.err != nil {
+			return nil, fmt.Errorf("failed to get memory info: %v", memRes.err)
+		}
+		info.Memory = *memRes.data
+	case <-ctx.Done():
+		return nil, ctx.Err()
 	}
-	info.Disks = diskRes.data
 
-	hypervRes := <-hypervChan
-	if hypervRes.err != nil {
-		return nil, fmt.Errorf("failed to get Hyper-V status: %v", hypervRes.err)
+	// Disk
+	select {
+	case diskRes := <-diskChan:
+		if diskRes.err != nil {
+			return nil, fmt.Errorf("failed to get disk info: %v", diskRes.err)
+		}
+		info.Disks = diskRes.data
+	case <-ctx.Done():
+		return nil, ctx.Err()
 	}
-	info.HyperV = *hypervRes.data
+
+	// Hyper-V
+	select {
+	case hypervRes := <-hypervChan:
+		if hypervRes.err != nil {
+			return nil, fmt.Errorf("failed to get Hyper-V status: %v", hypervRes.err)
+		}
+		info.HyperV = *hypervRes.data
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
 
 	return info, nil
 }
 
 // getCPUInfo retrieves CPU information
-func (m *Manager) getCPUInfo() (*CPUInfo, error) {
+func (m *Manager) getCPUInfo(ctx context.Context) (*CPUInfo, error) {
 	psScript := `
 		$cpu = Get-WmiObject -Class Win32_Processor
 		@{
@@ -140,7 +181,7 @@ func (m *Manager) getCPUInfo() (*CPUInfo, error) {
 		} | ConvertTo-Json
 	`
 
-	output, err := m.Exec.RunCommand(psScript)
+	output, err := m.Exec.RunScript(ctx, psScript)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute PowerShell command: %v\nOutput: %s", err, string(output))
 	}
@@ -160,7 +201,7 @@ func (m *Manager) getCPUInfo() (*CPUInfo, error) {
 }
 
 // getMemoryInfo retrieves memory information
-func (m *Manager) getMemoryInfo() (*MemoryInfo, error) {
+func (m *Manager) getMemoryInfo(ctx context.Context) (*MemoryInfo, error) {
 	psScript := `
 		$os = Get-WmiObject -Class Win32_OperatingSystem
 		$totalMB = [math]::Round($os.TotalVisibleMemorySize / 1024)
@@ -176,7 +217,7 @@ func (m *Manager) getMemoryInfo() (*MemoryInfo, error) {
 		} | ConvertTo-Json
 	`
 
-	output, err := m.Exec.RunCommand(psScript)
+	output, err := m.Exec.RunScript(ctx, psScript)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute PowerShell command: %v\nOutput: %s", err, string(output))
 	}
@@ -190,7 +231,7 @@ func (m *Manager) getMemoryInfo() (*MemoryInfo, error) {
 }
 
 // getDiskInfo retrieves disk information
-func (m *Manager) getDiskInfo() ([]DiskInfo, error) {
+func (m *Manager) getDiskInfo(ctx context.Context) ([]DiskInfo, error) {
 	psScript := `
 		Get-WmiObject -Class Win32_LogicalDisk -Filter "DriveType=3" | ForEach-Object {
 			$totalMB = [math]::Round($_.Size / 1MB)
@@ -208,7 +249,7 @@ func (m *Manager) getDiskInfo() ([]DiskInfo, error) {
 		} | ConvertTo-Json
 	`
 
-	output, err := m.Exec.RunCommand(psScript)
+	output, err := m.Exec.RunScript(ctx, psScript)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute PowerShell command: %v\nOutput: %s", err, string(output))
 	}
@@ -233,7 +274,7 @@ func (m *Manager) getDiskInfo() ([]DiskInfo, error) {
 }
 
 // getHyperVStatus retrieves Hyper-V status
-func (m *Manager) getHyperVStatus() (*HyperVStatus, error) {
+func (m *Manager) getHyperVStatus(ctx context.Context) (*HyperVStatus, error) {
 	psScript := `
 		$hyperv = Get-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V
 		if ($hyperv -eq $null) {
@@ -249,23 +290,23 @@ func (m *Manager) getHyperVStatus() (*HyperVStatus, error) {
 		}
 	`
 
-	output, err := m.Exec.RunCommand(psScript)
+	output, err := m.Exec.RunScript(ctx, psScript)
 	if err != nil {
 		// If error, try alternative method using Get-Service
-		return m.getHyperVStatusAlternative()
+		return m.getHyperVStatusAlternative(ctx)
 	}
 
 	var result HyperVStatus
 	if err := json.Unmarshal(output, &result); err != nil {
 		// If parsing fails, try alternative method
-		return m.getHyperVStatusAlternative()
+		return m.getHyperVStatusAlternative(ctx)
 	}
 
 	return &result, nil
 }
 
 // getHyperVStatusAlternative uses Get-Service as fallback
-func (m *Manager) getHyperVStatusAlternative() (*HyperVStatus, error) {
+func (m *Manager) getHyperVStatusAlternative(ctx context.Context) (*HyperVStatus, error) {
 	psScript := `
 		$vmms = Get-Service -Name vmms -ErrorAction SilentlyContinue
 		if ($vmms -eq $null) {
@@ -281,7 +322,7 @@ func (m *Manager) getHyperVStatusAlternative() (*HyperVStatus, error) {
 		}
 	`
 
-	output, err := m.Exec.RunCommand(psScript)
+	output, err := m.Exec.RunScript(ctx, psScript)
 	if err != nil {
 		return &HyperVStatus{
 			Enabled: false,
@@ -302,7 +343,7 @@ func (m *Manager) getHyperVStatusAlternative() (*HyperVStatus, error) {
 
 // EnableHyperV enables Hyper-V on the system
 // Returns true if a restart is needed, false otherwise
-func (m *Manager) EnableHyperV() (bool, error) {
+func (m *Manager) EnableHyperV(ctx context.Context) (bool, error) {
 	// Try to enable all Hyper-V features
 	psScript := `
 		$features = @(
@@ -349,7 +390,7 @@ func (m *Manager) EnableHyperV() (bool, error) {
 		} | ConvertTo-Json
 	`
 
-	output, err := m.Exec.RunCommand(psScript)
+	output, err := m.Exec.RunScript(ctx, psScript)
 	if err != nil {
 		return false, fmt.Errorf("failed to enable Hyper-V: %v\nOutput: %s", err, string(output))
 	}
@@ -371,14 +412,14 @@ func (m *Manager) EnableHyperV() (bool, error) {
 }
 
 // IsRunningAsAdmin checks if the current process is running with administrator privileges
-func IsRunningAsAdmin() bool {
+func IsRunningAsAdmin(ctx context.Context) bool {
 	psScript := `
 		$identity = [Security.Principal.WindowsIdentity]::GetCurrent()
 		$principal = New-Object Security.Principal.WindowsPrincipal($identity)
 		$principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 	`
 
-	cmd := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-Command", psScript)
+	cmd := exec.CommandContext(ctx, "powershell", "-NoProfile", "-NonInteractive", "-Command", psScript)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return false
@@ -388,11 +429,8 @@ func IsRunningAsAdmin() bool {
 }
 
 // ScheduleRestart schedules a system restart after the specified number of seconds
-func (m *Manager) ScheduleRestart(seconds int) error {
-	psScript := fmt.Sprintf(`shutdown /r /t %d /c "Restarting to complete Hyper-V installation"`, seconds)
-
-	cmd := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-Command", psScript)
-	output, err := cmd.CombinedOutput()
+func (m *Manager) ScheduleRestart(ctx context.Context, seconds int) error {
+	output, err := m.Exec.RunCmdlet(ctx, "shutdown", "/r", "/t", fmt.Sprintf("%d", seconds), "/c", "Restarting to complete Hyper-V installation")
 	if err != nil {
 		return fmt.Errorf("failed to schedule restart: %v\nOutput: %s", err, string(output))
 	}

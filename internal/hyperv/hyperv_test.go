@@ -1,6 +1,7 @@
 package hyperv
 
 import (
+	"context"
 	"os"
 	"strings"
 	"testing"
@@ -12,7 +13,7 @@ func skipIfNoHyperVMain(t *testing.T) {
 	if os.Getenv("CI") != "" || os.Getenv("GITHUB_ACTIONS") != "" {
 		t.Skip("Skipping test: Hyper-V not available in CI/CD environment")
 	}
-	if !IsRunningAsAdmin() {
+	if !IsRunningAsAdmin(context.TODO()) {
 		t.Skip("Skipping test: Administrator privileges required for Hyper-V operations")
 	}
 }
@@ -62,7 +63,7 @@ func TestGetVMs(t *testing.T) {
 
 	// Note: This test requires actual Hyper-V to be running
 	// In CI/CD environments without Hyper-V, this will gracefully skip
-	vms, err := manager.GetVMs()
+	vms, err := manager.GetVMs(context.TODO())
 
 	// If no VMs or Hyper-V not available, skip the test
 	if err != nil && len(vms) == 0 {
@@ -94,7 +95,7 @@ func TestVMIndexValidation(t *testing.T) {
 	manager := NewManager()
 
 	// First check if VMs are available
-	vms, err := manager.GetVMs()
+	vms, err := manager.GetVMs(context.TODO())
 	if err != nil || len(vms) == 0 {
 		t.Skip("Skipping test: No VMs available for testing")
 		return
@@ -113,7 +114,7 @@ func TestVMIndexValidation(t *testing.T) {
 	// Only test invalid indices to avoid starting actual VMs
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := manager.StartVM(tt.index)
+			err := manager.StartVM(context.TODO(), tt.index)
 			hasErr := err != nil
 
 			if hasErr != tt.wantErr {
@@ -128,7 +129,7 @@ func TestStartVMByName_NonExistent(t *testing.T) {
 	skipIfNoHyperVMain(t)
 	manager := NewManager()
 
-	err := manager.StartVMByName("QuickVM_NonExistent_12345")
+	err := manager.StartVMByName(context.TODO(), "QuickVM_NonExistent_12345")
 	if err == nil {
 		t.Error("Expected error for non-existent VM, got nil")
 	}
@@ -139,7 +140,7 @@ func TestStopVMByName_NonExistent(t *testing.T) {
 	skipIfNoHyperVMain(t)
 	manager := NewManager()
 
-	err := manager.StopVMByName("QuickVM_NonExistent_12345")
+	err := manager.StopVMByName(context.TODO(), "QuickVM_NonExistent_12345")
 	if err == nil {
 		t.Error("Expected error for non-existent VM, got nil")
 	}
@@ -150,7 +151,7 @@ func TestRestartVMByName_NonExistent(t *testing.T) {
 	skipIfNoHyperVMain(t)
 	manager := NewManager()
 
-	err := manager.RestartVMByName("QuickVM_NonExistent_12345")
+	err := manager.RestartVMByName(context.TODO(), "QuickVM_NonExistent_12345")
 	if err == nil {
 		t.Error("Expected error for non-existent VM, got nil")
 	}
@@ -161,7 +162,7 @@ func TestGetVMStatus_NonExistent(t *testing.T) {
 	skipIfNoHyperVMain(t)
 	manager := NewManager()
 
-	status, err := manager.GetVMStatus("QuickVM_NonExistent_12345")
+	status, err := manager.GetVMStatus(context.TODO(), "QuickVM_NonExistent_12345")
 	// PowerShell may return empty status without error for non-existent VM
 	// We just verify the function doesn't panic and returns something expected
 	if err != nil {
@@ -190,7 +191,7 @@ func TestStartVM_InvalidIndex(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := manager.StartVM(tc.index)
+			err := manager.StartVM(context.TODO(), tc.index)
 			if err == nil {
 				t.Errorf("Expected error for index %d, got nil", tc.index)
 			}
@@ -214,7 +215,7 @@ func TestStopVM_InvalidIndex(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := manager.StopVM(tc.index)
+			err := manager.StopVM(context.TODO(), tc.index)
 			if err == nil {
 				t.Errorf("Expected error for index %d, got nil", tc.index)
 			}
@@ -238,7 +239,7 @@ func TestRestartVM_InvalidIndex(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := manager.RestartVM(tc.index)
+			err := manager.RestartVM(context.TODO(), tc.index)
 			if err == nil {
 				t.Errorf("Expected error for index %d, got nil", tc.index)
 			}
@@ -256,6 +257,6 @@ func BenchmarkGetVMs(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, _ = manager.GetVMs()
+		_, _ = manager.GetVMs(context.TODO())
 	}
 }

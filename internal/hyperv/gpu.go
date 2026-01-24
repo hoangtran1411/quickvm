@@ -1,6 +1,7 @@
 package hyperv
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -71,7 +72,7 @@ func DefaultGPUPartitionConfig() *GPUPartitionConfig {
 }
 
 // CheckGPUPartitionable checks if the system has GPU(s) that support partitioning
-func (m *Manager) CheckGPUPartitionable() ([]GPUInfo, error) {
+func (m *Manager) CheckGPUPartitionable(ctx context.Context) ([]GPUInfo, error) {
 	psScript := `
 		$gpus = Get-VMPartitionableGpu -ErrorAction SilentlyContinue
 		if ($gpus -eq $null -or $gpus.Count -eq 0) {
@@ -101,7 +102,7 @@ func (m *Manager) CheckGPUPartitionable() ([]GPUInfo, error) {
 		}
 	`
 
-	output, err := m.Exec.RunCommand(psScript)
+	output, err := m.Exec.RunScript(ctx, psScript)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check GPU partitioning support: %v\nOutput: %s", err, string(output))
 	}
@@ -129,7 +130,7 @@ func (m *Manager) CheckGPUPartitionable() ([]GPUInfo, error) {
 }
 
 // GetVMGPUPartition gets GPU partition info for a specific VM
-func (m *Manager) GetVMGPUPartition(vmName string) (*VMGPUPartition, error) {
+func (m *Manager) GetVMGPUPartition(ctx context.Context, vmName string) (*VMGPUPartition, error) {
 	psScript := fmt.Sprintf(`
 		$adapter = Get-VMGpuPartitionAdapter -VMName "%s" -ErrorAction SilentlyContinue
 		if ($adapter -eq $null) {
@@ -147,7 +148,7 @@ func (m *Manager) GetVMGPUPartition(vmName string) (*VMGPUPartition, error) {
 		}
 	`, vmName, vmName, vmName)
 
-	output, err := m.Exec.RunCommand(psScript)
+	output, err := m.Exec.RunScript(ctx, psScript)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get VM GPU partition info: %v\nOutput: %s", err, string(output))
 	}
@@ -161,13 +162,13 @@ func (m *Manager) GetVMGPUPartition(vmName string) (*VMGPUPartition, error) {
 }
 
 // AddGPUPartition adds a GPU partition to a VM
-func (m *Manager) AddGPUPartition(vmName string, config *GPUPartitionConfig) error {
+func (m *Manager) AddGPUPartition(ctx context.Context, vmName string, config *GPUPartitionConfig) error {
 	if config == nil {
 		config = DefaultGPUPartitionConfig()
 	}
 
 	// Check if VM is running
-	state, err := m.GetVMStatus(vmName)
+	state, err := m.GetVMStatus(ctx, vmName)
 	if err != nil {
 		return fmt.Errorf("failed to get VM status: %v", err)
 	}
@@ -176,7 +177,7 @@ func (m *Manager) AddGPUPartition(vmName string, config *GPUPartitionConfig) err
 	}
 
 	// Check if VM already has GPU
-	gpuInfo, err := m.GetVMGPUPartition(vmName)
+	gpuInfo, err := m.GetVMGPUPartition(ctx, vmName)
 	if err != nil {
 		return fmt.Errorf("failed to check existing GPU partition: %v", err)
 	}
@@ -216,7 +217,7 @@ func (m *Manager) AddGPUPartition(vmName string, config *GPUPartitionConfig) err
 		config.HighMMIOSpace, vmName,
 	)
 
-	output, err := m.Exec.RunCommand(psScript)
+	output, err := m.Exec.RunScript(ctx, psScript)
 	if err != nil {
 		return fmt.Errorf("failed to add GPU partition: %v\nOutput: %s", err, string(output))
 	}
@@ -229,9 +230,9 @@ func (m *Manager) AddGPUPartition(vmName string, config *GPUPartitionConfig) err
 }
 
 // RemoveGPUPartition removes a GPU partition from a VM
-func (m *Manager) RemoveGPUPartition(vmName string) error {
+func (m *Manager) RemoveGPUPartition(ctx context.Context, vmName string) error {
 	// Check if VM is running
-	state, err := m.GetVMStatus(vmName)
+	state, err := m.GetVMStatus(ctx, vmName)
 	if err != nil {
 		return fmt.Errorf("failed to get VM status: %v", err)
 	}
@@ -240,7 +241,7 @@ func (m *Manager) RemoveGPUPartition(vmName string) error {
 	}
 
 	// Check if VM has GPU
-	gpuInfo, err := m.GetVMGPUPartition(vmName)
+	gpuInfo, err := m.GetVMGPUPartition(ctx, vmName)
 	if err != nil {
 		return fmt.Errorf("failed to check GPU partition: %v", err)
 	}
@@ -253,7 +254,7 @@ func (m *Manager) RemoveGPUPartition(vmName string) error {
 		Write-Output "SUCCESS"
 	`, vmName)
 
-	output, err := m.Exec.RunCommand(psScript)
+	output, err := m.Exec.RunScript(ctx, psScript)
 	if err != nil {
 		return fmt.Errorf("failed to remove GPU partition: %v\nOutput: %s", err, string(output))
 	}
@@ -266,7 +267,7 @@ func (m *Manager) RemoveGPUPartition(vmName string) error {
 }
 
 // GetGPUDriverPaths returns the paths where GPU drivers are located on the host
-func (m *Manager) GetGPUDriverPaths() ([]string, error) {
+func (m *Manager) GetGPUDriverPaths(ctx context.Context) ([]string, error) {
 	psScript := `
 		$paths = @()
 		$driverPath = "C:\Windows\System32\DriverStore\FileRepository"
@@ -286,7 +287,7 @@ func (m *Manager) GetGPUDriverPaths() ([]string, error) {
 		$paths | ConvertTo-Json
 	`
 
-	output, err := m.Exec.RunCommand(psScript)
+	output, err := m.Exec.RunScript(ctx, psScript)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get GPU driver paths: %v", err)
 	}

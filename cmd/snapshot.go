@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"quickvm/hyperv"
+	"quickvm/internal/hyperv"
 
 	"github.com/spf13/cobra"
 )
@@ -46,7 +46,7 @@ Example:
 		}
 
 		// Get VM name for display
-		vmName, err := manager.GetVMNameByIndex(index)
+		vmName, err := manager.GetVMNameByIndex(cmd.Context(), index)
 		if err != nil {
 			fmt.Printf("❌ Failed to get VM: %v\n", err)
 			return
@@ -54,7 +54,7 @@ Example:
 
 		fmt.Printf("📸 Snapshots for VM: %s (Index: %d)\n\n", vmName, index)
 
-		snapshots, err := manager.GetSnapshots(index)
+		snapshots, err := manager.GetSnapshots(cmd.Context(), index)
 		if err != nil {
 			fmt.Printf("❌ Failed to get snapshots: %v\n", err)
 			return
@@ -107,7 +107,7 @@ Examples:
 		snapshotName := args[1]
 
 		// Get VM name for display
-		vmName, err := manager.GetVMNameByIndex(index)
+		vmName, err := manager.GetVMNameByIndex(cmd.Context(), index)
 		if err != nil {
 			fmt.Printf("❌ Failed to get VM: %v\n", err)
 			return
@@ -115,7 +115,7 @@ Examples:
 
 		fmt.Printf("📸 Creating snapshot '%s' for VM: %s...\n", snapshotName, vmName)
 
-		if err := manager.CreateSnapshot(index, snapshotName); err != nil {
+		if err := manager.CreateSnapshot(cmd.Context(), index, snapshotName); err != nil {
 			fmt.Printf("❌ Failed to create snapshot: %v\n", err)
 			return
 		}
@@ -151,7 +151,7 @@ Examples:
 		snapshotName := args[1]
 
 		// Get VM name for display
-		vmName, err := manager.GetVMNameByIndex(index)
+		vmName, err := manager.GetVMNameByIndex(cmd.Context(), index)
 		if err != nil {
 			fmt.Printf("❌ Failed to get VM: %v\n", err)
 			return
@@ -160,7 +160,7 @@ Examples:
 		fmt.Printf("⏮️  Restoring VM '%s' to snapshot '%s'...\n", vmName, snapshotName)
 		fmt.Println("⚠️  Warning: All changes after this snapshot will be lost!")
 
-		if err := manager.RestoreSnapshot(index, snapshotName); err != nil {
+		if err := manager.RestoreSnapshot(cmd.Context(), index, snapshotName); err != nil {
 			fmt.Printf("❌ Failed to restore snapshot: %v\n", err)
 			return
 		}
@@ -192,7 +192,7 @@ Examples:
 		snapshotName := args[1]
 
 		// Get VM name for display
-		vmName, err := manager.GetVMNameByIndex(index)
+		vmName, err := manager.GetVMNameByIndex(cmd.Context(), index)
 		if err != nil {
 			fmt.Printf("❌ Failed to get VM: %v\n", err)
 			return
@@ -200,7 +200,7 @@ Examples:
 
 		fmt.Printf("🗑️  Deleting snapshot '%s' from VM '%s'...\n", snapshotName, vmName)
 
-		if err := manager.DeleteSnapshot(index, snapshotName); err != nil {
+		if err := manager.DeleteSnapshot(cmd.Context(), index, snapshotName); err != nil {
 			fmt.Printf("❌ Failed to delete snapshot: %v\n", err)
 			return
 		}

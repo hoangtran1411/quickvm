@@ -1,10 +1,11 @@
 package ui
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
-	"quickvm/hyperv"
+	"quickvm/internal/hyperv"
 
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
@@ -99,7 +100,7 @@ func (m Model) Init() tea.Cmd {
 }
 
 func (m Model) loadVMs() tea.Msg {
-	vms, err := m.manager.GetVMs()
+	vms, err := m.manager.GetVMs(context.TODO())
 	if err != nil {
 		return errMsg{err}
 	}
@@ -197,7 +198,7 @@ func (m *Model) updateTable() {
 
 func (m Model) startVM(index int) tea.Cmd {
 	return func() tea.Msg {
-		if err := m.manager.StartVM(index); err != nil {
+		if err := m.manager.StartVM(context.TODO(), index); err != nil {
 			return errMsg{err}
 		}
 		// Reload VMs after action
@@ -207,7 +208,7 @@ func (m Model) startVM(index int) tea.Cmd {
 
 func (m Model) stopVM(index int) tea.Cmd {
 	return func() tea.Msg {
-		if err := m.manager.StopVM(index); err != nil {
+		if err := m.manager.StopVM(context.TODO(), index); err != nil {
 			return errMsg{err}
 		}
 		// Reload VMs after action
@@ -217,7 +218,7 @@ func (m Model) stopVM(index int) tea.Cmd {
 
 func (m Model) restartVM(index int) tea.Cmd {
 	return func() tea.Msg {
-		if err := m.manager.RestartVM(index); err != nil {
+		if err := m.manager.RestartVM(context.TODO(), index); err != nil {
 			return errMsg{err}
 		}
 		// Reload VMs after action

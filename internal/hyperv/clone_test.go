@@ -1,6 +1,7 @@
 package hyperv
 
 import (
+	"context"
 	"os"
 	"strings"
 	"testing"
@@ -12,7 +13,7 @@ func skipIfNoHyperV(t *testing.T) {
 	if os.Getenv("CI") != "" || os.Getenv("GITHUB_ACTIONS") != "" {
 		t.Skip("Skipping test: Hyper-V not available in CI/CD environment")
 	}
-	if !IsRunningAsAdmin() {
+	if !IsRunningAsAdmin(context.TODO()) {
 		t.Skip("Skipping test: Administrator privileges required for Hyper-V operations")
 	}
 }
@@ -69,7 +70,7 @@ func TestCloneVM_InvalidIndex(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := manager.CloneVM(tc.vmIndex, tc.newName)
+			err := manager.CloneVM(context.TODO(), tc.vmIndex, tc.newName)
 			if tc.wantErr {
 				if err == nil {
 					t.Errorf("expected error containing '%s', got nil", tc.errMatch)
@@ -131,7 +132,7 @@ func TestCloneVM_EmptyName(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Using index 1 - the empty name check should happen first before any Hyper-V calls
-			err := manager.CloneVM(1, tc.newName)
+			err := manager.CloneVM(context.TODO(), 1, tc.newName)
 			if tc.wantErr {
 				if err == nil {
 					t.Errorf("expected error containing '%s', got nil", tc.errMatch)
@@ -178,7 +179,7 @@ func TestRenameVM_EmptyNames(t *testing.T) {
 
 	// Renaming with empty names should fail (PowerShell will error)
 	// This test verifies the function calls PowerShell correctly
-	err := manager.RenameVM("NonExistentVM", "NewName")
+	err := manager.RenameVM(context.TODO(), "NonExistentVM", "NewName")
 	if err == nil {
 		t.Error("expected error when renaming non-existent VM, got nil")
 	}
@@ -189,7 +190,7 @@ func TestVMExists_NonExistent(t *testing.T) {
 	skipIfNoHyperV(t)
 	manager := NewManager()
 
-	exists, err := manager.VMExists("QuickVM_NonExistent_Test_12345")
+	exists, err := manager.VMExists(context.TODO(), "QuickVM_NonExistent_Test_12345")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -205,7 +206,7 @@ func TestVMExists_EmptyName(t *testing.T) {
 	manager := NewManager()
 
 	// Empty name should return false (no VM with empty name)
-	exists, err := manager.VMExists("")
+	exists, err := manager.VMExists(context.TODO(), "")
 	if err != nil {
 		// PowerShell might error with empty name
 		return
@@ -222,7 +223,7 @@ func TestDeleteVM_NonExistent(t *testing.T) {
 	manager := NewManager()
 
 	// Deleting non-existent VM should fail
-	err := manager.DeleteVM("QuickVM_NonExistent_Test_12345")
+	err := manager.DeleteVM(context.TODO(), "QuickVM_NonExistent_Test_12345")
 	if err == nil {
 		t.Error("expected error when deleting non-existent VM, got nil")
 	}
@@ -233,7 +234,7 @@ func TestCloneVMByName_NonExistent(t *testing.T) {
 	skipIfNoHyperV(t)
 	manager := NewManager()
 
-	err := manager.CloneVMByName("QuickVM_NonExistent_Test_12345", "NewClone")
+	err := manager.CloneVMByName(context.TODO(), "QuickVM_NonExistent_Test_12345", "NewClone")
 	if err == nil {
 		t.Error("expected error when cloning non-existent VM, got nil")
 	}
@@ -248,7 +249,7 @@ func TestCloneVMByName_EmptySourceName(t *testing.T) {
 	skipIfNoHyperV(t)
 	manager := NewManager()
 
-	err := manager.CloneVMByName("", "NewClone")
+	err := manager.CloneVMByName(context.TODO(), "", "NewClone")
 	if err == nil {
 		t.Error("expected error when cloning with empty source name, got nil")
 	}
@@ -261,7 +262,7 @@ func TestCloneVMByName_EmptyNewName(t *testing.T) {
 
 	// This should fail with "not found" because source doesn't exist
 	// But if source existed, it would fail with "new VM name cannot be empty"
-	err := manager.CloneVMByName("SomeVM", "")
+	err := manager.CloneVMByName(context.TODO(), "SomeVM", "")
 	if err == nil {
 		t.Error("expected error when cloning with empty new name, got nil")
 	}

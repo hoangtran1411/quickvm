@@ -1,6 +1,7 @@
 package hyperv
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -29,7 +30,7 @@ func TestExportVM_InvalidIndex(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := manager.ExportVM(tc.index, "C:\\Temp")
+			err := manager.ExportVM(context.TODO(), tc.index, "C:\\Temp")
 			if err == nil {
 				t.Errorf("Expected error for index %d, got nil", tc.index)
 			}
@@ -184,7 +185,7 @@ func TestImportVM_PathNotExists(t *testing.T) {
 		Path: "C:\\NonExistent\\Path\\That\\Does\\Not\\Exist\\12345",
 	}
 
-	_, err := manager.ImportVM(opts)
+	_, err := manager.ImportVM(context.TODO(), opts)
 	if err == nil {
 		t.Error("Expected error for non-existent path, got nil")
 	}
@@ -204,7 +205,7 @@ func TestImportVM_NoVMCXFile(t *testing.T) {
 		Path: tempDir,
 	}
 
-	_, err = manager.ImportVM(opts)
+	_, err = manager.ImportVM(context.TODO(), opts)
 	if err == nil {
 		t.Error("Expected error for directory without .vmcx files, got nil")
 	}
@@ -263,7 +264,7 @@ func TestExportVMByName_EmptyName(t *testing.T) {
 	manager := NewManager()
 
 	// Test with empty VM name - should fail at PowerShell level
-	err := manager.ExportVMByName("", "C:\\Temp")
+	err := manager.ExportVMByName(context.TODO(), "", "C:\\Temp")
 	if err == nil {
 		t.Error("Expected error for empty VM name, got nil")
 	}

@@ -1,6 +1,7 @@
 package hyperv
 
 import (
+	"context"
 	"os"
 	"strings"
 	"testing"
@@ -12,7 +13,7 @@ func skipIfNoHyperVEnv(t *testing.T) {
 	if os.Getenv("CI") != "" || os.Getenv("GITHUB_ACTIONS") != "" {
 		t.Skip("Skipping test: Hyper-V not available in CI/CD environment")
 	}
-	if !IsRunningAsAdmin() {
+	if !IsRunningAsAdmin(context.TODO()) {
 		t.Skip("Skipping test: Administrator privileges required for Hyper-V operations")
 	}
 }
@@ -148,7 +149,7 @@ func TestGetVMIPAddress_InvalidIndex(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := manager.GetVMIPAddress(tc.vmIndex)
+			_, err := manager.GetVMIPAddress(context.TODO(), tc.vmIndex)
 			if tc.wantErr {
 				if err == nil {
 					t.Errorf("expected error containing '%s', got nil", tc.errMatch)
@@ -169,7 +170,7 @@ func TestGetVMIPAddressByName_NonExistent(t *testing.T) {
 	skipIfNoHyperVEnv(t)
 	manager := NewManager()
 
-	_, err := manager.GetVMIPAddressByName("QuickVM_NonExistent_Test_12345")
+	_, err := manager.GetVMIPAddressByName(context.TODO(), "QuickVM_NonExistent_Test_12345")
 	if err == nil {
 		t.Error("expected error for non-existent VM, got nil")
 	}
@@ -208,7 +209,7 @@ func TestConnectRDP_InvalidIndex(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := manager.ConnectRDP(tc.vmIndex, "")
+			err := manager.ConnectRDP(context.TODO(), tc.vmIndex, "")
 			if tc.wantErr {
 				if err == nil {
 					t.Errorf("expected error containing '%s', got nil", tc.errMatch)
@@ -229,7 +230,7 @@ func TestConnectRDPByName_NonExistent(t *testing.T) {
 	skipIfNoHyperVEnv(t)
 	manager := NewManager()
 
-	err := manager.ConnectRDPByName("QuickVM_NonExistent_Test_12345", "")
+	err := manager.ConnectRDPByName(context.TODO(), "QuickVM_NonExistent_Test_12345", "")
 	if err == nil {
 		t.Error("expected error for non-existent VM, got nil")
 	}

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"quickvm/hyperv"
+	"quickvm/internal/hyperv"
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
@@ -30,7 +30,7 @@ Examples:
 		manager := hyperv.NewManager()
 
 		// First check current status
-		info, err := manager.GetSystemInfo(false)
+		info, err := manager.GetSystemInfo(cmd.Context(), false)
 		if err != nil {
 			color.Red("❌ Error checking Hyper-V status: %v", err)
 			os.Exit(1)
@@ -51,7 +51,7 @@ Examples:
 		fmt.Println()
 
 		// Check if running as administrator
-		if !hyperv.IsRunningAsAdmin() {
+		if !hyperv.IsRunningAsAdmin(cmd.Context()) {
 			color.Red("❌ This command requires Administrator privileges.")
 			fmt.Println()
 			color.Yellow("💡 Please run this command in an elevated PowerShell or Command Prompt:")
@@ -62,7 +62,7 @@ Examples:
 		}
 
 		// Enable Hyper-V
-		needsRestart, err := manager.EnableHyperV()
+		needsRestart, err := manager.EnableHyperV(cmd.Context())
 		if err != nil {
 			color.Red("❌ Failed to enable Hyper-V: %v", err)
 			os.Exit(1)
@@ -80,7 +80,7 @@ Examples:
 				color.White("   Press Ctrl+C to cancel the restart.")
 				fmt.Println()
 
-				if err := manager.ScheduleRestart(10); err != nil {
+				if err := manager.ScheduleRestart(cmd.Context(), 10); err != nil {
 					color.Red("❌ Failed to schedule restart: %v", err)
 					color.Yellow("💡 Please restart your computer manually.")
 				}
@@ -99,7 +99,7 @@ Examples:
 					color.White("   Press Ctrl+C to cancel the restart.")
 					fmt.Println()
 
-					if err := manager.ScheduleRestart(10); err != nil {
+					if err := manager.ScheduleRestart(cmd.Context(), 10); err != nil {
 						color.Red("❌ Failed to schedule restart: %v", err)
 						color.Yellow("💡 Please restart your computer manually.")
 					}

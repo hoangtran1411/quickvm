@@ -1,8 +1,9 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
-	"quickvm/hyperv"
+	"quickvm/internal/hyperv"
 	"testing"
 )
 
@@ -23,7 +24,7 @@ func TestRunStart(t *testing.T) {
 			name: "Start single VM",
 			args: []string{"1"},
 			setup: func(m *MockManager) {
-				m.StartVMByNameFn = func(name string) error {
+				m.StartVMByNameFn = func(ctx context.Context, name string) error {
 					if name != "VM1" {
 						return fmt.Errorf("wrong VM")
 					}
@@ -36,7 +37,7 @@ func TestRunStart(t *testing.T) {
 			all:  true,
 			setup: func(m *MockManager) {
 				count := 0
-				m.StartVMByNameFn = func(name string) error {
+				m.StartVMByNameFn = func(ctx context.Context, name string) error {
 					count++
 					return nil
 				}
@@ -46,7 +47,7 @@ func TestRunStart(t *testing.T) {
 			name: "Failed to get VMs",
 			args: []string{"1"},
 			setup: func(m *MockManager) {
-				m.GetVMsFn = func() ([]hyperv.VM, error) {
+				m.GetVMsFn = func(ctx context.Context) ([]hyperv.VM, error) {
 					return nil, fmt.Errorf("hyper-v error")
 				}
 			},
@@ -55,7 +56,7 @@ func TestRunStart(t *testing.T) {
 			name: "Failed to start one VM",
 			args: []string{"1", "2"},
 			setup: func(m *MockManager) {
-				m.StartVMByNameFn = func(name string) error {
+				m.StartVMByNameFn = func(ctx context.Context, name string) error {
 					if name == "VM2" {
 						return fmt.Errorf("crash")
 					}
@@ -68,7 +69,7 @@ func TestRunStart(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &MockManager{
-				GetVMsFn: func() ([]hyperv.VM, error) {
+				GetVMsFn: func(ctx context.Context) ([]hyperv.VM, error) {
 					return mockVMs, nil
 				},
 			}
@@ -77,7 +78,7 @@ func TestRunStart(t *testing.T) {
 			}
 
 			// We just run it. Verification happens inside m.StartVMByNameFn
-			runStart(m, tt.args, tt.rangeStr, tt.all)
+			runStart(context.Background(), m, tt.args, tt.rangeStr, tt.all)
 		})
 	}
 }

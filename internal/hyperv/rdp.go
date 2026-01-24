@@ -1,6 +1,7 @@
 package hyperv
 
 import (
+	"context"
 	"fmt"
 	"os/exec"
 	"strings"
@@ -42,19 +43,19 @@ func ParseCredentials(input string) RDPCredentials {
 }
 
 // GetVMIPAddress gets the IPv4 address of a VM by index
-func (m *Manager) GetVMIPAddress(vmIndex int) (string, error) {
-	vmName, err := m.GetVMNameByIndex(vmIndex)
+func (m *Manager) GetVMIPAddress(ctx context.Context, vmIndex int) (string, error) {
+	vmName, err := m.GetVMNameByIndex(ctx, vmIndex)
 	if err != nil {
 		return "", err
 	}
 
-	return m.GetVMIPAddressByName(vmName)
+	return m.GetVMIPAddressByName(ctx, vmName)
 }
 
 // GetVMIPAddressByName gets the IPv4 address of a VM by name
-func (m *Manager) GetVMIPAddressByName(vmName string) (string, error) {
+func (m *Manager) GetVMIPAddressByName(ctx context.Context, vmName string) (string, error) {
 	// First check if VM is running
-	state, err := m.GetVMStatus(vmName)
+	state, err := m.GetVMStatus(ctx, vmName)
 	if err != nil {
 		return "", fmt.Errorf("failed to get VM state: %v", err)
 	}
@@ -70,7 +71,7 @@ func (m *Manager) GetVMIPAddressByName(vmName string) (string, error) {
 		if ($ipv4) { $ipv4 } else { "" }
 	`, vmName)
 
-	output, err := m.Exec.RunCommand(psScript)
+	output, err := m.Exec.RunScript(ctx, psScript)
 	if err != nil {
 		return "", fmt.Errorf("failed to get VM IP address: %v\nOutput: %s", err, string(output))
 	}
@@ -87,39 +88,48 @@ func (m *Manager) GetVMIPAddressByName(vmName string) (string, error) {
 }
 
 // ConnectRDP opens an RDP connection to a VM by index
-func (m *Manager) ConnectRDP(vmIndex int, credentials string) error {
-	ip, err := m.GetVMIPAddress(vmIndex)
+func (m *Manager) ConnectRDP(ctx context.Context, vmIndex int, credentials string) error {
+	ip, err := m.GetVMIPAddress(ctx, vmIndex)
 	if err != nil {
 		return err
 	}
 
-	return m.ConnectRDPByIP(ip, credentials)
+	return m.ConnectRDPByIP(ctx, ip, credentials)
 }
 
 // ConnectRDPByName opens an RDP connection to a VM by name
-func (m *Manager) ConnectRDPByName(vmName, credentials string) error {
-	ip, err := m.GetVMIPAddressByName(vmName)
+func (m *Manager) ConnectRDPByName(ctx context.Context, vmName, credentials string) error {
+	ip, err := m.GetVMIPAddressByName(ctx, vmName)
 	if err != nil {
 		return err
 	}
 
-	return m.ConnectRDPByIP(ip, credentials)
+	return m.ConnectRDPByIP(ctx, ip, credentials)
 }
 
 // ConnectRDPByIP opens an RDP connection to a specific IP address
 // credentials can be "username" or "username@password"
-func (m *Manager) ConnectRDPByIP(ip, credentials string) error {
+func (m *Manager) ConnectRDPByIP(ctx context.Context, ip, credentials string) error {
 	creds := ParseCredentials(credentials)
 
 	// If password is provided, save to Windows Credential Manager first
 	if creds.Password != "" {
-		if err := m.SaveRDPCredentials(ip, creds.Username, creds.Password); err != nil {
+		if err := m.SaveRDPCredentials(ctx, ip, creds.Username, creds.Password); err != nil {
 			return fmt.Errorf("failed to save RDP credentials: %v", err)
 		}
 	}
 
 	// Build mstsc command
-	cmd := exec.Command("mstsc", "/v:"+ip)
+	// mstsc is an external interactive GUI program.
+	// We use Command (not CommandContext) because we usually want it to detach or run independently if possible,
+	// but CommandContext is safer if we want to kill it when CLI exits.
+	// However, RDP usually stays open.
+	// For now, let's use standard exec.Command but we can't use ctx easily without it being killed on context cancel.
+	// If context is short-lived (CLI command), we might want it to survive?
+	// But idiomatic Go says respect context. Use CommandContext.
+	// If user hits Ctrl-C, we kill RDP window? Probably acceptable.
+
+	cmd := exec.CommandContext(ctx, "mstsc", "/v:"+ip)
 
 	// Start mstsc without waiting for it to finish
 	if err := cmd.Start(); err != nil {
@@ -130,12 +140,10 @@ func (m *Manager) ConnectRDPByIP(ip, credentials string) error {
 }
 
 // SaveRDPCredentials saves RDP credentials to Windows Credential Manager
-func (m *Manager) SaveRDPCredentials(target, username, password string) error {
-	// Use cmdkey to save credentials
-	// cmdkey /generic:TERMSRV/<target> /user:<username> /pass:<password>
-	psScript := fmt.Sprintf(`cmdkey /generic:TERMSRV/%s /user:%s /pass:%s`, target, username, password)
-
-	output, err := m.Exec.RunCommand(psScript)
+func (m *Manager) SaveRDPCredentials(ctx context.Context, target, username, password string) error {
+	// cmdkey
+	cmd := exec.CommandContext(ctx, "cmdkey", fmt.Sprintf("/generic:TERMSRV/%s", target), fmt.Sprintf("/user:%s", username), fmt.Sprintf("/pass:%s", password))
+	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to save credentials: %v\nOutput: %s", err, string(output))
 	}
@@ -144,10 +152,9 @@ func (m *Manager) SaveRDPCredentials(target, username, password string) error {
 }
 
 // DeleteRDPCredentials removes RDP credentials from Windows Credential Manager
-func (m *Manager) DeleteRDPCredentials(target string) error {
-	psScript := fmt.Sprintf(`cmdkey /delete:TERMSRV/%s`, target)
-
-	output, err := m.Exec.RunCommand(psScript)
+func (m *Manager) DeleteRDPCredentials(ctx context.Context, target string) error {
+	cmd := exec.CommandContext(ctx, "cmdkey", fmt.Sprintf("/delete:TERMSRV/%s", target))
+	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to delete credentials: %v\nOutput: %s", err, string(output))
 	}
