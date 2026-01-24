@@ -30,6 +30,7 @@ jobs:
         $VERSION = $env:GITHUB_REF -replace 'refs/tags/', ''
         echo "VERSION=$VERSION" >> $env:GITHUB_OUTPUT
         echo "VERSION_NUMBER=$($VERSION -replace 'v', '')" >> $env:GITHUB_OUTPUT
+        echo "GO_VERSION=1.25.6" >> $env:GITHUB_OUTPUT
       shell: pwsh
 
     - name: Update version in code
