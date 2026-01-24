@@ -3,7 +3,7 @@
 <div align="center">
 
 ![QuickVM Logo](https://img.shields.io/badge/QuickVM-Hyper--V%20Manager-blue?style=for-the-badge&logo=windows)
-![Go Version](https://img.shields.io/badge/Go-1.25.2-00ADD8?style=for-the-badge&logo=go)
+![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?style=for-the-badge&logo=go)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 [![Build Status](https://github.com/hoangtran1411/quickvm/actions/workflows/build.yml/badge.svg)](https://github.com/hoangtran1411/quickvm/actions/workflows/build.yml)
 
@@ -198,6 +198,45 @@ quickvm import "D:\Backups\VMs\MyVM" --copy        # Copy VM files
 quickvm import "D:\Backups\VMs\MyVM" --new-id      # Generate new VM ID
 ```
 
+#### GPU Passthrough (GPU-P)
+```bash
+# Check GPU partitioning support
+quickvm gpu status
+
+# Add GPU partition to a VM (requires Admin)
+quickvm gpu add 1
+
+# Remove GPU partition from a VM
+quickvm gpu remove 1
+
+# Show driver paths for manual copy to guest
+quickvm gpu drivers
+```
+
+#### Remote Desktop (RDP)
+```bash
+# Connect to a running VM via RDP
+quickvm rdp 1
+
+# Connect with auto-login credentials
+quickvm rdp 1 -u "admin@password123"
+```
+
+#### Workspace Management (VM Groups)
+```bash
+# Create a workspace with specific VMs
+quickvm ws create "DevEnvironment" --vms "Proxy,WebApp,DB"
+
+# List all workspaces
+quickvm ws list
+
+# Start all VMs in a workspace
+quickvm ws start "DevEnvironment"
+
+# Stop all VMs in a workspace
+quickvm ws stop "DevEnvironment"
+```
+
 ## 🎯 Quick Examples
 
 ```bash
@@ -224,27 +263,34 @@ QuickVM is built with clean architecture principles:
 ```
 quickvm/
 ├── cmd/            # CLI commands (Cobra)
-│   ├── root.go     # Root command & TUI launcher
-│   ├── start.go    # Start VM command
-│   ├── stop.go     # Stop VM command
-│   ├── restart.go  # Restart VM command
-│   ├── list.go     # List VMs command
-│   ├── info.go     # System info command
-│   ├── snapshot.go # Snapshot management commands
-│   ├── export.go   # Export VM command
-│   ├── import.go   # Import VM command
-│   ├── enable.go   # Enable Hyper-V command
-│   ├── update.go   # Update command
-│   └── version.go  # Version command
-├── hyperv/         # Hyper-V integration layer
-│   ├── hyperv.go   # VM management via PowerShell
-│   ├── snapshot.go # Snapshot operations
-│   ├── export.go   # Export/Import VM operations
-│   └── sysinfo.go  # System information (CPU, RAM, Disk, Hyper-V)
-├── ui/             # TUI components
-│   └── table.go    # Interactive table view (Bubble Tea)
+│   ├── root.go      # Root command & TUI launcher
+│   ├── list.go      # List VMs command
+│   ├── start.go     # Start VM command
+│   ├── stop.go      # Stop VM command
+│   ├── restart.go   # Restart VM command
+│   ├── info.go      # System info command
+│   ├── snapshot.go  # Snapshot management
+│   ├── clone.go     # Clone VM command
+│   ├── export.go    # Export VM command
+│   ├── import.go    # Import VM command
+│   ├── gpu.go       # GPU passthrough management
+│   ├── rdp.go       # Remote Desktop connection
+│   ├── workspace.go # VM group management
+│   ├── enable.go    # Enable Hyper-V command
+│   └── update.go    # Update command
+├── internal/       # Private application logic
+│   └── hyperv/      # Hyper-V integration layer
+│       ├── hyperv.go    # Core VM management
+│       ├── snapshot.go  # Snapshot operations
+│       ├── clone.go     # Clone operations
+│       ├── export.go    # Export/Import operations
+│       ├── gpu.go       # GPU passthrough logic
+│       ├── rdp.go       # RDP & Credential logic
+│       ├── sysinfo.go   # Hardware & System info
+│       └── workspace.go # Workspace profile logic
+├── ui/             # TUI components (Bubble Tea)
+│   └── table.go     # Interactive dashboard
 ├── updater/        # Auto-update functionality
-│   └── updater.go  # Check and apply updates from GitHub
 ├── main.go         # Application entry point
 └── go.mod          # Go modules
 ```
@@ -261,7 +307,7 @@ quickvm/
 
 1. **User Experience First** - Intuitive keyboard navigation and clear visual feedback
 2. **Performance** - Fast VM operations with minimal overhead
-3. **Reliability** - Comprehensive error handling and validation
+3. **Reliability** - Comprehensive error handling, automated testing, and proper process management via Context API
 4. **Beauty** - Color-coded states and modern terminal aesthetics
 
 ## 📚 Documentation
