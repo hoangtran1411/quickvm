@@ -1,6 +1,6 @@
 module quickvm
 
-go 1.21
+go 1.25.6
 
 require (
 	github.com/charmbracelet/bubbles v0.18.0

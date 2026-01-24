@@ -3,7 +3,7 @@
 <div align="center">
 
 ![QuickVM Logo](https://img.shields.io/badge/QuickVM-Hyper--V%20Manager-blue?style=for-the-badge&logo=windows)
-![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?style=for-the-badge&logo=go)
+![Go Version](https://img.shields.io/badge/Go-1.25.6-00ADD8?style=for-the-badge&logo=go)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 [![Build Status](https://github.com/hoangtran1411/quickvm/actions/workflows/build.yml/badge.svg)](https://github.com/hoangtran1411/quickvm/actions/workflows/build.yml)
 
@@ -28,7 +28,7 @@
 
 - Windows 10/11 with Hyper-V enabled
 - Administrator privileges (required for Hyper-V management)
-- Go 1.21 or higher (for building from source)
+- Go 1.25.6 or higher (for building from source)
 
 ## 🚀 Installation
 
