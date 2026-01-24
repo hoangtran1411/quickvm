@@ -2,60 +2,87 @@
 trigger: always_on
 ---
 
+# Go Style Guide - quickvm
+
+> **Core Rules** - For full idioms reference, see `go-idioms-reference.md`
+
+This project is a **Hyper-V Virtual Machine Management CLI/TUI** built with:
+- **Cobra** for CLI command structure
+- **BubbleTea & Lipgloss** for Terminal User Interface
+- **Internal packages** (`hyperv/`) for business logic wrapping PowerShell
+- **Windows-focused** architecture
+
 ---
-trigger: always_on
+
+## Code Style
+
+- Format with `gofmt`/`goimports`. Run `golangci-lint run ./...` before commit.
+- Adhere to [Effective Go](https://go.dev/doc/effective_go) and [Go Code Review Comments](https://github.com/golang/go/wiki/CodeReviewComments).
+- **Organization**:
+  - `cmd/`: entry points and CLI flag parsing.
+  - `internal/`: private application logic (Hyper-V, TUI models).
+  - `pkg/`: public libraries (if any).
+
+## Error Handling
+
+- **Wrap Errors**: Always use `fmt.Errorf("...: %w", err)` for context, especially for PowerShell/Hyper-V failures.
+- **Fail Fast**: Use guard clauses to check errors immediately.
+- **No Silent Failures**: Do not ignore errors in `defer` (log them if unavoidable).
+
+## CLI & TUI Guidelines
+
+- **Cobra (CLI)**:
+  - Follow the "Command Pattern".
+  - Subcommands stay in `cmd/`.
+  - Logic stays in `internal/`.
+- **BubbleTea (TUI)**:
+  - Models stay in `internal/tui`.
+  - Styling with `lipgloss` (define consistent themes).
+  - Use `tea.Cmd` for side effects (like VM operations).
+
+## Hyper-V & Systems Integration
+
+- **PowerShell Security**:
+  - **NEVER** concatenate user input into command arguments.
+  - Use `exec.CommandContext` with individual arguments.
+- **Context Awareness**:
+  - All I/O functions MUST accept `context.Context` as the first argument.
+  - Use timeouts for all external process calls.
+- **Platform Specifics**:
+  - Use `//go:build windows` for code that strictly depends on Windows APIs.
+  - Mock interfaces to allow tests to run on non-Windows systems.
+
+## Testing & Linting
+
+- **Table-Driven Tests**: Primary method for `internal` logic.
+- **Mocking**: Abstract Hyper-V calls behind interfaces to unit test logic without Admin rights.
+- **Integration**: Real Hyper-V tests should be separated (e.g., via build tags or manual triggers).
+
 ---
 
-Code Style:
-- "Ensure all Go code is formatted using `gofmt` or `goimports`."
-- "Adhere to [Effective Go](https://golang.org/doc/effective_go.html) and [Go Code Review Comments](https://github.com/golang/go/wiki/CodeReviewComments)."
-- "Organize code into domain-specific packages (e.g., `hyperv/`) for business logic. Use `internal/` only for code that should legally be hidden from external importers."
+## AI Agent Rules (Critical)
 
-User Interface & UX (Charmbracelet):
-- "Leverage `github.com/charmbracelet/lipgloss` for all CLI styling (colors, borders, margins). Avoid raw ANSI escape codes."
-- "Use `github.com/charmbracelet/bubbletea` for interactive workflows (spinners, selection lists, forms)."
-- "Ensure the CLI feels 'Premium': use consistent padding, clear headers, and intuitive navigation."
+### Enforcement
 
-Error Handling:
-- "Always wrap errors using `%w`: `fmt.Errorf(\"context: %w\", err)`. This is critical for tracing Hyper-V and Shell execution errors."
-- "Implement 'fail fast' logic using guard clauses to minimize indentation."
-- "Do not ignore errors in `defer` statements (e.g., closing files), log them if handling isn't possible."
+- **Prefer Clarity**: Clear, verbose variable names over single letters (except idiomatic `i`, `ctx`, `err`).
+- **Idiomatic Go**: Avoid bringing patterns from other languages (like getters/setters unless necessary for interfaces).
 
-Context & Concurrency:
-- "Every function performing I/O or calling external commands (PowerShell) MUST accept `context.Context` as its first argument."
-- "Use `context` to manage timeouts and cancellations for long-running Hyper-V operations."
+### Context Accuracy
 
-Security & Shell Execution:
-- "NEVER construct PowerShell commands using simple string concatenation with user input. Use proper argument quoting or sanitization helpers to prevent Command Injection."
-- "Prefer `exec.CommandContext` over `exec.Command`."
+- **Verify APIs**: Check `go.mod` for library versions (especially `bubbletea`).
+- **Assume "No Access"**: When mocking, assume we don't have Admin privileges unless confirmed.
 
-Documentation:
-- "Every exported function, variable, and type must have clear documentation comments explaining 'Why' rather than just 'What'."
-- "Provide usage examples for complex packages in a `doc.go` file."
+### Context Engineering
 
-Testing:
-- "Prioritize Table-driven tests combined with `t.Run` for comprehensive test coverage."
-- "Mock Hyper-V interfaces to ensure unit tests can run without Administrator privileges or a Windows environment."
-- "Use the 'TestMain' pattern or build tags (e.g., `//go:build windows`) for integration tests that require actual Hyper-V."
+- Check `internal/hyperv` existing patterns before adding new wrappers.
+- Do not blindly copy WMI queries; verify they work on standard Hyper-V installations.
 
-Efficiency & Tone:
-- "Avoid greetings, apologies, or meta-commentary; focus strictly on code and execution logs."
-- "Provide code as minimal diffs/blocks whenever possible."
+---
 
-Reference & Resource Mapping (GitHub Repositories)
+## Quick Reference Links
 
-### CLI Implementation:
-- **Reference:** [spf13/cobra](https://github.com/spf13/cobra)
-- **Guideline:** Use Cobra's structure for subcommands (e.g., `vm start`, `vm stop`). Follow the "Command Pattern" to decouple CLI logic from Hyper-V business logic.
-
-### Hyper-V & WMI Integration:
-- **Reference:** [sheepla/go-hyperv](https://github.com/sheepla/go-hyperv)
-- **Guideline:** Model Hyper-V object structures (VM, VHD, Network Switch) based on this repo's WMI queries. Ensure type safety when parsing WMI outputs.
-
-### Performance & Profiling:
-- **Reference:** [google/pprof](https://github.com/google/pprof)
-- **Guideline:** Integrate `net/http/pprof` in long-running management daemons to monitor memory leaks during heavy VM orchestration tasks.
-
-### Automation Logic:
-- **Reference:** [fdcastel/Hyper-V-Automation](https://github.com/fdcastel/Hyper-V-Automation)
-- **Guideline:** Use the logic from these PowerShell scripts as a blueprint for the `os/exec` calls in Go. Ensure all scripts are executed with `context.Context` for strict timeout management.
+- [Effective Go](https://go.dev/doc/effective_go)
+- [Cobra](https://github.com/spf13/cobra)
+- [Bubble Tea](https://github.com/charmbracelet/bubbletea)
+- [Go Hyper-V Reference](https://github.com/sheepla/go-hyperv)
+- [golangci-lint](https://github.com/golangci/golangci-lint)
