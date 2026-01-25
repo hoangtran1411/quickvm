@@ -78,6 +78,66 @@ func newMockManager(output string, err error) (*Manager, *MockRunner) {
 	return &Manager{Exec: mock}, mock
 }
 
+// --- Security Tests: PowerShell Injection Prevention ---
+
+func TestEscapePSString(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "Simple name",
+			input:    "MyVM",
+			expected: "MyVM",
+		},
+		{
+			name:     "Name with spaces",
+			input:    "My VM Name",
+			expected: "My VM Name",
+		},
+		{
+			name:     "Name with double quotes - injection attempt",
+			input:    `"; Remove-VM -Name * -Force; #`,
+			expected: "`\"; Remove-VM -Name * -Force; #",
+		},
+		{
+			name:     "Name with dollar sign - variable injection",
+			input:    "$env:USERNAME",
+			expected: "`$env:USERNAME",
+		},
+		{
+			name:     "Name with backtick - escape bypass attempt",
+			input:    "VM`nName",
+			expected: "VM``nName",
+		},
+		{
+			name:     "Complex injection attempt",
+			input:    `"$(Remove-VM * -Force)"`,
+			expected: "`\"`$(Remove-VM * -Force)`\"",
+		},
+		{
+			name:     "All special chars combined",
+			input:    "`\"$test",
+			expected: "```\"`$test",
+		},
+		{
+			name:     "Empty string",
+			input:    "",
+			expected: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := escapePSString(tt.input)
+			if result != tt.expected {
+				t.Errorf("escapePSString(%q) = %q, want %q", tt.input, result, tt.expected)
+			}
+		})
+	}
+}
+
 // --- VM Management Tests ---
 
 func TestGetVMs_Mock_Success(t *testing.T) {

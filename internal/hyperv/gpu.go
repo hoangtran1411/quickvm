@@ -7,6 +7,17 @@ import (
 	"strings"
 )
 
+// escapePSString escapes a string for safe use in PowerShell double-quoted strings.
+// This prevents injection attacks where vmName could contain malicious PowerShell commands.
+// Escapes: backtick (`), double quote ("), and dollar sign ($)
+func escapePSString(s string) string {
+	// Order matters: escape backticks first since they're the escape character
+	s = strings.ReplaceAll(s, "`", "``")
+	s = strings.ReplaceAll(s, `"`, "`\"")
+	s = strings.ReplaceAll(s, "$", "`$")
+	return s
+}
+
 // GPUInfo contains information about a partitionable GPU
 type GPUInfo struct {
 	Name                    string `json:"name"`
@@ -131,6 +142,8 @@ func (m *Manager) CheckGPUPartitionable(ctx context.Context) ([]GPUInfo, error) 
 
 // GetVMGPUPartition gets GPU partition info for a specific VM
 func (m *Manager) GetVMGPUPartition(ctx context.Context, vmName string) (*VMGPUPartition, error) {
+	// Escape vmName to prevent PowerShell injection attacks
+	safeVMName := escapePSString(vmName)
 	psScript := fmt.Sprintf(`
 		$adapter = Get-VMGpuPartitionAdapter -VMName "%s" -ErrorAction SilentlyContinue
 		if ($adapter -eq $null) {
@@ -146,7 +159,7 @@ func (m *Manager) GetVMGPUPartition(ctx context.Context, vmName string) (*VMGPUP
 				PartitionCount = 1
 			} | ConvertTo-Json
 		}
-	`, vmName, vmName, vmName)
+	`, safeVMName, safeVMName, safeVMName)
 
 	output, err := m.Exec.RunScript(ctx, psScript)
 	if err != nil {
@@ -188,6 +201,8 @@ func (m *Manager) AddGPUPartition(ctx context.Context, vmName string, config *GP
 	}
 
 	// Add GPU Partition Adapter
+	// Escape vmName to prevent PowerShell injection attacks
+	safeVMName := escapePSString(vmName)
 	psScript := fmt.Sprintf(`
 		# Step 1: Add GPU Partition Adapter
 		Add-VMGpuPartitionAdapter -VMName "%s"
@@ -208,15 +223,15 @@ func (m *Manager) AddGPUPartition(ctx context.Context, vmName string, config *GP
 		
 		Write-Output "SUCCESS"
 	`,
-		vmName,
-		vmName,
+		safeVMName,
+		safeVMName,
 		config.MinVRAM, config.MaxVRAM, config.OptimalVRAM,
 		config.MinEncode, config.MaxEncode, config.OptimalEncode,
 		config.MinDecode, config.MaxDecode, config.OptimalDecode,
 		config.MinCompute, config.MaxCompute, config.OptimalCompute,
-		vmName,
-		config.LowMMIOSpace, vmName,
-		config.HighMMIOSpace, vmName,
+		safeVMName,
+		config.LowMMIOSpace, safeVMName,
+		config.HighMMIOSpace, safeVMName,
 	)
 
 	output, err := m.Exec.RunScript(ctx, psScript)
@@ -251,10 +266,12 @@ func (m *Manager) RemoveGPUPartition(ctx context.Context, vmName string) error {
 		return fmt.Errorf("VM '%s' does not have a GPU partition", vmName)
 	}
 
+	// Escape vmName to prevent PowerShell injection attacks
+	safeVMName := escapePSString(vmName)
 	psScript := fmt.Sprintf(`
 		Remove-VMGpuPartitionAdapter -VMName "%s"
 		Write-Output "SUCCESS"
-	`, vmName)
+	`, safeVMName)
 
 	output, err := m.Exec.RunScript(ctx, psScript)
 	if err != nil {
