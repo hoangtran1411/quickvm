@@ -139,7 +139,7 @@ func TestCopyFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	// Create source file
 	srcPath := filepath.Join(tmpDir, "source.txt")
@@ -199,7 +199,7 @@ func TestExtractZip(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	// Create a test ZIP file
 	zipPath := filepath.Join(tmpDir, "test.zip")
@@ -238,7 +238,7 @@ func TestExtractZip_WithDirectory(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	// Create ZIP with directory structure
 	zipPath := filepath.Join(tmpDir, "test-dir.zip")
@@ -273,7 +273,7 @@ func TestExtractZip_InvalidZip(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	// Create an invalid ZIP (just a text file)
 	invalidZip := filepath.Join(tmpDir, "invalid.zip")
@@ -378,10 +378,10 @@ func createTestZip(path string) error {
 	if err != nil {
 		return err
 	}
-	defer zipFile.Close()
+	defer func() { _ = zipFile.Close() }()
 
 	w := zip.NewWriter(zipFile)
-	defer w.Close()
+	defer func() { _ = w.Close() }()
 
 	f, err := w.Create("test.txt")
 	if err != nil {
@@ -397,10 +397,10 @@ func createTestZipWithDir(path string) error {
 	if err != nil {
 		return err
 	}
-	defer zipFile.Close()
+	defer func() { _ = zipFile.Close() }()
 
 	w := zip.NewWriter(zipFile)
-	defer w.Close()
+	defer func() { _ = w.Close() }()
 
 	// Create directory entry
 	_, err = w.Create("subdir/")
@@ -420,7 +420,7 @@ func createTestZipWithDir(path string) error {
 // Benchmark tests
 func BenchmarkCopyFile(b *testing.B) {
 	tmpDir, _ := os.MkdirTemp("", "bench-*")
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	srcPath := filepath.Join(tmpDir, "source.bin")
 	// Create 1MB file
@@ -431,13 +431,13 @@ func BenchmarkCopyFile(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		dstPath := filepath.Join(tmpDir, "dest.bin")
 		_ = copyFile(srcPath, dstPath)
-		os.Remove(dstPath)
+		_ = os.Remove(dstPath)
 	}
 }
 
 func BenchmarkExtractZip(b *testing.B) {
 	tmpDir, _ := os.MkdirTemp("", "bench-zip-*")
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	zipPath := filepath.Join(tmpDir, "test.zip")
 	_ = createTestZip(zipPath)
@@ -447,7 +447,7 @@ func BenchmarkExtractZip(b *testing.B) {
 		extractDir := filepath.Join(tmpDir, "extract")
 		_ = os.MkdirAll(extractDir, 0755)
 		_ = extractZip(zipPath, extractDir)
-		os.RemoveAll(extractDir)
+		_ = os.RemoveAll(extractDir)
 	}
 }
 

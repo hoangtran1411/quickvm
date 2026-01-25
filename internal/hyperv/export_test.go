@@ -60,7 +60,7 @@ func TestFindVMCXFile_NotFound(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temp directory: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	_, err = manager.findVMCXFile(tempDir)
 	if err == nil {
@@ -76,7 +76,7 @@ func TestFindVMCXFile_InVirtualMachinesSubdir(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temp directory: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	vmDir := filepath.Join(tempDir, "Virtual Machines")
 	if err := os.MkdirAll(vmDir, 0755); err != nil {
@@ -199,7 +199,7 @@ func TestImportVM_NoVMCXFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temp directory: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	opts := ImportVMOptions{
 		Path: tempDir,
@@ -243,7 +243,7 @@ func TestFindVMCXFile_DirectlyInBasePath(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temp directory: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	vmcxFile := filepath.Join(tempDir, "test.vmcx")
 	if err := os.WriteFile(vmcxFile, []byte{}, 0644); err != nil {

@@ -21,9 +21,9 @@ const (
 
 // Release represents a GitHub release
 type Release struct {
-	TagName string `json:"tag_name"`
-	Name    string `json:"name"`
-	Body    string `json:"body"`
+	TagName string  `json:"tag_name"`
+	Name    string  `json:"name"`
+	Body    string  `json:"body"`
 	Assets  []Asset `json:"assets"`
 }
 
@@ -65,7 +65,7 @@ func (u *Updater) CheckForUpdates() (*Release, bool, error) {
 	if err != nil {
 		return nil, false, fmt.Errorf("failed to check for updates: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, false, fmt.Errorf("GitHub API returned status %d", resp.StatusCode)
@@ -89,10 +89,10 @@ func (u *Updater) CheckForUpdates() (*Release, bool, error) {
 func (u *Updater) DownloadAndInstall(release *Release) error {
 	// Determine the correct asset based on architecture
 	assetName := u.getAssetName()
-	
+
 	var downloadURL string
 	var assetSize int64
-	
+
 	for _, asset := range release.Assets {
 		if strings.Contains(asset.Name, assetName) {
 			downloadURL = asset.BrowserDownloadURL
@@ -116,7 +116,7 @@ func (u *Updater) DownloadAndInstall(release *Release) error {
 	if err != nil {
 		return fmt.Errorf("failed to download update: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("download failed with status %d", resp.StatusCode)
@@ -128,11 +128,11 @@ func (u *Updater) DownloadAndInstall(release *Release) error {
 		return fmt.Errorf("failed to create temp file: %w", err)
 	}
 	tmpPath := tmpFile.Name()
-	defer os.Remove(tmpPath)
+	defer func() { _ = os.Remove(tmpPath) }()
 
 	// Download with progress
 	_, err = io.Copy(tmpFile, resp.Body)
-	tmpFile.Close()
+	_ = tmpFile.Close()
 	if err != nil {
 		return fmt.Errorf("failed to save update: %w", err)
 	}
@@ -148,10 +148,10 @@ func (u *Updater) DownloadAndInstall(release *Release) error {
 	// Use a different strategy: rename old file instead of deleting
 	oldPath := exePath + ".old"
 	fmt.Println("🔄 Installing update...")
-	
+
 	// Remove any existing .old file first
 	_ = os.Remove(oldPath)
-	
+
 	// Rename current executable to .old (this works even if file is locked)
 	if err := os.Rename(exePath, oldPath); err != nil {
 		return fmt.Errorf("failed to rename old version: %w", err)
@@ -192,13 +192,13 @@ func copyFile(src, dst string) error {
 	if err != nil {
 		return err
 	}
-	defer sourceFile.Close()
+	defer func() { _ = sourceFile.Close() }()
 
 	destFile, err := os.Create(dst)
 	if err != nil {
 		return err
 	}
-	defer destFile.Close()
+	defer func() { _ = destFile.Close() }()
 
 	_, err = io.Copy(destFile, sourceFile)
 	if err != nil {
@@ -218,7 +218,7 @@ func copyFile(src, dst string) error {
 func createCleanupScript(exePath, oldPath string) error {
 	// Create a PowerShell script that will delete the old version after a delay
 	scriptPath := oldPath + ".cleanup.ps1"
-	
+
 	scriptContent := fmt.Sprintf(`# QuickVM Update Cleanup Script
 # This script will delete itself after cleaning up
 
@@ -260,11 +260,11 @@ Remove-Item $scriptFile -Force -ErrorAction SilentlyContinue
 // executeCommand executes a shell command in the background
 func executeCommand(scriptPath string) error {
 	// Use PowerShell to execute the cleanup script in hidden mode
-	cmd := exec.Command("powershell.exe", 
+	cmd := exec.Command("powershell.exe",
 		"-WindowStyle", "Hidden",
 		"-ExecutionPolicy", "Bypass",
 		"-File", scriptPath)
-	
+
 	// Start without waiting for completion
 	return cmd.Start()
 }
@@ -274,7 +274,7 @@ func (u *Updater) DownloadZipPackage(release *Release, destPath string) error {
 	// Find ZIP asset
 	var zipURL string
 	arch := runtime.GOARCH
-	
+
 	for _, asset := range release.Assets {
 		if strings.Contains(asset.Name, ".zip") && strings.Contains(asset.Name, arch) {
 			zipURL = asset.BrowserDownloadURL
@@ -292,7 +292,7 @@ func (u *Updater) DownloadZipPackage(release *Release, destPath string) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	// Save ZIP file
 	zipPath := filepath.Join(destPath, "quickvm-update.zip")
@@ -300,7 +300,7 @@ func (u *Updater) DownloadZipPackage(release *Release, destPath string) error {
 	if err != nil {
 		return err
 	}
-	defer zipFile.Close()
+	defer func() { _ = zipFile.Close() }()
 
 	_, err = io.Copy(zipFile, resp.Body)
 	if err != nil {
@@ -317,7 +317,7 @@ func extractZip(zipPath, destPath string) error {
 	if err != nil {
 		return err
 	}
-	defer r.Close()
+	defer func() { _ = r.Close() }()
 
 	for _, f := range r.File {
 		fpath := filepath.Join(destPath, f.Name)
@@ -340,13 +340,13 @@ func extractZip(zipPath, destPath string) error {
 
 		rc, err := f.Open()
 		if err != nil {
-			outFile.Close()
+			_ = outFile.Close()
 			return err
 		}
 
 		_, err = io.Copy(outFile, rc)
-		outFile.Close()
-		rc.Close()
+		_ = outFile.Close()
+		_ = rc.Close()
 
 		if err != nil {
 			return err

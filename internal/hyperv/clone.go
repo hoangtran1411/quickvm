@@ -42,7 +42,7 @@ func (m *Manager) CloneVM(ctx context.Context, vmIndex int, newName string) erro
 	if err != nil {
 		return fmt.Errorf("failed to create temp directory: %v", err)
 	}
-	defer os.RemoveAll(tempDir) // Cleanup on exit
+	defer func() { _ = os.RemoveAll(tempDir) }() // Cleanup on exit
 
 	// Step 1: Export the source VM
 	if err := m.ExportVMByName(ctx, vmName, tempDir); err != nil {

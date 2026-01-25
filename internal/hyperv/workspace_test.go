@@ -12,7 +12,7 @@ func TestWorkspaceStorage(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	// Since GetWorkspaceDir uses os.UserHomeDir, we might want to mock it.
 	// But let's check if we can just test the logic via manual Save/Load to specific paths if possible.
@@ -24,11 +24,11 @@ func TestWorkspaceStorage(t *testing.T) {
 		oldHome = os.Getenv("HOME")
 	}
 
-	os.Setenv("USERPROFILE", tempDir)
-	os.Setenv("HOME", tempDir)
+	_ = os.Setenv("USERPROFILE", tempDir)
+	_ = os.Setenv("HOME", tempDir)
 	defer func() {
-		os.Setenv("USERPROFILE", oldHome)
-		os.Setenv("HOME", oldHome)
+		_ = os.Setenv("USERPROFILE", oldHome)
+		_ = os.Setenv("HOME", oldHome)
 	}()
 
 	ws := &Workspace{
@@ -74,11 +74,11 @@ func TestWorkspaceStorage(t *testing.T) {
 
 func TestLoadWorkspace_Errors(t *testing.T) {
 	tempDir, _ := os.MkdirTemp("", "quickvm-test-load-err")
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	oldHome := os.Getenv("USERPROFILE")
-	os.Setenv("USERPROFILE", tempDir)
-	defer os.Setenv("USERPROFILE", oldHome)
+	_ = os.Setenv("USERPROFILE", tempDir)
+	defer func() { _ = os.Setenv("USERPROFILE", oldHome) }()
 
 	// Test non-existent
 	_, err := LoadWorkspace("NoSuchWorkspace")
@@ -99,11 +99,11 @@ func TestLoadWorkspace_Errors(t *testing.T) {
 
 func TestDeleteWorkspace_NonExistent(t *testing.T) {
 	tempDir, _ := os.MkdirTemp("", "quickvm-test-del-err")
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	oldHome := os.Getenv("USERPROFILE")
-	os.Setenv("USERPROFILE", tempDir)
-	defer os.Setenv("USERPROFILE", oldHome)
+	_ = os.Setenv("USERPROFILE", tempDir)
+	defer func() { _ = os.Setenv("USERPROFILE", oldHome) }()
 
 	err := DeleteWorkspace("NoSuchWs")
 	if err == nil {
@@ -113,11 +113,11 @@ func TestDeleteWorkspace_NonExistent(t *testing.T) {
 
 func TestSaveWorkspace_Error(t *testing.T) {
 	tempDir, _ := os.MkdirTemp("", "quickvm-test-save-err")
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	oldHome := os.Getenv("USERPROFILE")
-	os.Setenv("USERPROFILE", tempDir)
-	defer os.Setenv("USERPROFILE", oldHome)
+	_ = os.Setenv("USERPROFILE", tempDir)
+	defer func() { _ = os.Setenv("USERPROFILE", oldHome) }()
 
 	wsDir, _ := GetWorkspaceDir()
 	// Make workspace directory read-only (not reliably working on all OS, but try)
@@ -135,10 +135,10 @@ func TestSaveWorkspace_Error(t *testing.T) {
 
 func TestGetWorkspaceDir_HomeError(t *testing.T) {
 	oldHome := os.Getenv("USERPROFILE")
-	os.Unsetenv("USERPROFILE")
-	os.Unsetenv("HOME")
+	_ = os.Unsetenv("USERPROFILE")
+	_ = os.Unsetenv("HOME")
 	defer func() {
-		os.Setenv("USERPROFILE", oldHome)
+		_ = os.Setenv("USERPROFILE", oldHome)
 	}()
 
 	_, err := GetWorkspaceDir()
@@ -149,11 +149,11 @@ func TestGetWorkspaceDir_HomeError(t *testing.T) {
 
 func TestGetWorkspaceDir(t *testing.T) {
 	tempDir, _ := os.MkdirTemp("", "quickvm-test-dir")
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	oldHome := os.Getenv("USERPROFILE")
-	os.Setenv("USERPROFILE", tempDir)
-	defer os.Setenv("USERPROFILE", oldHome)
+	_ = os.Setenv("USERPROFILE", tempDir)
+	defer func() { _ = os.Setenv("USERPROFILE", oldHome) }()
 
 	dir, err := GetWorkspaceDir()
 	if err != nil {

@@ -47,29 +47,29 @@ func printSystemInfo(info *hyperv.SystemInfo) {
 	errorColor := color.New(color.FgRed)
 
 	fmt.Println()
-	headerColor.Println("╔══════════════════════════════════════════════════════════════╗")
-	headerColor.Println("║                       SYSTEM INFORMATION                     ║")
-	headerColor.Println("╚══════════════════════════════════════════════════════════════╝")
+	_, _ = headerColor.Println("╔══════════════════════════════════════════════════════════════╗")
+	_, _ = headerColor.Println("║                       SYSTEM INFORMATION                     ║")
+	_, _ = headerColor.Println("╚══════════════════════════════════════════════════════════════╝")
 	fmt.Println()
 
 	// CPU Section
-	headerColor.Println("🖥️  CPU")
+	_, _ = headerColor.Println("🖥️  CPU")
 	fmt.Println(strings.Repeat("─", 60))
-	labelColor.Print("   Name:  ")
-	valueColor.Println(info.CPU.Name)
-	labelColor.Print("   Cores: ")
-	valueColor.Printf("%d cores\n", info.CPU.Cores)
+	_, _ = labelColor.Print("   Name:  ")
+	_, _ = valueColor.Println(info.CPU.Name)
+	_, _ = labelColor.Print("   Cores: ")
+	_, _ = valueColor.Printf("%d cores\n", info.CPU.Cores)
 	fmt.Println()
 
 	// Memory Section
-	headerColor.Println("💾 MEMORY (RAM)")
+	_, _ = headerColor.Println("💾 MEMORY (RAM)")
 	fmt.Println(strings.Repeat("─", 60))
-	labelColor.Print("   Total: ")
-	valueColor.Printf("%d MB (%.2f GB)\n", info.Memory.TotalMB, info.Memory.TotalGB)
-	labelColor.Print("   Used:  ")
-	valueColor.Printf("%d MB (%.2f GB)\n", info.Memory.UsedMB, info.Memory.UsedGB)
-	labelColor.Print("   Free:  ")
-	successColor.Printf("%d MB (%.2f GB)\n", info.Memory.FreeMB, info.Memory.FreeGB)
+	_, _ = labelColor.Print("   Total: ")
+	_, _ = valueColor.Printf("%d MB (%.2f GB)\n", info.Memory.TotalMB, info.Memory.TotalGB)
+	_, _ = labelColor.Print("   Used:  ")
+	_, _ = valueColor.Printf("%d MB (%.2f GB)\n", info.Memory.UsedMB, info.Memory.UsedGB)
+	_, _ = labelColor.Print("   Free:  ")
+	_, _ = successColor.Printf("%d MB (%.2f GB)\n", info.Memory.FreeMB, info.Memory.FreeGB)
 
 	// Memory progress bar
 	usedPercent := float64(info.Memory.UsedMB) / float64(info.Memory.TotalMB) * 100
@@ -77,13 +77,13 @@ func printSystemInfo(info *hyperv.SystemInfo) {
 	fmt.Println()
 
 	// Disk Section
-	headerColor.Println("💿 DISK DRIVES")
+	_, _ = headerColor.Println("💿 DISK DRIVES")
 	fmt.Println(strings.Repeat("─", 60))
 	for _, disk := range info.Disks {
-		labelColor.Printf("   Drive %s\n", disk.Name)
-		valueColor.Printf("      Total: %d MB (%.2f GB)\n", disk.TotalMB, disk.TotalGB)
-		valueColor.Printf("      Used:  %d MB (%.2f GB)\n", disk.UsedMB, disk.UsedGB)
-		successColor.Printf("      Free:  %d MB (%.2f GB)\n", disk.FreeMB, disk.FreeGB)
+		_, _ = labelColor.Printf("   Drive %s\n", disk.Name)
+		_, _ = valueColor.Printf("      Total: %d MB (%.2f GB)\n", disk.TotalMB, disk.TotalGB)
+		_, _ = valueColor.Printf("      Used:  %d MB (%.2f GB)\n", disk.UsedMB, disk.UsedGB)
+		_, _ = successColor.Printf("      Free:  %d MB (%.2f GB)\n", disk.FreeMB, disk.FreeGB)
 
 		diskUsedPercent := float64(disk.UsedMB) / float64(disk.TotalMB) * 100
 		printProgressBar("      Usage", diskUsedPercent, 35)
@@ -91,17 +91,17 @@ func printSystemInfo(info *hyperv.SystemInfo) {
 	}
 
 	// Hyper-V Section
-	headerColor.Println("🔧 HYPER-V STATUS")
+	_, _ = headerColor.Println("🔧 HYPER-V STATUS")
 	fmt.Println(strings.Repeat("─", 60))
-	labelColor.Print("   Status:  ")
+	_, _ = labelColor.Print("   Status:  ")
 	if info.HyperV.Enabled {
-		successColor.Printf("✅ %s (Enabled)\n", info.HyperV.Status)
+		_, _ = successColor.Printf("✅ %s (Enabled)\n", info.HyperV.Status)
 	} else {
-		errorColor.Printf("❌ %s (Disabled)\n", info.HyperV.Status)
+		_, _ = errorColor.Printf("❌ %s (Disabled)\n", info.HyperV.Status)
 	}
 	fmt.Println()
 
-	headerColor.Println("════════════════════════════════════════════════════════════════")
+	_, _ = headerColor.Println("════════════════════════════════════════════════════════════════")
 }
 
 // printProgressBar prints a visual progress bar
@@ -120,7 +120,7 @@ func printProgressBar(label string, percent float64, width int) {
 	}
 
 	fmt.Printf("%s: [", label)
-	barColor.Print(strings.Repeat("█", filled))
+	_, _ = barColor.Print(strings.Repeat("█", filled))
 	fmt.Print(strings.Repeat("░", empty))
 	fmt.Printf("] %.1f%%\n", percent)
 }
