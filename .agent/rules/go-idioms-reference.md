@@ -167,3 +167,4 @@ type VMManager interface {
 - [Cobra (CLI)](https://github.com/spf13/cobra)
 - [Bubble Tea (TUI)](https://github.com/charmbracelet/bubbletea)
 - [Go Hyper-V (Reference)](https://github.com/sheepla/go-hyperv)
+- [golangci-lint (v2.8.0)](https://golangci-lint.run/)

@@ -16,7 +16,7 @@ This project is a **Hyper-V Virtual Machine Management CLI/TUI** built with:
 
 ## Code Style
 
-- Format with `gofmt`/`goimports`. Run `golangci-lint run ./...` before commit.
+- Format with `gofmt`/`goimports`. Run `golangci-lint` (v2.8.0+) `run ./...` before commit.
 - Adhere to [Effective Go](https://go.dev/doc/effective_go) and [Go Code Review Comments](https://github.com/golang/go/wiki/CodeReviewComments).
 - **Organization**:
   - `cmd/`: entry points and CLI flag parsing.
@@ -85,4 +85,4 @@ This project is a **Hyper-V Virtual Machine Management CLI/TUI** built with:
 - [Cobra](https://github.com/spf13/cobra)
 - [Bubble Tea](https://github.com/charmbracelet/bubbletea)
 - [Go Hyper-V Reference](https://github.com/sheepla/go-hyperv)
-- [golangci-lint](https://github.com/golangci/golangci-lint)
+- [golangci-lint (v2.8.0)](https://golangci-lint.run/)
