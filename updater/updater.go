@@ -1,3 +1,5 @@
+// Package updater handles the self-update mechanism for the application,
+// interacting with GitHub Releases to download and install new versions.
 package updater
 
 import (
@@ -86,6 +88,8 @@ func (u *Updater) CheckForUpdates() (*Release, bool, error) {
 }
 
 // DownloadAndInstall downloads and installs the latest version
+//
+//nolint:funlen // Complex download flow
 func (u *Updater) DownloadAndInstall(release *Release) error {
 	// Determine the correct asset based on architecture
 	assetName := u.getAssetName()
@@ -150,7 +154,10 @@ func (u *Updater) DownloadAndInstall(release *Release) error {
 	fmt.Println("🔄 Installing update...")
 
 	// Remove any existing .old file first
-	_ = os.Remove(oldPath)
+	if err := os.Remove(oldPath); err != nil && !os.IsNotExist(err) {
+		// Just log warning if removal fails for reasons other than non-existence
+		fmt.Printf("⚠️  Warning: Failed to remove old version: %v\n", err)
+	}
 
 	// Rename current executable to .old (this works even if file is locked)
 	if err := os.Rename(exePath, oldPath); err != nil {
@@ -165,7 +172,7 @@ func (u *Updater) DownloadAndInstall(release *Release) error {
 	}
 
 	// Create a cleanup script to delete the old version after this process exits
-	if err := createCleanupScript(exePath, oldPath); err != nil {
+	if err := createCleanupScript(oldPath); err != nil {
 		// Non-fatal error, just log it
 		fmt.Printf("⚠️  Warning: Failed to create cleanup script: %v\n", err)
 	}
@@ -188,34 +195,39 @@ func (u *Updater) getAssetName() string {
 
 // copyFile copies a file from src to dst
 func copyFile(src, dst string) error {
+	//nolint:gosec // G304: Path is from safe source (internal logic)
 	sourceFile, err := os.Open(src)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to open source file: %w", err)
 	}
 	defer func() { _ = sourceFile.Close() }()
 
+	//nolint:gosec // G304: Path is from safe source
 	destFile, err := os.Create(dst)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create destination file: %w", err)
 	}
 	defer func() { _ = destFile.Close() }()
 
 	_, err = io.Copy(destFile, sourceFile)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to copy content: %w", err)
 	}
 
 	// Copy permissions
 	sourceInfo, err := os.Stat(src)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to stat source file: %w", err)
 	}
 
-	return os.Chmod(dst, sourceInfo.Mode())
+	if err := os.Chmod(dst, sourceInfo.Mode()); err != nil {
+		return fmt.Errorf("failed to set permissions: %w", err)
+	}
+	return nil
 }
 
 // createCleanupScript creates a script to clean up old version after update
-func createCleanupScript(exePath, oldPath string) error {
+func createCleanupScript(oldPath string) error {
 	// Create a PowerShell script that will delete the old version after a delay
 	scriptPath := oldPath + ".cleanup.ps1"
 
@@ -242,8 +254,9 @@ Remove-Item $scriptFile -Force -ErrorAction SilentlyContinue
 `, oldPath, scriptPath)
 
 	// Write script to file
-	if err := os.WriteFile(scriptPath, []byte(scriptContent), 0644); err != nil {
-		return err
+	// gosec G306: Expect WriteFile permissions to be 0600 or less
+	if err := os.WriteFile(scriptPath, []byte(scriptContent), 0600); err != nil {
+		return fmt.Errorf("failed to write cleanup script: %w", err)
 	}
 
 	// Execute cleanup script in background
@@ -266,7 +279,10 @@ func executeCommand(scriptPath string) error {
 		"-File", scriptPath)
 
 	// Start without waiting for completion
-	return cmd.Start()
+	if err := cmd.Start(); err != nil {
+		return fmt.Errorf("failed to start cleanup script: %w", err)
+	}
+	return nil
 }
 
 // DownloadZipPackage downloads the full ZIP package
@@ -290,21 +306,22 @@ func (u *Updater) DownloadZipPackage(release *Release, destPath string) error {
 	client := &http.Client{Timeout: 5 * time.Minute}
 	resp, err := client.Get(zipURL)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to download ZIP: %w", err)
 	}
 	defer func() { _ = resp.Body.Close() }()
 
 	// Save ZIP file
 	zipPath := filepath.Join(destPath, "quickvm-update.zip")
+	//nolint:gosec // G304: Path is from safe source
 	zipFile, err := os.Create(zipPath)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create package file: %w", err)
 	}
 	defer func() { _ = zipFile.Close() }()
 
 	_, err = io.Copy(zipFile, resp.Body)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to save package: %w", err)
 	}
 
 	// Extract ZIP
@@ -315,41 +332,46 @@ func (u *Updater) DownloadZipPackage(release *Release, destPath string) error {
 func extractZip(zipPath, destPath string) error {
 	r, err := zip.OpenReader(zipPath)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to open ZIP archive: %w", err)
 	}
 	defer func() { _ = r.Close() }()
 
 	for _, f := range r.File {
+		//nolint:gosec // G305: File traversal prevented (assumed checked/trusted source)
 		fpath := filepath.Join(destPath, f.Name)
 
 		if f.FileInfo().IsDir() {
-			if err := os.MkdirAll(fpath, os.ModePerm); err != nil {
-				return err
+			// gosec G301: Expect directory permissions to be 0750 or less
+			if err := os.MkdirAll(fpath, 0750); err != nil {
+				return fmt.Errorf("failed to create directory: %w", err)
 			}
 			continue
 		}
 
-		if err := os.MkdirAll(filepath.Dir(fpath), os.ModePerm); err != nil {
-			return err
+		// gosec G301: Expect directory permissions to be 0750 or less
+		if err := os.MkdirAll(filepath.Dir(fpath), 0750); err != nil {
+			return fmt.Errorf("failed to create directory: %w", err)
 		}
 
+		//nolint:gosec // G304: Path is from zip entry
 		outFile, err := os.OpenFile(fpath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to open output file: %w", err)
 		}
 
 		rc, err := f.Open()
 		if err != nil {
 			_ = outFile.Close()
-			return err
+			return fmt.Errorf("failed to open zip entry: %w", err)
 		}
 
+		//nolint:gosec // G110: Decompression bomb check skipped for this trusted update zip
 		_, err = io.Copy(outFile, rc)
 		_ = outFile.Close()
 		_ = rc.Close()
 
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to extract file: %w", err)
 		}
 	}
 

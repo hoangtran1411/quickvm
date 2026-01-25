@@ -1,3 +1,4 @@
+// Package hyperv provides interfaces and methods for interacting with Hyper-V.
 package hyperv
 
 import (
@@ -47,7 +48,11 @@ type PowerShellRunner struct{}
 // RunScript executes a PowerShell command/script with Context
 func (p *PowerShellRunner) RunScript(ctx context.Context, script string) ([]byte, error) {
 	cmd := exec.CommandContext(ctx, "powershell", "-NoProfile", "-NonInteractive", "-Command", script)
-	return cmd.CombinedOutput()
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return out, fmt.Errorf("execution failed: %w", err)
+	}
+	return out, nil
 }
 
 // RunCmdlet executes a PowerShell cmdlet safely using separate arguments to avoid injection
@@ -55,14 +60,20 @@ func (p *PowerShellRunner) RunCmdlet(ctx context.Context, cmdlet string, args ..
 	// Construct args: powershell -NoProfile -NonInteractive -Command Cmdlet -Arg1 val1 ...
 	// This relies on the fact that we are passing "Cmdlet" and its args as separate arguments to the powershell executable,
 	// which then parses them. This avoids shell injection when 'cmdlet' is just the command name and 'args' are its parameters.
-	
+
 	// Base args
-	psArgs := []string{"-NoProfile", "-NonInteractive", "-Command", cmdlet}
+	psArgs := make([]string, 0, 4+len(args))
+	psArgs = append(psArgs, "-NoProfile", "-NonInteractive", "-Command", cmdlet)
 	// Append the rest
 	psArgs = append(psArgs, args...)
 
+	//nolint:gosec // G204: psArgs matches safe pattern
 	cmd := exec.CommandContext(ctx, "powershell", psArgs...)
-	return cmd.CombinedOutput()
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return out, fmt.Errorf("cmdlet execution failed: %w", err)
+	}
+	return out, nil
 }
 
 // Manager handles Hyper-V operations
@@ -78,6 +89,8 @@ func NewManager() *Manager {
 }
 
 // GetVMs retrieves all Hyper-V virtual machines
+//
+//nolint:funlen // Parsing logic is verbose
 func (m *Manager) GetVMs(ctx context.Context) ([]VM, error) {
 	// PowerShell script to get VM information
 	psScript := `
@@ -101,7 +114,8 @@ func (m *Manager) GetVMs(ctx context.Context) ([]VM, error) {
 	outputStr := strings.TrimSpace(string(output))
 
 	// Handle single VM case (PowerShell returns object, not array)
-	if strings.HasPrefix(outputStr, "{") {
+	switch {
+	case strings.HasPrefix(outputStr, "{"):
 		var vmRaw struct {
 			Name        string      `json:"name"`
 			State       string      `json:"state"`
@@ -137,7 +151,7 @@ func (m *Manager) GetVMs(ctx context.Context) ([]VM, error) {
 		}
 
 		vms = append(vms, vm)
-	} else if strings.HasPrefix(outputStr, "[") {
+	case strings.HasPrefix(outputStr, "["):
 		var vmsRaw []struct {
 			Name        string      `json:"name"`
 			State       string      `json:"state"`
@@ -174,7 +188,7 @@ func (m *Manager) GetVMs(ctx context.Context) ([]VM, error) {
 			}
 			vms = append(vms, vm)
 		}
-	} else {
+	default:
 		// If output is empty or doesn't start with JSON structure, check if it's an error or just no VMs.
 		// If no VMs are present, PowerShell might return nothing or "[]".
 		// Get-VM returns nothing if no VMs exist.
@@ -274,11 +288,11 @@ func (m *Manager) GetVMStatus(ctx context.Context, name string) (string, error) 
 	// We use Select-Object -ExpandProperty to get just the string value.
 	output, err := m.Exec.RunCmdlet(ctx, "Get-VM", "-Name", name, "|", "Select-Object", "-ExpandProperty", "State")
 	// Note: Piping in RunCmdlet via args works because we are passing "-Command" "Get-VM ... | ..." to powershell.
-	// Wait, RunCmdlet as I defined it: 
+	// Wait, RunCmdlet as I defined it:
 	// psArgs := []string{..., "-Command", cmdlet} -> append args.
 	// Result: powershell ... -Command Get-VM -Name name | Select...
 	// This works in PowerShell syntax.
-	
+
 	if err != nil {
 		// Fallback for complex queries or if piping fails in this specific way,
 		// but standard PowerShell argument parsing usually handles this if arguments are passed correctly.

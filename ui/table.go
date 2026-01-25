@@ -1,3 +1,4 @@
+// Package ui provides the terminal user interface for the QuickVM application.
 package ui
 
 import (
@@ -53,6 +54,7 @@ var (
 				Bold(true)
 )
 
+// Model represents the state of the TUI application.
 type Model struct {
 	table   table.Model
 	vms     []hyperv.VM
@@ -66,6 +68,7 @@ type errMsg struct{ err error }
 
 func (e errMsg) Error() string { return e.err.Error() }
 
+// NewModel creates a new TUI model.
 func NewModel() Model {
 	columns := []table.Column{
 		{Title: "Index", Width: 7},
@@ -95,6 +98,7 @@ func NewModel() Model {
 	}
 }
 
+// Init initializes the model.
 func (m Model) Init() tea.Cmd {
 	return m.loadVMs
 }
@@ -107,6 +111,7 @@ func (m Model) loadVMs() tea.Msg {
 	return vmListMsg(vms)
 }
 
+// Update updates the model based on messages.
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
@@ -165,7 +170,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) updateTable() {
-	rows := []table.Row{}
+	rows := make([]table.Row, 0, len(m.vms))
 	for _, vm := range m.vms {
 		var state string
 		switch strings.ToLower(vm.State) {
@@ -226,6 +231,7 @@ func (m Model) restartVM(index int) tea.Cmd {
 	}
 }
 
+// View renders the TUI view
 func (m Model) View() string {
 	var b strings.Builder
 

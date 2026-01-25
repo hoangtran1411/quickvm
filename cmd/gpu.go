@@ -29,7 +29,7 @@ var gpuStatusCmd = &cobra.Command{
 	Use:   "status",
 	Short: "Check GPU partitioning support",
 	Long:  `Check if the system has GPUs that support partitioning for VM passthrough.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, _ []string) {
 		manager := hyperv.NewManager()
 
 		color.Cyan("🔍 Checking GPU partitioning support...")
@@ -228,7 +228,7 @@ var gpuDriversCmd = &cobra.Command{
 	Use:   "drivers",
 	Short: "Show GPU driver paths for copying to guest",
 	Long:  `Display the GPU driver file paths that need to be copied to the guest VM.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, _ []string) {
 		manager := hyperv.NewManager()
 
 		color.Cyan("🔍 Searching for GPU driver files...")

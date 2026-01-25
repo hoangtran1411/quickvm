@@ -14,7 +14,7 @@ var listCmd = &cobra.Command{
 	Short:   "List all Hyper-V virtual machines",
 	Long:    `Display a list of all Hyper-V virtual machines with their status.`,
 	Aliases: []string{"ls"},
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, _ []string) {
 		manager := hyperv.NewManager()
 
 		fmt.Println("📋 Fetching Hyper-V virtual machines...")

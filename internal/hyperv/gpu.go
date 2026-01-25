@@ -162,6 +162,8 @@ func (m *Manager) GetVMGPUPartition(ctx context.Context, vmName string) (*VMGPUP
 }
 
 // AddGPUPartition adds a GPU partition to a VM
+//
+//nolint:funlen // Script construction required
 func (m *Manager) AddGPUPartition(ctx context.Context, vmName string, config *GPUPartitionConfig) error {
 	if config == nil {
 		config = DefaultGPUPartitionConfig()

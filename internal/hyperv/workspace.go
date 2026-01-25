@@ -23,8 +23,9 @@ func GetWorkspaceDir() (string, error) {
 	}
 
 	dir := filepath.Join(home, ".quickvm", "workspaces")
+	// gosec G301: Expect directory permissions to be 0750 or less
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		if err := os.MkdirAll(dir, 0755); err != nil {
+		if err := os.MkdirAll(dir, 0750); err != nil {
 			return "", fmt.Errorf("failed to create workspace directory: %w", err)
 		}
 	}
@@ -45,7 +46,11 @@ func SaveWorkspace(ws *Workspace) error {
 		return fmt.Errorf("failed to marshal workspace: %w", err)
 	}
 
-	return os.WriteFile(filename, data, 0644)
+	// gosec G306: Expect WriteFile permissions to be 0600 or less
+	if err := os.WriteFile(filename, data, 0600); err != nil {
+		return fmt.Errorf("failed to write workspace file: %w", err)
+	}
+	return nil
 }
 
 // LoadWorkspace loads a workspace by name
@@ -56,6 +61,7 @@ func LoadWorkspace(name string) (*Workspace, error) {
 	}
 
 	filename := filepath.Join(dir, name+".yaml")
+	//nolint:gosec // G304: Path is constructed from trusted dir and name + literal extension.
 	data, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read workspace file '%s': %w", name, err)
@@ -101,5 +107,8 @@ func DeleteWorkspace(name string) error {
 		return fmt.Errorf("workspace '%s' does not exist", name)
 	}
 
-	return os.Remove(filename)
+	if err := os.Remove(filename); err != nil {
+		return fmt.Errorf("failed to delete workspace file: %w", err)
+	}
+	return nil
 }

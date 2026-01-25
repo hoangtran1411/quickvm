@@ -10,10 +10,10 @@ import (
 
 // SystemInfo contains system information
 type SystemInfo struct {
-	CPU    CPUInfo      `json:"cpu"`
-	Memory MemoryInfo   `json:"memory"`
-	Disks  []DiskInfo   `json:"disks"`
-	HyperV HyperVStatus `json:"hyperV"`
+	CPU    CPUInfo    `json:"cpu"`
+	Memory MemoryInfo `json:"memory"`
+	Disks  []DiskInfo `json:"disks"`
+	HyperV Status     `json:"hyperV"`
 }
 
 // CPUInfo contains CPU information
@@ -43,8 +43,8 @@ type DiskInfo struct {
 	UsedGB  float64 `json:"usedGB"`
 }
 
-// HyperVStatus contains Hyper-V status information
-type HyperVStatus struct {
+// Status contains Hyper-V status information
+type Status struct {
 	Enabled bool   `json:"enabled"`
 	Status  string `json:"status"`
 }
@@ -52,6 +52,8 @@ type HyperVStatus struct {
 // GetSystemInfo retrieves system information including CPU, RAM, and Hyper-V status.
 // diskInfo is optional and only retrieved if includeDisk is true.
 // Uses parallel queries to improve performance.
+//
+//nolint:funlen // Parallel execution logic
 func (m *Manager) GetSystemInfo(ctx context.Context, includeDisk bool) (*SystemInfo, error) {
 	info := &SystemInfo{}
 
@@ -69,7 +71,7 @@ func (m *Manager) GetSystemInfo(ctx context.Context, includeDisk bool) (*SystemI
 		err  error
 	}
 	type hypervResult struct {
-		data *HyperVStatus
+		data *Status
 		err  error
 	}
 
@@ -132,7 +134,7 @@ func (m *Manager) GetSystemInfo(ctx context.Context, includeDisk bool) (*SystemI
 		}
 		info.CPU = *cpuRes.data
 	case <-ctx.Done():
-		return nil, ctx.Err()
+		return nil, fmt.Errorf("context cancelled during CPU info retrieval: %w", ctx.Err())
 	}
 
 	// Memory
@@ -143,7 +145,7 @@ func (m *Manager) GetSystemInfo(ctx context.Context, includeDisk bool) (*SystemI
 		}
 		info.Memory = *memRes.data
 	case <-ctx.Done():
-		return nil, ctx.Err()
+		return nil, fmt.Errorf("context cancelled during memory info retrieval: %w", ctx.Err())
 	}
 
 	// Disk
@@ -154,7 +156,7 @@ func (m *Manager) GetSystemInfo(ctx context.Context, includeDisk bool) (*SystemI
 		}
 		info.Disks = diskRes.data
 	case <-ctx.Done():
-		return nil, ctx.Err()
+		return nil, fmt.Errorf("context cancelled during disk info retrieval: %w", ctx.Err())
 	}
 
 	// Hyper-V
@@ -165,7 +167,7 @@ func (m *Manager) GetSystemInfo(ctx context.Context, includeDisk bool) (*SystemI
 		}
 		info.HyperV = *hypervRes.data
 	case <-ctx.Done():
-		return nil, ctx.Err()
+		return nil, fmt.Errorf("context cancelled during Hyper-V status retrieval: %w", ctx.Err())
 	}
 
 	return info, nil
@@ -274,7 +276,7 @@ func (m *Manager) getDiskInfo(ctx context.Context) ([]DiskInfo, error) {
 }
 
 // getHyperVStatus retrieves Hyper-V status
-func (m *Manager) getHyperVStatus(ctx context.Context) (*HyperVStatus, error) {
+func (m *Manager) getHyperVStatus(ctx context.Context) (*Status, error) {
 	psScript := `
 		$hyperv = Get-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V
 		if ($hyperv -eq $null) {
@@ -296,7 +298,7 @@ func (m *Manager) getHyperVStatus(ctx context.Context) (*HyperVStatus, error) {
 		return m.getHyperVStatusAlternative(ctx)
 	}
 
-	var result HyperVStatus
+	var result Status
 	if err := json.Unmarshal(output, &result); err != nil {
 		// If parsing fails, try alternative method
 		return m.getHyperVStatusAlternative(ctx)
@@ -306,7 +308,7 @@ func (m *Manager) getHyperVStatus(ctx context.Context) (*HyperVStatus, error) {
 }
 
 // getHyperVStatusAlternative uses Get-Service as fallback
-func (m *Manager) getHyperVStatusAlternative(ctx context.Context) (*HyperVStatus, error) {
+func (m *Manager) getHyperVStatusAlternative(ctx context.Context) (*Status, error) {
 	psScript := `
 		$vmms = Get-Service -Name vmms -ErrorAction SilentlyContinue
 		if ($vmms -eq $null) {
@@ -324,15 +326,15 @@ func (m *Manager) getHyperVStatusAlternative(ctx context.Context) (*HyperVStatus
 
 	output, err := m.Exec.RunScript(ctx, psScript)
 	if err != nil {
-		return &HyperVStatus{
+		return &Status{
 			Enabled: false,
 			Status:  "Unknown",
 		}, nil
 	}
 
-	var result HyperVStatus
+	var result Status
 	if err := json.Unmarshal(output, &result); err != nil {
-		return &HyperVStatus{
+		return &Status{
 			Enabled: false,
 			Status:  "Unknown",
 		}, nil
@@ -343,6 +345,8 @@ func (m *Manager) getHyperVStatusAlternative(ctx context.Context) (*HyperVStatus
 
 // EnableHyperV enables Hyper-V on the system
 // Returns true if a restart is needed, false otherwise
+//
+//nolint:funlen // Script construction required
 func (m *Manager) EnableHyperV(ctx context.Context) (bool, error) {
 	// Try to enable all Hyper-V features
 	psScript := `

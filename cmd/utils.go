@@ -65,7 +65,6 @@ func parseRange(rangeStr string, maxIndex int) ([]int, error) {
 	var indices []int
 	seen := make(map[int]bool)
 
-	// Handle comma-separated format (e.g., "1,3,5" or "1-5,7,9-11")
 	parts := strings.Split(rangeStr, ",")
 	for _, part := range parts {
 		part = strings.TrimSpace(part)
@@ -73,51 +72,15 @@ func parseRange(rangeStr string, maxIndex int) ([]int, error) {
 			continue
 		}
 
-		if strings.Contains(part, "-") {
-			// Handle range segment (e.g., "1-5")
-			subParts := strings.Split(part, "-")
-			if len(subParts) != 2 {
-				return nil, fmt.Errorf("invalid range segment: %s", part)
-			}
+		segmentIndices, err := parseRangeSegment(part, maxIndex)
+		if err != nil {
+			return nil, err
+		}
 
-			start, err := strconv.Atoi(strings.TrimSpace(subParts[0]))
-			if err != nil {
-				return nil, fmt.Errorf("invalid start index: %s", subParts[0])
-			}
-
-			end, err := strconv.Atoi(strings.TrimSpace(subParts[1]))
-			if err != nil {
-				return nil, fmt.Errorf("invalid end index: %s", subParts[1])
-			}
-
-			if start > end {
-				return nil, fmt.Errorf("start index (%d) must be <= end index (%d)", start, end)
-			}
-
-			if start < 1 || end > maxIndex {
-				return nil, fmt.Errorf("range %d-%d out of bounds (1-%d)", start, end, maxIndex)
-			}
-
-			for i := start; i <= end; i++ {
-				if !seen[i] {
-					indices = append(indices, i)
-					seen[i] = true
-				}
-			}
-		} else {
-			// Handle single index segment
-			index, err := strconv.Atoi(part)
-			if err != nil {
-				return nil, fmt.Errorf("invalid index: %s", part)
-			}
-
-			if index < 1 || index > maxIndex {
-				return nil, fmt.Errorf("index %d out of bounds (1-%d)", index, maxIndex)
-			}
-
-			if !seen[index] {
-				indices = append(indices, index)
-				seen[index] = true
+		for _, idx := range segmentIndices {
+			if !seen[idx] {
+				indices = append(indices, idx)
+				seen[idx] = true
 			}
 		}
 	}
@@ -127,4 +90,56 @@ func parseRange(rangeStr string, maxIndex int) ([]int, error) {
 	}
 
 	return indices, nil
+}
+
+// parseRangeSegment parses a single range segment (e.g., "1-5" or "3")
+func parseRangeSegment(segment string, maxIndex int) ([]int, error) {
+	if strings.Contains(segment, "-") {
+		return parseHyphenatedRange(segment, maxIndex)
+	}
+	return parseSingleIndex(segment, maxIndex)
+}
+
+func parseHyphenatedRange(segment string, maxIndex int) ([]int, error) {
+	parts := strings.Split(segment, "-")
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("invalid range segment: %s", segment)
+	}
+
+	start, err := strconv.Atoi(strings.TrimSpace(parts[0]))
+	if err != nil {
+		return nil, fmt.Errorf("invalid start index: %s", parts[0])
+	}
+
+	end, err := strconv.Atoi(strings.TrimSpace(parts[1]))
+	if err != nil {
+		return nil, fmt.Errorf("invalid end index: %s", parts[1])
+	}
+
+	if start > end {
+		return nil, fmt.Errorf("start index (%d) must be <= end index (%d)", start, end)
+	}
+
+	if start < 1 || end > maxIndex {
+		return nil, fmt.Errorf("range %d-%d out of bounds (1-%d)", start, end, maxIndex)
+	}
+
+	var indices []int
+	for i := start; i <= end; i++ {
+		indices = append(indices, i)
+	}
+	return indices, nil
+}
+
+func parseSingleIndex(segment string, maxIndex int) ([]int, error) {
+	index, err := strconv.Atoi(segment)
+	if err != nil {
+		return nil, fmt.Errorf("invalid index: %s", segment)
+	}
+
+	if index < 1 || index > maxIndex {
+		return nil, fmt.Errorf("index %d out of bounds (1-%d)", index, maxIndex)
+	}
+
+	return []int{index}, nil
 }

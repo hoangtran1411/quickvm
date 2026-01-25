@@ -19,7 +19,7 @@ var workspaceCmd = &cobra.Command{
 var wsListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List all workspaces",
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(_ *cobra.Command, _ []string) {
 		names, err := hyperv.ListWorkspaces()
 		if err != nil {
 			fmt.Printf("❌ Failed to list workspaces: %v\n", err)
@@ -44,7 +44,7 @@ var wsCreateCmd = &cobra.Command{
 	Use:   "create <name>",
 	Short: "Create a new workspace",
 	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(_ *cobra.Command, args []string) {
 		name := args[0]
 		vms := strings.Split(wsVms, ",")
 		for i, v := range vms {
@@ -70,7 +70,7 @@ var wsShowCmd = &cobra.Command{
 	Use:   "show <name>",
 	Short: "Show workspace details",
 	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(_ *cobra.Command, args []string) {
 		ws, err := hyperv.LoadWorkspace(args[0])
 		if err != nil {
 			fmt.Printf("❌ Failed to load workspace: %v\n", err)
@@ -90,7 +90,7 @@ var wsDeleteCmd = &cobra.Command{
 	Use:   "delete <name>",
 	Short: "Delete a workspace",
 	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(_ *cobra.Command, args []string) {
 		if err := hyperv.DeleteWorkspace(args[0]); err != nil {
 			fmt.Printf("❌ Failed to delete workspace: %v\n", err)
 			return

@@ -1,3 +1,4 @@
+// Package cmd handles the command-line interface for the QuickVM application.
 package cmd
 
 import (
@@ -18,13 +19,13 @@ var rootCmd = &cobra.Command{
 	Short: "QuickVM - Fast Hyper-V Virtual Machine Manager",
 	Long: `QuickVM is a TUI-based command-line tool for managing Hyper-V virtual machines.
 It provides a fast and intuitive interface for starting, stopping, and managing VMs.`,
-	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+	PersistentPreRun: func(cmd *cobra.Command, _ []string) {
 		// Check for updates if --update flag is set
 		if autoUpdate && cmd.Name() != "update" {
 			checkAndUpdate()
 		}
 	},
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(_ *cobra.Command, _ []string) {
 		// Launch TUI
 		p := tea.NewProgram(ui.NewModel(), tea.WithAltScreen())
 		if _, err := p.Run(); err != nil {
@@ -34,6 +35,7 @@ It provides a fast and intuitive interface for starting, stopping, and managing 
 	},
 }
 
+// Execute runs the root command.
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)

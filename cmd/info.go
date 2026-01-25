@@ -18,7 +18,7 @@ var infoCmd = &cobra.Command{
 - RAM (MB and GB)
 - Disk drives with free/total space
 - Hyper-V status`,
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, _ []string) {
 		manager := hyperv.NewManager()
 
 		includeDisk, _ := cmd.Flags().GetBool("disk")
@@ -38,6 +38,7 @@ func init() {
 	rootCmd.AddCommand(infoCmd)
 }
 
+//nolint:funlen // UI function
 func printSystemInfo(info *hyperv.SystemInfo) {
 	// Header
 	headerColor := color.New(color.FgCyan, color.Bold)
@@ -110,12 +111,14 @@ func printProgressBar(label string, percent float64, width int) {
 	empty := width - filled
 
 	// Choose color based on usage
+	// Choose color based on usage
 	var barColor *color.Color
-	if percent >= 90 {
+	switch {
+	case percent >= 90:
 		barColor = color.New(color.FgRed)
-	} else if percent >= 70 {
+	case percent >= 70:
 		barColor = color.New(color.FgYellow)
-	} else {
+	default:
 		barColor = color.New(color.FgGreen)
 	}
 

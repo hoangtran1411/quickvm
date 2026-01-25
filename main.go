@@ -1,3 +1,4 @@
+// Package main is the entry point for the QuickVM application.
 package main
 
 import (
@@ -5,7 +6,7 @@ import (
 )
 
 // QuickVM - Fast Hyper-V Virtual Machine Manager
-// 
+//
 // A TUI-based command-line tool for managing Hyper-V virtual machines
 // with an intuitive interface and quick commands.
 //

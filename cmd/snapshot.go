@@ -23,7 +23,7 @@ Available subcommands:
   create  - Create a new snapshot
   restore - Restore a VM to a snapshot
   delete  - Delete a snapshot`,
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, _ []string) {
 		_ = cmd.Help()
 	},
 }

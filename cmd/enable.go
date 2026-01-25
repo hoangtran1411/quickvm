@@ -26,7 +26,7 @@ Examples:
   quickvm enable              # Enable Hyper-V (prompt for restart)
   quickvm enable -y           # Enable Hyper-V and restart immediately
   quickvm enable --no-restart # Enable Hyper-V without restarting`,
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, _ []string) {
 		manager := hyperv.NewManager()
 
 		// First check current status

@@ -59,7 +59,8 @@ The exported VM will be placed in a subdirectory named after the VM.`,
 		// Check if export path exists, create if not
 		if _, err := os.Stat(exportPath); os.IsNotExist(err) {
 			fmt.Printf("📁 Creating export directory: %s\n", exportPath)
-			if err := os.MkdirAll(exportPath, 0755); err != nil {
+			// gosec G301: Expect directory permissions to be 0750 or less
+			if err := os.MkdirAll(exportPath, 0750); err != nil {
 				fmt.Printf("❌ Failed to create export directory: %v\n", err)
 				return
 			}
