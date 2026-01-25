@@ -146,7 +146,10 @@ type VMManager interface {
 - **Table-Driven**: Primary pattern for logic tests.
 - **Build Tags**: Use `//go:build windows` for integration tests that require real Hyper-V.
 - **Mocking**: Use mocks for unit tests in `internal/hyperv` to run on any OS.
-- **Linting**: `.golangci.yml` MUST use version 2 schema (`version: "2"`). V1 schema is deprecated and forbidden.
+- **Linting**: `.golangci.yml` MUST use version 2 schema (`version: "2"`).
+  - Use kebab-case for linter settings (e.g., `ignore-sigs`, `ignore-package-globs`).
+  - Exclusions must be configured under `linters: exclusions: rules` instead of `issues: exclude-rules`.
+  - Prefer global exclusions in config over redundant `//nolint` comments in test files.
 
 ---
 
