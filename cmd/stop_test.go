@@ -24,7 +24,7 @@ func TestRunStop(t *testing.T) {
 			name: "Stop single VM",
 			args: []string{"1"},
 			setup: func(m *MockManager) {
-				m.StopVMFn = func(ctx context.Context, index int) error {
+				m.StopVMFn = func(_ context.Context, index int) error {
 					if index != 1 {
 						return fmt.Errorf("wrong index")
 					}
@@ -37,7 +37,7 @@ func TestRunStop(t *testing.T) {
 			all:  true,
 			setup: func(m *MockManager) {
 				count := 0
-				m.StopVMFn = func(ctx context.Context, index int) error {
+				m.StopVMFn = func(_ context.Context, _ int) error {
 					count++
 					return nil
 				}
@@ -47,7 +47,7 @@ func TestRunStop(t *testing.T) {
 			name: "Failed to get VMs",
 			args: []string{"1"},
 			setup: func(m *MockManager) {
-				m.GetVMsFn = func(ctx context.Context) ([]hyperv.VM, error) {
+				m.GetVMsFn = func(_ context.Context) ([]hyperv.VM, error) {
 					return nil, fmt.Errorf("hyper-v error")
 				}
 			},
@@ -55,9 +55,9 @@ func TestRunStop(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(_ *testing.T) {
 			m := &MockManager{
-				GetVMsFn: func(ctx context.Context) ([]hyperv.VM, error) {
+				GetVMsFn: func(_ context.Context) ([]hyperv.VM, error) {
 					return mockVMs, nil
 				},
 			}

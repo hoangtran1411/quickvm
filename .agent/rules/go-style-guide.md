@@ -17,6 +17,7 @@ This project is a **Hyper-V Virtual Machine Management CLI/TUI** built with:
 ## Code Style
 
 - Format with `gofmt`/`goimports`. Run `golangci-lint` (v2.8.0+) `run ./...` before commit.
+- **Linting Configuration**: MUST use `golangci-lint` v2 configuration schema (v2.8.x+). Usage of v1.x.x schema is strictly forbidden.
 - Adhere to [Effective Go](https://go.dev/doc/effective_go) and [Go Code Review Comments](https://github.com/golang/go/wiki/CodeReviewComments).
 - **Organization**:
   - `cmd/`: entry points and CLI flag parsing.

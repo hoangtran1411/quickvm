@@ -67,7 +67,6 @@ func (p *PowerShellRunner) RunCmdlet(ctx context.Context, cmdlet string, args ..
 	// Append the rest
 	psArgs = append(psArgs, args...)
 
-	//nolint:gosec // G204: psArgs matches safe pattern
 	cmd := exec.CommandContext(ctx, "powershell", psArgs...)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
@@ -90,7 +89,7 @@ func NewManager() *Manager {
 
 // GetVMs retrieves all Hyper-V virtual machines
 //
-//nolint:funlen // Parsing logic is verbose
+//nolint:funlen,gocyclo // Parsing logic is verbose and cyclomatic complexity is high
 func (m *Manager) GetVMs(ctx context.Context) ([]VM, error) {
 	// PowerShell script to get VM information
 	psScript := `

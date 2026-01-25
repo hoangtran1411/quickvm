@@ -112,6 +112,8 @@ func (m Model) loadVMs() tea.Msg {
 }
 
 // Update updates the model based on messages.
+//
+//nolint:gocyclo // UI Update loop is naturally complex
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 

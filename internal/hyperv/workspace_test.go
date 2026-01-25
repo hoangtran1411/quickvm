@@ -89,6 +89,7 @@ func TestLoadWorkspace_Errors(t *testing.T) {
 	// Test invalid YAML
 	wsDir, _ := GetWorkspaceDir()
 	invalidFile := filepath.Join(wsDir, "invalid.yaml")
+	//nolint:gosec // G306: Internal test file
 	_ = os.WriteFile(invalidFile, []byte("invalid: yaml: : :"), 0644)
 
 	_, err = LoadWorkspace("invalid")
@@ -121,7 +122,9 @@ func TestSaveWorkspace_Error(t *testing.T) {
 
 	wsDir, _ := GetWorkspaceDir()
 	// Make workspace directory read-only (not reliably working on all OS, but try)
+	//nolint:gosec // G302: Testing permission errors
 	_ = os.Chmod(wsDir, 0100)
+	//nolint:gosec // G302: Resetting permissions
 	defer func() { _ = os.Chmod(wsDir, 0755) }()
 
 	ws := &Workspace{Name: "Fail"}

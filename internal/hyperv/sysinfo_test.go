@@ -11,14 +11,14 @@ type MockSysInfoExecutor struct {
 	MockError  error
 }
 
-func (m *MockSysInfoExecutor) RunScript(ctx context.Context, script string) ([]byte, error) {
+func (m *MockSysInfoExecutor) RunScript(_ context.Context, _ string) ([]byte, error) {
 	if m.MockError != nil {
 		return nil, m.MockError
 	}
 	return []byte(m.MockOutput), nil
 }
 
-func (m *MockSysInfoExecutor) RunCmdlet(ctx context.Context, cmdlet string, args ...string) ([]byte, error) {
+func (m *MockSysInfoExecutor) RunCmdlet(_ context.Context, _ string, _ ...string) ([]byte, error) {
 	if m.MockError != nil {
 		return nil, m.MockError
 	}
@@ -59,7 +59,7 @@ type SmartMockVerifyDisk struct {
 	DiskCheckTriggered bool
 }
 
-func (m *SmartMockVerifyDisk) RunScript(ctx context.Context, script string) ([]byte, error) {
+func (m *SmartMockVerifyDisk) RunScript(_ context.Context, script string) ([]byte, error) {
 	// Detect what kind of script is running based on keywords
 	if contains(script, "Win32_Processor") {
 		return []byte(`{"Name": "Mock CPU", "Cores": 4}`), nil
@@ -78,7 +78,7 @@ func (m *SmartMockVerifyDisk) RunScript(ctx context.Context, script string) ([]b
 	return []byte("{}"), nil
 }
 
-func (m *SmartMockVerifyDisk) RunCmdlet(ctx context.Context, cmdlet string, args ...string) ([]byte, error) {
+func (m *SmartMockVerifyDisk) RunCmdlet(_ context.Context, _ string, _ ...string) ([]byte, error) {
 	return []byte("{}"), nil
 }
 

@@ -129,7 +129,6 @@ func (m *Manager) ConnectRDPByIP(ctx context.Context, ip, credentials string) er
 	// But idiomatic Go says respect context. Use CommandContext.
 	// If user hits Ctrl-C, we kill RDP window? Probably acceptable.
 
-	//nolint:gosec // G204: IP is validated by regex
 	cmd := exec.CommandContext(ctx, "mstsc", "/v:"+ip)
 
 	// Start mstsc without waiting for it to finish
@@ -143,7 +142,6 @@ func (m *Manager) ConnectRDPByIP(ctx context.Context, ip, credentials string) er
 // SaveRDPCredentials saves RDP credentials to Windows Credential Manager
 func (m *Manager) SaveRDPCredentials(ctx context.Context, target, username, password string) error {
 	// cmdkey
-	//nolint:gosec // G204: Credentials are user-provided but passed as arguments; cmdkey handles them.
 	cmd := exec.CommandContext(ctx, "cmdkey", fmt.Sprintf("/generic:TERMSRV/%s", target), fmt.Sprintf("/user:%s", username), fmt.Sprintf("/pass:%s", password))
 	output, err := cmd.CombinedOutput()
 	if err != nil {
@@ -155,7 +153,6 @@ func (m *Manager) SaveRDPCredentials(ctx context.Context, target, username, pass
 
 // DeleteRDPCredentials removes RDP credentials from Windows Credential Manager
 func (m *Manager) DeleteRDPCredentials(ctx context.Context, target string) error {
-	//nolint:gosec // G204: Target is validated
 	cmd := exec.CommandContext(ctx, "cmdkey", fmt.Sprintf("/delete:TERMSRV/%s", target))
 	output, err := cmd.CombinedOutput()
 	if err != nil {

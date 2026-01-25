@@ -53,7 +53,7 @@ type Status struct {
 // diskInfo is optional and only retrieved if includeDisk is true.
 // Uses parallel queries to improve performance.
 //
-//nolint:funlen // Parallel execution logic
+//nolint:funlen,gocyclo // Parallel execution logic and cyclomatic complexity
 func (m *Manager) GetSystemInfo(ctx context.Context, includeDisk bool) (*SystemInfo, error) {
 	info := &SystemInfo{}
 

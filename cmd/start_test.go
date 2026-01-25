@@ -7,6 +7,7 @@ import (
 	"testing"
 )
 
+//nolint:funlen // Table-driven tests are naturally long
 func TestRunStart(t *testing.T) {
 	mockVMs := []hyperv.VM{
 		{Name: "VM1", Index: 1},
@@ -24,7 +25,7 @@ func TestRunStart(t *testing.T) {
 			name: "Start single VM",
 			args: []string{"1"},
 			setup: func(m *MockManager) {
-				m.StartVMByNameFn = func(ctx context.Context, name string) error {
+				m.StartVMByNameFn = func(_ context.Context, name string) error {
 					if name != "VM1" {
 						return fmt.Errorf("wrong VM")
 					}
@@ -37,7 +38,7 @@ func TestRunStart(t *testing.T) {
 			all:  true,
 			setup: func(m *MockManager) {
 				count := 0
-				m.StartVMByNameFn = func(ctx context.Context, name string) error {
+				m.StartVMByNameFn = func(_ context.Context, _ string) error {
 					count++
 					return nil
 				}
@@ -47,7 +48,7 @@ func TestRunStart(t *testing.T) {
 			name: "Failed to get VMs",
 			args: []string{"1"},
 			setup: func(m *MockManager) {
-				m.GetVMsFn = func(ctx context.Context) ([]hyperv.VM, error) {
+				m.GetVMsFn = func(_ context.Context) ([]hyperv.VM, error) {
 					return nil, fmt.Errorf("hyper-v error")
 				}
 			},
@@ -56,7 +57,7 @@ func TestRunStart(t *testing.T) {
 			name: "Failed to start one VM",
 			args: []string{"1", "2"},
 			setup: func(m *MockManager) {
-				m.StartVMByNameFn = func(ctx context.Context, name string) error {
+				m.StartVMByNameFn = func(_ context.Context, name string) error {
 					if name == "VM2" {
 						return fmt.Errorf("crash")
 					}
@@ -67,9 +68,9 @@ func TestRunStart(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(_ *testing.T) {
 			m := &MockManager{
-				GetVMsFn: func(ctx context.Context) ([]hyperv.VM, error) {
+				GetVMsFn: func(_ context.Context) ([]hyperv.VM, error) {
 					return mockVMs, nil
 				},
 			}

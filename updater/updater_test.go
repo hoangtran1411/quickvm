@@ -74,9 +74,9 @@ func TestCheckForUpdates_MockServer(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(_ *testing.T) {
 			// Create mock server
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusOK)
 				response := `{
@@ -144,6 +144,7 @@ func TestCopyFile(t *testing.T) {
 	// Create source file
 	srcPath := filepath.Join(tmpDir, "source.txt")
 	content := []byte("Hello, QuickVM!")
+	//nolint:gosec // G306: Internal test file
 	if err := os.WriteFile(srcPath, content, 0644); err != nil {
 		t.Fatalf("Failed to create source file: %v", err)
 	}
@@ -155,6 +156,7 @@ func TestCopyFile(t *testing.T) {
 	}
 
 	// Verify content
+	//nolint:gosec // G304: Test file read
 	got, err := os.ReadFile(dstPath)
 	if err != nil {
 		t.Fatalf("Failed to read dest file: %v", err)
@@ -209,6 +211,7 @@ func TestExtractZip(t *testing.T) {
 
 	// Extract
 	extractDir := filepath.Join(tmpDir, "extracted")
+	//nolint:gosec // G301: Internal test directory
 	if err := os.MkdirAll(extractDir, 0755); err != nil {
 		t.Fatalf("Failed to create extract dir: %v", err)
 	}
@@ -223,6 +226,7 @@ func TestExtractZip(t *testing.T) {
 		t.Error("Expected extracted file test.txt not found")
 	}
 
+	//nolint:gosec // G304: Test file read
 	content, err := os.ReadFile(expectedFile)
 	if err != nil {
 		t.Fatalf("Failed to read extracted file: %v", err)
@@ -247,6 +251,7 @@ func TestExtractZip_WithDirectory(t *testing.T) {
 	}
 
 	extractDir := filepath.Join(tmpDir, "extracted")
+	//nolint:gosec // G301: Internal test directory
 	if err := os.MkdirAll(extractDir, 0755); err != nil {
 		t.Fatalf("Failed to create extract dir: %v", err)
 	}
@@ -277,6 +282,7 @@ func TestExtractZip_InvalidZip(t *testing.T) {
 
 	// Create an invalid ZIP (just a text file)
 	invalidZip := filepath.Join(tmpDir, "invalid.zip")
+	//nolint:gosec // G306: Internal test file
 	if err := os.WriteFile(invalidZip, []byte("not a zip file"), 0644); err != nil {
 		t.Fatalf("Failed to create invalid zip: %v", err)
 	}
@@ -297,8 +303,6 @@ func TestExtractZip_NonExistent(t *testing.T) {
 func TestRelease_Struct(t *testing.T) {
 	r := Release{
 		TagName: "v1.0.0",
-		Name:    "Release 1.0.0",
-		Body:    "Release notes here",
 		Assets: []Asset{
 			{
 				Name:               "quickvm-windows-amd64.exe",
@@ -321,9 +325,8 @@ func TestRelease_Struct(t *testing.T) {
 
 func TestAsset_Struct(t *testing.T) {
 	a := Asset{
-		Name:               "test-asset.exe",
-		BrowserDownloadURL: "https://example.com/test-asset.exe",
-		Size:               2048,
+		Name: "test-asset.exe",
+		Size: 2048,
 	}
 
 	if a.Name != "test-asset.exe" {
@@ -374,9 +377,10 @@ func trimVersionPrefix(v string) string {
 
 // Helper: Create a simple test ZIP file
 func createTestZip(path string) error {
+	//nolint:gosec // G304: Test file creation
 	zipFile, err := os.Create(path)
 	if err != nil {
-		return err
+		return err //nolint:wrapcheck // Test helper
 	}
 	defer func() { _ = zipFile.Close() }()
 
@@ -385,17 +389,18 @@ func createTestZip(path string) error {
 
 	f, err := w.Create("test.txt")
 	if err != nil {
-		return err
+		return err //nolint:wrapcheck // Test helper
 	}
 	_, err = f.Write([]byte("Hello from ZIP!"))
-	return err
+	return err //nolint:wrapcheck // Test helper
 }
 
 // Helper: Create a test ZIP with directory structure
 func createTestZipWithDir(path string) error {
+	//nolint:gosec // G304: Test file creation
 	zipFile, err := os.Create(path)
 	if err != nil {
-		return err
+		return err //nolint:wrapcheck // Test helper
 	}
 	defer func() { _ = zipFile.Close() }()
 
@@ -405,16 +410,16 @@ func createTestZipWithDir(path string) error {
 	// Create directory entry
 	_, err = w.Create("subdir/")
 	if err != nil {
-		return err
+		return err //nolint:wrapcheck // Test helper
 	}
 
 	// Create file in subdirectory
 	f, err := w.Create("subdir/nested.txt")
 	if err != nil {
-		return err
+		return err //nolint:wrapcheck // Test helper
 	}
 	_, err = f.Write([]byte("Nested content"))
-	return err
+	return err //nolint:wrapcheck // Test helper
 }
 
 // Benchmark tests
@@ -425,6 +430,7 @@ func BenchmarkCopyFile(b *testing.B) {
 	srcPath := filepath.Join(tmpDir, "source.bin")
 	// Create 1MB file
 	data := make([]byte, 1024*1024)
+	//nolint:gosec // G306: Benchmark file
 	_ = os.WriteFile(srcPath, data, 0644)
 
 	b.ResetTimer()
@@ -445,6 +451,7 @@ func BenchmarkExtractZip(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		extractDir := filepath.Join(tmpDir, "extract")
+		//nolint:gosec // G301: Benchmark directory
 		_ = os.MkdirAll(extractDir, 0755)
 		_ = extractZip(zipPath, extractDir)
 		_ = os.RemoveAll(extractDir)

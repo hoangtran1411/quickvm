@@ -19,6 +19,8 @@ func skipIfNoHyperVEnv(t *testing.T) {
 }
 
 // TestParseCredentials tests the ParseCredentials function
+//
+//nolint:funlen // Table-driven tests are naturally long
 func TestParseCredentials(t *testing.T) {
 	testCases := []struct {
 		name         string
