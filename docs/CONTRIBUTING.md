@@ -105,7 +105,7 @@ When suggesting features:
 - **Go 1.21+**: [Download Go](https://golang.org/dl/)
 - **Windows 10/11** with Hyper-V enabled
 - **Git**: [Download Git](https://git-scm.com/)
-- **(Optional)** golangci-lint for linting
+- **golangci-lint v2.8.0+**: [Installation Guide](https://golangci-lint.run/usage/install/)
 
 ### First Time Setup
 
@@ -213,6 +213,7 @@ if err := vm.Start(); err != nil {
 ### ⚠️ Linting Rules (IMPORTANT)
 
 This project uses `golangci-lint` in CI. **All PRs must pass linting.**
+> ⚠️ **Note**: You MUST use **golangci-lint v2.8.0** or higher. The configuration file `.golangci.yml` uses the **v2 schema** which is incompatible with older versions.
 
 #### Common Lint Errors to Avoid
 
@@ -254,8 +255,12 @@ go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 # Run lint
 golangci-lint run ./...
 
-# Run with timeout (for large codebases)
-golangci-lint run --timeout=5m ./...
+#### Configuration Schema (v2)
+
+Our `.golangci.yml` uses `version: "2"`. Key differences for contributors:
+- **Kebab-case**: Use `ignore-sigs`, `min-complexity`, etc.
+- **Exclusions**: Use `linters: exclusions: rules` instead of the old `issues: exclude-rules`.
+- **Global Patterns**: Prefer adding binary-wide rules in config rather than polluting code with `//nolint` comments.
 ```
 
 #### If You Don't Have golangci-lint

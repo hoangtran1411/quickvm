@@ -84,6 +84,9 @@ go mod download
 # Build the application
 go build -ldflags="-s -w" -o quickvm.exe
 
+# Lint the code (requires golangci-lint v2.8.0+)
+golangci-lint run
+
 # Install using the menu
 .\install-menu.bat
 ```

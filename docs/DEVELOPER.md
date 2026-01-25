@@ -7,6 +7,7 @@
 - Windows 10/11 with Hyper-V
 - PowerShell 5.1+
 - Git
+- golangci-lint v2.8.0+ (for code quality)
 
 ### First Time Setup
 
@@ -24,6 +25,9 @@ go build -o quickvm.exe
 
 # Test
 go test ./...
+
+# Lint (MUST use golangci-lint v2.8.0+)
+golangci-lint run
 
 # Run
 .\quickvm.exe list
