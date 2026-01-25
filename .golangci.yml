@@ -1,13 +1,9 @@
 version: "2"
 
 run:
-  # timeout for analysis, e.g. 30s, 5m, default is 1m (in v2 no default?)
   timeout: "5m"
-  
-  # tests: false # invalid in v2 'run'. use exclude-files or similar if needed. default includes tests.
 
 linters:
-  # Enable specific linters
   enable:
     - errcheck
     - govet
@@ -63,7 +59,7 @@ linters:
        excludes:
          - G204
     wrapcheck:
-      ignoreSigs:
+      ignore-sigs:
         - .Errorf(
         - errors.New(
         - errors.Unwrap(
@@ -72,20 +68,21 @@ linters:
         - .WithMessage(
         - .WithMessagef(
         - .WithStack(
-      ignorePackageGlobs:
+      ignore-package-globs:
         - encoding/*
         - github.com/pkg/*
+
+  exclusions:
+    rules:
+      - path: _test\.go
+        linters:
+          - funlen
+          - gocyclo
+          - gosec
+          - dupl
+          - wrapcheck
+          - revive
 
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
-  
-  exclude-rules:
-    - path: _test\.go
-      linters:
-        - funlen
-        - gocyclo
-        - gosec
-        - dupl
-        - wrapcheck
-        - revive

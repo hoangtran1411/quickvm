@@ -79,13 +79,12 @@ func TestFindVMCXFile_InVirtualMachinesSubdir(t *testing.T) {
 	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	vmDir := filepath.Join(tempDir, "Virtual Machines")
-	//nolint:gosec // G301: Internal test directory
 	if err := os.MkdirAll(vmDir, 0755); err != nil {
 		t.Fatalf("Failed to create Virtual Machines directory: %v", err)
 	}
 
 	vmcxFile := filepath.Join(vmDir, "test.vmcx")
-	//nolint:gosec // G306: Internal test file
+
 	if err := os.WriteFile(vmcxFile, []byte{}, 0644); err != nil {
 		t.Fatalf("Failed to create .vmcx file: %v", err)
 	}
@@ -113,7 +112,6 @@ func TestImportVMOptions_Defaults(t *testing.T) {
 	}
 }
 
-//nolint:funlen // Table-driven tests are naturally long
 func TestImportVMOptions_WithFlags(t *testing.T) {
 	testCases := []struct {
 		name          string
@@ -249,7 +247,7 @@ func TestFindVMCXFile_DirectlyInBasePath(t *testing.T) {
 	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	vmcxFile := filepath.Join(tempDir, "test.vmcx")
-	//nolint:gosec // G306: Internal test file
+
 	if err := os.WriteFile(vmcxFile, []byte{}, 0644); err != nil {
 		t.Fatalf("Failed to create .vmcx file: %v", err)
 	}

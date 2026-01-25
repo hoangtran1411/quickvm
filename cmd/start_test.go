@@ -7,7 +7,6 @@ import (
 	"testing"
 )
 
-//nolint:funlen // Table-driven tests are naturally long
 func TestRunStart(t *testing.T) {
 	mockVMs := []hyperv.VM{
 		{Name: "VM1", Index: 1},
