@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"quickvm/internal/hyperv"
+	"quickvm/internal/output"
 
 	"github.com/spf13/cobra"
 )
@@ -32,7 +33,10 @@ The exported VM will be placed in a subdirectory named after the VM.`,
 		// Parse VM index
 		index, err := strconv.Atoi(args[0])
 		if err != nil {
-			fmt.Printf("❌ Invalid VM index: %s\n", args[0])
+			output.PrintError("INVALID_INDEX", "Invalid VM index", args[0])
+			if !output.IsJSON() {
+				fmt.Printf("❌ Invalid VM index: %s\n", args[0])
+			}
 			return
 		}
 
@@ -43,7 +47,10 @@ The exported VM will be placed in a subdirectory named after the VM.`,
 		if !filepath.IsAbs(exportPath) {
 			cwd, err := os.Getwd()
 			if err != nil {
-				fmt.Printf("❌ Failed to get current directory: %v\n", err)
+				output.PrintError("PATH_ERROR", "Failed to get current directory", err.Error())
+				if !output.IsJSON() {
+					fmt.Printf("❌ Failed to get current directory: %v\n", err)
+				}
 				return
 			}
 			exportPath = filepath.Join(cwd, exportPath)
@@ -52,30 +59,56 @@ The exported VM will be placed in a subdirectory named after the VM.`,
 		// Get VM name for display
 		vmName, err := manager.GetVMNameByIndex(cmd.Context(), index)
 		if err != nil {
-			fmt.Printf("❌ Failed to get VM: %v\n", err)
+			output.PrintError("VM_GET_FAILED", "Failed to get VM", err.Error())
+			if !output.IsJSON() {
+				fmt.Printf("❌ Failed to get VM: %v\n", err)
+			}
 			return
 		}
 
 		// Check if export path exists, create if not
 		if _, err := os.Stat(exportPath); os.IsNotExist(err) {
-			fmt.Printf("📁 Creating export directory: %s\n", exportPath)
+			if !output.IsJSON() {
+				fmt.Printf("📁 Creating export directory: %s\n", exportPath)
+			}
 			// gosec G301: Expect directory permissions to be 0750 or less
 			if err := os.MkdirAll(exportPath, 0750); err != nil {
-				fmt.Printf("❌ Failed to create export directory: %v\n", err)
+				output.PrintError("DIR_CREATE_FAILED", "Failed to create export directory", err.Error())
+				if !output.IsJSON() {
+					fmt.Printf("❌ Failed to create export directory: %v\n", err)
+				}
 				return
 			}
 		}
 
-		fmt.Printf("📦 Exporting VM '%s' to '%s'...\n", vmName, exportPath)
-		fmt.Println("⏳ This may take a while depending on VM size...")
+		if !output.IsJSON() {
+			fmt.Printf("📦 Exporting VM '%s' to '%s'...\n", vmName, exportPath)
+			fmt.Println("⏳ This may take a while depending on VM size...")
+		}
 
 		if err := manager.ExportVM(cmd.Context(), index, exportPath); err != nil {
-			fmt.Printf("❌ Failed to export VM: %v\n", err)
+			output.PrintError("EXPORT_FAILED", "Failed to export VM", err.Error())
+			if !output.IsJSON() {
+				fmt.Printf("❌ Failed to export VM: %v\n", err)
+			}
 			return
 		}
 
 		// Show success message with export location
 		exportedPath := filepath.Join(exportPath, vmName)
+
+		// JSON output for AI agents
+		if output.IsJSON() {
+			output.PrintData(ExportResult{
+				VMName:     vmName,
+				VMIndex:    index,
+				ExportPath: exportedPath,
+				Success:    true,
+				Message:    "VM exported successfully",
+			})
+			return
+		}
+
 		fmt.Printf("\n✅ VM '%s' exported successfully!\n", vmName)
 		fmt.Printf("📁 Export location: %s\n", exportedPath)
 		fmt.Println("\n💡 Tips:")

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"quickvm/internal/hyperv"
+	"quickvm/internal/output"
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
@@ -25,7 +26,16 @@ var infoCmd = &cobra.Command{
 
 		info, err := manager.GetSystemInfo(cmd.Context(), includeDisk)
 		if err != nil {
-			color.Red("❌ Error getting system info: %v", err)
+			output.PrintError("SYSTEM_INFO_FAILED", "Error getting system info", err.Error())
+			if !output.IsJSON() {
+				color.Red("❌ Error getting system info: %v", err)
+			}
+			return
+		}
+
+		// JSON output for AI agents
+		if output.IsJSON() {
+			output.PrintData(info)
 			return
 		}
 

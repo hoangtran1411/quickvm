@@ -5,9 +5,16 @@ import (
 	"strings"
 
 	"quickvm/internal/hyperv"
+	"quickvm/internal/output"
 
 	"github.com/spf13/cobra"
 )
+
+// VMListResponse represents the JSON response for VM list
+type VMListResponse struct {
+	VMs   []hyperv.VM `json:"vms"`
+	Total int         `json:"total"`
+}
 
 var listCmd = &cobra.Command{
 	Use:     "list",
@@ -17,13 +24,29 @@ var listCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, _ []string) {
 		manager := hyperv.NewManager()
 
-		fmt.Println("📋 Fetching Hyper-V virtual machines...")
+		if !output.IsJSON() {
+			fmt.Println("📋 Fetching Hyper-V virtual machines...")
+		}
+
 		vms, err := manager.GetVMs(cmd.Context())
 		if err != nil {
-			fmt.Printf("❌ Failed to get VMs: %v\n", err)
+			output.PrintError("VM_LIST_FAILED", "Failed to get VMs", err.Error())
+			if !output.IsJSON() {
+				fmt.Printf("❌ Failed to get VMs: %v\n", err)
+			}
 			return
 		}
 
+		// JSON output for AI agents
+		if output.IsJSON() {
+			output.PrintData(VMListResponse{
+				VMs:   vms,
+				Total: len(vms),
+			})
+			return
+		}
+
+		// Human-readable output
 		if len(vms) == 0 {
 			fmt.Println("ℹ️  No virtual machines found.")
 			return

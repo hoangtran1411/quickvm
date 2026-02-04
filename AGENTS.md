@@ -2,6 +2,62 @@
 
 QuickVM is a fast Hyper-V Virtual Machine management CLI/TUI for Windows, built with Go.
 
+## AI Agent Integration (AX-Friendly)
+
+**All commands support `--output json` (`-o json`) for machine-readable output.**
+
+### Quick Reference
+
+| Command | JSON Response Type | Description |
+|---------|-------------------|-------------|
+| `list -o json` | `VMListResponse` | List all VMs with details |
+| `info -o json` | `SystemInfo` | System/Hyper-V info |
+| `start 1 -o json` | `VMBatchResult` | Start VM(s) |
+| `stop 1 -o json` | `VMBatchResult` | Stop VM(s) |
+| `restart 1 -o json` | `VMBatchResult` | Restart VM(s) |
+| `version -o json` | `VersionInfo` | App version info |
+| `snapshot list 1 -o json` | `SnapshotListResult` | List VM snapshots |
+| `snapshot create 1 "name" -o json` | `SnapshotOpResult` | Create snapshot |
+| `export 1 "./path" -o json` | `ExportResult` | Export VM |
+| `clone 1 "name" -o json` | `CloneResult` | Clone VM |
+| `rdp 1 -o json` | `RDPResult` | RDP connection info |
+
+### Response Format
+
+**Success:**
+```json
+{
+  "success": true,
+  "data": { ... }
+}
+```
+
+**Error:**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "ERROR_CODE",
+    "message": "Human-readable message",
+    "details": "Technical details"
+  }
+}
+```
+
+### Error Codes
+
+| Code | Description |
+|------|-------------|
+| `VM_GET_FAILED` | Failed to retrieve VM info |
+| `VM_LIST_FAILED` | Failed to list VMs |
+| `INVALID_INDEX` | Invalid VM index provided |
+| `INVALID_ARGS` | Invalid command arguments |
+| `EXPORT_FAILED` | Export operation failed |
+| `CLONE_FAILED` | Clone operation failed |
+| `RDP_FAILED` | RDP connection failed |
+| `SNAPSHOT_*_FAILED` | Snapshot operations |
+```
+
 ## Quick Commands
 
 ```powershell

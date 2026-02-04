@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"context"
-	"fmt"
 
 	"quickvm/internal/hyperv"
 
@@ -30,43 +29,15 @@ Examples:
 }
 
 func runRestart(ctx context.Context, manager hyperv.VMManager, args []string, rangeStr string, all bool) {
-	// Get VMs to validate index and get name
-	vms, err := manager.GetVMs(ctx)
-	if err != nil {
-		fmt.Printf("❌ Failed to get VMs: %v\n", err)
-		return
-	}
-
-	// Use shared getIndices logic
-	indices, err := getIndices(args, rangeStr, all, len(vms))
-	if err != nil {
-		fmt.Printf("❌ Error: %v\n", err)
-		return
-	}
-
-	if len(indices) > 1 {
-		fmt.Printf("🔄 Restarting %d VMs...\n\n", len(indices))
-	}
-
-	successCount := 0
-	failCount := 0
-
-	for _, index := range indices {
-		vm := vms[index-1]
-		fmt.Printf("🔄 Restarting VM: %s (Index: %d)...\n", vm.Name, index)
-
-		if err := manager.RestartVM(ctx, index); err != nil {
-			fmt.Printf("❌ Failed to restart VM '%s': %v\n", vm.Name, err)
-			failCount++
-		} else {
-			fmt.Printf("✅ VM '%s' restarted successfully!\n", vm.Name)
-			successCount++
-		}
-	}
-
-	if len(indices) > 1 {
-		fmt.Printf("\n📊 Summary: %d restarted, %d failed\n", successCount, failCount)
-	}
+	runVMBatchOperation(ctx, manager, args, rangeStr, all, VMOperationConfig{
+		Operation:   "restart",
+		ActionVerb:  "Restarting",
+		ActionEmoji: "🔄",
+		SuccessVerb: "restarted",
+		OperationFunc: func(ctx context.Context, mgr hyperv.VMManager, vm hyperv.VM) error {
+			return mgr.RestartVMByName(ctx, vm.Name)
+		},
+	})
 }
 
 func init() {

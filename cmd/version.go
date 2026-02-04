@@ -3,6 +3,8 @@ package cmd
 import (
 	"fmt"
 
+	"quickvm/internal/output"
+
 	"github.com/spf13/cobra"
 )
 
@@ -15,11 +17,30 @@ var (
 	GitCommit = "dev"
 )
 
+// VersionInfo represents version information for JSON output
+type VersionInfo struct {
+	Version   string `json:"version"`
+	BuildDate string `json:"buildDate"`
+	GitCommit string `json:"gitCommit"`
+	Name      string `json:"name"`
+}
+
 var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Print version information",
 	Long:  `Display the version, build date, and git commit of QuickVM.`,
 	Run: func(_ *cobra.Command, _ []string) {
+		// JSON output for AI agents
+		if output.IsJSON() {
+			output.PrintData(VersionInfo{
+				Name:      "QuickVM",
+				Version:   Version,
+				BuildDate: BuildDate,
+				GitCommit: GitCommit,
+			})
+			return
+		}
+
 		fmt.Printf("QuickVM - Fast Hyper-V Virtual Machine Manager\n")
 		fmt.Printf("Version:    %s\n", Version)
 		fmt.Printf("Build Date: %s\n", BuildDate)

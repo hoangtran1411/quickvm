@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"quickvm/internal/hyperv"
+	"quickvm/internal/output"
 
 	"github.com/spf13/cobra"
 )
@@ -41,22 +42,44 @@ Example:
 
 		index, err := strconv.Atoi(args[0])
 		if err != nil {
-			fmt.Printf("❌ Invalid VM index: %s\n", args[0])
+			output.PrintError("INVALID_INDEX", "Invalid VM index", args[0])
+			if !output.IsJSON() {
+				fmt.Printf("❌ Invalid VM index: %s\n", args[0])
+			}
 			return
 		}
 
 		// Get VM name for display
 		vmName, err := manager.GetVMNameByIndex(cmd.Context(), index)
 		if err != nil {
-			fmt.Printf("❌ Failed to get VM: %v\n", err)
+			output.PrintError("VM_GET_FAILED", "Failed to get VM", err.Error())
+			if !output.IsJSON() {
+				fmt.Printf("❌ Failed to get VM: %v\n", err)
+			}
 			return
 		}
 
-		fmt.Printf("📸 Snapshots for VM: %s (Index: %d)\n\n", vmName, index)
+		if !output.IsJSON() {
+			fmt.Printf("📸 Snapshots for VM: %s (Index: %d)\n\n", vmName, index)
+		}
 
 		snapshots, err := manager.GetSnapshots(cmd.Context(), index)
 		if err != nil {
-			fmt.Printf("❌ Failed to get snapshots: %v\n", err)
+			output.PrintError("SNAPSHOT_LIST_FAILED", "Failed to get snapshots", err.Error())
+			if !output.IsJSON() {
+				fmt.Printf("❌ Failed to get snapshots: %v\n", err)
+			}
+			return
+		}
+
+		// JSON output for AI agents
+		if output.IsJSON() {
+			output.PrintData(SnapshotListResult{
+				VMName:    vmName,
+				VMIndex:   index,
+				Snapshots: snapshots,
+				Total:     len(snapshots),
+			})
 			return
 		}
 
@@ -100,7 +123,10 @@ Examples:
 
 		index, err := strconv.Atoi(args[0])
 		if err != nil {
-			fmt.Printf("❌ Invalid VM index: %s\n", args[0])
+			output.PrintError("INVALID_INDEX", "Invalid VM index", args[0])
+			if !output.IsJSON() {
+				fmt.Printf("❌ Invalid VM index: %s\n", args[0])
+			}
 			return
 		}
 
@@ -109,14 +135,35 @@ Examples:
 		// Get VM name for display
 		vmName, err := manager.GetVMNameByIndex(cmd.Context(), index)
 		if err != nil {
-			fmt.Printf("❌ Failed to get VM: %v\n", err)
+			output.PrintError("VM_GET_FAILED", "Failed to get VM", err.Error())
+			if !output.IsJSON() {
+				fmt.Printf("❌ Failed to get VM: %v\n", err)
+			}
 			return
 		}
 
-		fmt.Printf("📸 Creating snapshot '%s' for VM: %s...\n", snapshotName, vmName)
+		if !output.IsJSON() {
+			fmt.Printf("📸 Creating snapshot '%s' for VM: %s...\n", snapshotName, vmName)
+		}
 
 		if err := manager.CreateSnapshot(cmd.Context(), index, snapshotName); err != nil {
-			fmt.Printf("❌ Failed to create snapshot: %v\n", err)
+			output.PrintError("SNAPSHOT_CREATE_FAILED", "Failed to create snapshot", err.Error())
+			if !output.IsJSON() {
+				fmt.Printf("❌ Failed to create snapshot: %v\n", err)
+			}
+			return
+		}
+
+		// JSON output for AI agents
+		if output.IsJSON() {
+			output.PrintData(SnapshotOpResult{
+				Operation:    "create",
+				VMName:       vmName,
+				VMIndex:      index,
+				SnapshotName: snapshotName,
+				Success:      true,
+				Message:      "Snapshot created successfully",
+			})
 			return
 		}
 

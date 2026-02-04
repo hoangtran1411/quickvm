@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"quickvm/internal/hyperv"
+	"quickvm/internal/output"
 
 	"github.com/spf13/cobra"
 )
@@ -34,43 +35,75 @@ Examples:
 		// Parse VM index
 		index, err := strconv.Atoi(args[0])
 		if err != nil {
-			fmt.Printf("❌ Invalid VM index: %s\n", args[0])
+			output.PrintError("INVALID_INDEX", "Invalid VM index", args[0])
+			if !output.IsJSON() {
+				fmt.Printf("❌ Invalid VM index: %s\n", args[0])
+			}
 			return
 		}
 
 		// Get new name and trim whitespace
 		newName := strings.TrimSpace(args[1])
 		if newName == "" {
-			fmt.Println("❌ New VM name cannot be empty")
+			output.PrintError("INVALID_NAME", "New VM name cannot be empty", "")
+			if !output.IsJSON() {
+				fmt.Println("❌ New VM name cannot be empty")
+			}
 			return
 		}
 
 		// Get source VM name for display
 		sourceName, err := manager.GetVMNameByIndex(cmd.Context(), index)
 		if err != nil {
-			fmt.Printf("❌ Failed to get source VM: %v\n", err)
+			output.PrintError("VM_GET_FAILED", "Failed to get source VM", err.Error())
+			if !output.IsJSON() {
+				fmt.Printf("❌ Failed to get source VM: %v\n", err)
+			}
 			return
 		}
 
 		// Check if new name already exists
 		exists, err := manager.VMExists(cmd.Context(), newName)
 		if err != nil {
-			fmt.Printf("❌ Failed to check VM name: %v\n", err)
+			output.PrintError("VM_CHECK_FAILED", "Failed to check VM name", err.Error())
+			if !output.IsJSON() {
+				fmt.Printf("❌ Failed to check VM name: %v\n", err)
+			}
 			return
 		}
 		if exists {
-			fmt.Printf("❌ A VM with name '%s' already exists\n", newName)
+			output.PrintError("VM_EXISTS", "A VM with this name already exists", newName)
+			if !output.IsJSON() {
+				fmt.Printf("❌ A VM with name '%s' already exists\n", newName)
+			}
 			return
 		}
 
-		fmt.Printf("🔄 Cloning VM '%s' to '%s'...\n", sourceName, newName)
-		fmt.Println("⏳ This may take several minutes depending on VM disk size...")
-		fmt.Println()
-		fmt.Println("Steps:")
-		fmt.Println("  1. Exporting source VM...")
+		if !output.IsJSON() {
+			fmt.Printf("🔄 Cloning VM '%s' to '%s'...\n", sourceName, newName)
+			fmt.Println("⏳ This may take several minutes depending on VM disk size...")
+			fmt.Println()
+			fmt.Println("Steps:")
+			fmt.Println("  1. Exporting source VM...")
+		}
 
 		if err := manager.CloneVM(cmd.Context(), index, newName); err != nil {
-			fmt.Printf("\n❌ Failed to clone VM: %v\n", err)
+			output.PrintError("CLONE_FAILED", "Failed to clone VM", err.Error())
+			if !output.IsJSON() {
+				fmt.Printf("\n❌ Failed to clone VM: %v\n", err)
+			}
+			return
+		}
+
+		// JSON output for AI agents
+		if output.IsJSON() {
+			output.PrintData(CloneResult{
+				SourceName:  sourceName,
+				SourceIndex: index,
+				NewName:     newName,
+				Success:     true,
+				Message:     "VM cloned successfully",
+			})
 			return
 		}
 

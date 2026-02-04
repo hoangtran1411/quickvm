@@ -8,22 +8,32 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 
+	"quickvm/internal/output"
 	"quickvm/ui"
 	"quickvm/updater"
 )
 
-var autoUpdate bool
+var (
+	autoUpdate   bool
+	outputFormat string
+)
 
 var rootCmd = &cobra.Command{
 	Use:   "quickvm",
 	Short: "QuickVM - Fast Hyper-V Virtual Machine Manager",
 	Long: `QuickVM is a TUI-based command-line tool for managing Hyper-V virtual machines.
 It provides a fast and intuitive interface for starting, stopping, and managing VMs.`,
-	PersistentPreRun: func(cmd *cobra.Command, _ []string) {
+	PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
+		// Set output format (for AI agent compatibility)
+		if err := output.SetFormat(outputFormat); err != nil {
+			return fmt.Errorf("invalid output format: %w", err)
+		}
+
 		// Check for updates if --update flag is set
 		if autoUpdate && cmd.Name() != "update" {
 			checkAndUpdate()
 		}
+		return nil
 	},
 	Run: func(_ *cobra.Command, _ []string) {
 		// Launch TUI
@@ -45,6 +55,7 @@ func Execute() {
 
 func init() {
 	rootCmd.PersistentFlags().BoolVar(&autoUpdate, "update", false, "Check for updates before running")
+	rootCmd.PersistentFlags().StringVarP(&outputFormat, "output", "o", "table", "Output format: json, table, text (json is AI-agent friendly)")
 }
 
 // checkAndUpdate checks for updates and prompts to install if available

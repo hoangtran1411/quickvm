@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"quickvm/internal/hyperv"
+	"quickvm/internal/output"
 
 	"github.com/spf13/cobra"
 )
@@ -43,34 +44,60 @@ Examples:
 		// Parse VM index
 		index, err := strconv.Atoi(args[0])
 		if err != nil {
-			fmt.Printf("❌ Invalid VM index: %s\n", args[0])
+			output.PrintError("INVALID_INDEX", "Invalid VM index", args[0])
+			if !output.IsJSON() {
+				fmt.Printf("❌ Invalid VM index: %s\n", args[0])
+			}
 			return
 		}
 
 		// Get VM name for display
 		vmName, err := manager.GetVMNameByIndex(cmd.Context(), index)
 		if err != nil {
-			fmt.Printf("❌ Failed to get VM: %v\n", err)
+			output.PrintError("VM_GET_FAILED", "Failed to get VM", err.Error())
+			if !output.IsJSON() {
+				fmt.Printf("❌ Failed to get VM: %v\n", err)
+			}
 			return
 		}
 
 		// Get IP address first to show to user
 		ip, err := manager.GetVMIPAddress(cmd.Context(), index)
 		if err != nil {
-			fmt.Printf("❌ Failed to get VM IP address: %v\n", err)
+			output.PrintError("IP_GET_FAILED", "Failed to get VM IP address", err.Error())
+			if !output.IsJSON() {
+				fmt.Printf("❌ Failed to get VM IP address: %v\n", err)
+			}
 			return
 		}
 
-		fmt.Printf("🔗 Connecting to VM '%s' at %s...\n", vmName, ip)
+		if !output.IsJSON() {
+			fmt.Printf("🔗 Connecting to VM '%s' at %s...\n", vmName, ip)
+		}
 
 		// Parse credentials for display
 		creds := hyperv.ParseCredentials(rdpCredentials)
-		if creds.Password != "" {
+		if creds.Password != "" && !output.IsJSON() {
 			fmt.Println("🔐 Saving credentials to Windows Credential Manager...")
 		}
 
 		if err := manager.ConnectRDPByIP(cmd.Context(), ip, rdpCredentials); err != nil {
-			fmt.Printf("❌ Failed to open RDP: %v\n", err)
+			output.PrintError("RDP_FAILED", "Failed to open RDP", err.Error())
+			if !output.IsJSON() {
+				fmt.Printf("❌ Failed to open RDP: %v\n", err)
+			}
+			return
+		}
+
+		// JSON output for AI agents
+		if output.IsJSON() {
+			output.PrintData(RDPResult{
+				VMName:    vmName,
+				VMIndex:   index,
+				IPAddress: ip,
+				Success:   true,
+				Message:   "RDP client opened successfully",
+			})
 			return
 		}
 
