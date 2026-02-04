@@ -99,7 +99,8 @@ quickvm/
 ├── .agent/                # AI agent configuration
 │   ├── rules/             # Always-on coding rules
 │   ├── skills/            # Reusable code patterns
-│   └── workflows/         # Step-by-step automation
+│   ├── workflows/         # Step-by-step automation
+│   └── context/           # Architecture, decisions, and knowledge
 └── docs/                  # Documentation
 ```
 
