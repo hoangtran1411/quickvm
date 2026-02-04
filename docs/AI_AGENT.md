@@ -4,22 +4,35 @@ This document explains how to use the AI agent configuration, skills, and workfl
 
 ## Overview
 
-The `.agent/` directory contains configuration files that enhance AI coding assistants (like GitHub Copilot, Cursor, or Claude) with project-specific knowledge and automation.
+The `.agent/` directory contains configuration files that enhance AI coding assistants (like GitHub Copilot, Cursor, Claude, OpenAI Codex, Google Gemini, and others) with project-specific knowledge and automation.
+
+This project follows the [AGENTS.md standard](https://agents.md/) - used by 60k+ open-source projects.
 
 ```
-.agent/
-├── rules/                    # Always-on rules and guidelines
-│   └── go-style-guide.md    # Go coding standards
-├── skills/                   # Reusable patterns and templates
-│   ├── go-cli-cobra/
-│   ├── go-tui-bubbletea/
-│   ├── go-powershell-integration/
-│   ├── go-testing-patterns/
-│   └── go-project-structure/
-└── workflows/                # Step-by-step task automation
-    ├── add-command.md
-    ├── add-hyperv-feature.md
-    └── ...
+quickvm/
+├── AGENTS.md                 # Root context for AI agents
+├── cmd/AGENTS.md             # CLI commands context
+├── internal/hyperv/AGENTS.md # Hyper-V logic context
+├── ui/AGENTS.md              # TUI context
+└── .agent/
+    ├── context/              # Additional AI context
+    │   ├── known-issues.md   # Edge cases and gotchas
+    │   ├── decisions.md      # Architecture Decision Records
+    │   └── snippets.md       # Copy-paste code patterns
+    ├── rules/                # Always-on rules and guidelines
+    │   ├── go-style-guide.md # Go coding standards
+    │   └── go-idioms-reference.md # Detailed idioms
+    ├── skills/               # Reusable patterns and templates
+    │   ├── go-cli-cobra/
+    │   ├── go-tui-bubbletea/
+    │   ├── go-powershell-integration/
+    │   ├── go-testing-patterns/
+    │   ├── go-project-structure/
+    │   └── git-release-management/
+    └── workflows/            # Step-by-step task automation
+        ├── add-command.md
+        ├── add-hyperv-feature.md
+        └── ...
 ```
 
 ## Rules
