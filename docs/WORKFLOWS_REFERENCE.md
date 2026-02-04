@@ -113,6 +113,25 @@ Steps:
 5. Run tests
 6. Manual verification
 
+### `/improve-ax` - Improve Agent Experience
+**Auto-run**: ✅ Most steps
+
+Steps:
+1. Audit current AGENTS.md files
+2. Check for outdated information
+3. Update from recent changes
+4. Add missing AGENTS.md files
+5. Update known-issues.md
+6. Enhance snippets.md
+7. Validate documentation
+8. Update AI_AGENT.md index
+
+When to use:
+- After adding new features
+- When AI agents make repeated mistakes
+- During periodic maintenance
+- After major refactoring
+
 ---
 
 ## Workflow Annotations
