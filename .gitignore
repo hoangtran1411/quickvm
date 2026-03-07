@@ -18,7 +18,6 @@ vendor/
 go.work
 
 # IDE specific files
-.vscode/
 .idea/
 *.swp
 *.swo
