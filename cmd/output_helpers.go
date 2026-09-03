@@ -3,10 +3,16 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"sync"
+	"time"
+
+	"golang.org/x/sync/errgroup"
 
 	"quickvm/internal/hyperv"
 	"quickvm/internal/output"
 )
+
+const defaultBatchConcurrency = 4
 
 // VMOperationResult represents the result of a single VM operation
 type VMOperationResult struct {
@@ -131,38 +137,70 @@ func runVMBatchOperation(
 		fmt.Printf("%s %s %d VMs...\n\n", config.ActionEmoji, config.ActionVerb, len(indices))
 	}
 
-	results := make([]VMOperationResult, 0, len(indices))
+	results := make([]VMOperationResult, len(indices))
 	successCount := 0
 	failCount := 0
 
-	for _, index := range indices {
+	// why: Using a bounded worker pool (errgroup + semaphore) executes operations concurrently,
+	// drastically reducing batch execution time (from N*10s to N/4*10s) while avoiding Hyper-V I/O storms.
+	var (
+		mu sync.Mutex
+		g  errgroup.Group
+	)
+	sem := make(chan struct{}, defaultBatchConcurrency)
+
+	for i, index := range indices {
+		i, index := i, index
 		vm := vms[index-1]
-		result := VMOperationResult{
-			Index: index,
-			Name:  vm.Name,
-		}
 
-		if !output.IsJSON() {
-			fmt.Printf("%s %s VM: %s (Index: %d)...\n", config.ActionEmoji, config.ActionVerb, vm.Name, index)
-		}
+		sem <- struct{}{}
+		g.Go(func() error {
+			defer func() { <-sem }()
 
-		if err := config.OperationFunc(ctx, manager, vm); err != nil {
-			result.Success = false
-			result.Error = err.Error()
-			failCount++
-			if !output.IsJSON() {
-				fmt.Printf("❌ Failed to %s VM '%s': %v\n", config.Operation, vm.Name, err)
+			// why: Enforce 60s per-VM timeout so a hung external cmdlet does not block the entire batch.
+			opCtx, cancel := context.WithTimeout(ctx, 60*time.Second)
+			defer cancel()
+
+			res := VMOperationResult{
+				Index: index,
+				Name:  vm.Name,
 			}
-		} else {
-			result.Success = true
-			result.Message = fmt.Sprintf("VM %s successfully", config.SuccessVerb)
-			successCount++
+
 			if !output.IsJSON() {
-				fmt.Printf("✅ VM '%s' %s successfully!\n", vm.Name, config.SuccessVerb)
+				// why: Protect stdout to prevent interleaved lines when multiple workers log simultaneously.
+				mu.Lock()
+				fmt.Printf("%s %s VM: %s (Index: %d)...\n", config.ActionEmoji, config.ActionVerb, vm.Name, index)
+				mu.Unlock()
 			}
-		}
-		results = append(results, result)
+
+			opErr := config.OperationFunc(opCtx, manager, vm)
+
+			// why: Synchronize updates to shared success/fail counters and results slice.
+			mu.Lock()
+			defer mu.Unlock()
+
+			if opErr != nil {
+				res.Success = false
+				res.Error = opErr.Error()
+				failCount++
+				if !output.IsJSON() {
+					fmt.Printf("❌ Failed to %s VM '%s': %v\n", config.Operation, vm.Name, opErr)
+				}
+			} else {
+				res.Success = true
+				res.Message = fmt.Sprintf("VM %s successfully", config.SuccessVerb)
+				successCount++
+				if !output.IsJSON() {
+					fmt.Printf("✅ VM '%s' %s successfully!\n", vm.Name, config.SuccessVerb)
+				}
+			}
+			// why: Direct index assignment preserves the original argument order regardless of completion order.
+			results[i] = res
+			return nil
+		})
 	}
+
+	_ = g.Wait()
 
 	// JSON output for AI agents
 	if output.IsJSON() {

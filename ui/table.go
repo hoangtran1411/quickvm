@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"quickvm/internal/hyperv"
 
@@ -104,7 +105,11 @@ func (m Model) Init() tea.Cmd {
 }
 
 func (m Model) loadVMs() tea.Msg {
-	vms, err := m.manager.GetVMs(context.TODO())
+	// why: Enforce 30s timeout on context to prevent TUI freeze if Hyper-V WMI service becomes unresponsive.
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	vms, err := m.manager.GetVMs(ctx)
 	if err != nil {
 		return errMsg{err}
 	}
@@ -133,7 +138,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if len(m.vms) > 0 && m.table.Cursor() < len(m.vms) {
 				selectedVM := m.vms[m.table.Cursor()]
 				m.message = fmt.Sprintf("Starting VM: %s...", selectedVM.Name)
-				return m, m.startVM(selectedVM.Index)
+				// why: Calling startVMByName directly passes the selected VM's name,
+				// skipping a redundant GetVMs round-trip that was previously needed for index lookup.
+				return m, m.startVMByName(selectedVM.Name)
 			}
 
 		case "s":
@@ -203,9 +210,13 @@ func (m *Model) updateTable() {
 	m.table.SetRows(rows)
 }
 
-func (m Model) startVM(index int) tea.Cmd {
+func (m Model) startVMByName(name string) tea.Cmd {
 	return func() tea.Msg {
-		if err := m.manager.StartVM(context.TODO(), index); err != nil {
+		// why: Explicit 60s timeout replaces context.TODO() to adhere to timeout rules and prevent process leaks.
+		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+		defer cancel()
+
+		if err := m.manager.StartVMByName(ctx, name); err != nil {
 			return errMsg{err}
 		}
 		// Reload VMs after action
@@ -215,7 +226,11 @@ func (m Model) startVM(index int) tea.Cmd {
 
 func (m Model) stopVM(index int) tea.Cmd {
 	return func() tea.Msg {
-		if err := m.manager.StopVM(context.TODO(), index); err != nil {
+		// why: Explicit 60s timeout replaces context.TODO() to prevent hanging operations.
+		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+		defer cancel()
+
+		if err := m.manager.StopVM(ctx, index); err != nil {
 			return errMsg{err}
 		}
 		// Reload VMs after action
@@ -225,7 +240,11 @@ func (m Model) stopVM(index int) tea.Cmd {
 
 func (m Model) restartVM(index int) tea.Cmd {
 	return func() tea.Msg {
-		if err := m.manager.RestartVM(context.TODO(), index); err != nil {
+		// why: Explicit 60s timeout replaces context.TODO() to prevent hanging operations.
+		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+		defer cancel()
+
+		if err := m.manager.RestartVM(ctx, index); err != nil {
 			return errMsg{err}
 		}
 		// Reload VMs after action

@@ -7,7 +7,11 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
+	"time"
 )
+
+// DefaultOperationTimeout is the fallback timeout for VM operations when no deadline is set on ctx.
+const DefaultOperationTimeout = 60 * time.Second
 
 // VM represents a Hyper-V virtual machine
 type VM struct {
@@ -222,11 +226,26 @@ func (m *Manager) StartVM(ctx context.Context, index int) error {
 
 // StartVMByName starts a virtual machine by name
 func (m *Manager) StartVMByName(ctx context.Context, name string) error {
+	// why: Fallback to DefaultOperationTimeout ensures external PowerShell processes
+	// do not hang indefinitely if the caller supplied a context without a deadline.
+	if _, hasDeadline := ctx.Deadline(); !hasDeadline {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, DefaultOperationTimeout)
+		defer cancel()
+	}
+
 	// why: Using RunCmdlet with separate args prevents shell injection attacks
 	// where 'name' could contain malicious PowerShell commands.
 	output, err := m.Exec.RunCmdlet(ctx, "Start-VM", "-Name", name)
 	if err != nil {
-		return fmt.Errorf("failed to start VM '%s': %v\nOutput: %s", name, err, string(output))
+		outputStr := string(output)
+		// why: Hyper-V throws an exception when Start-VM is called on an already running VM.
+		// Treating this as an idempotent success avoids reporting false errors during batch or UI operations.
+		if strings.Contains(strings.ToLower(outputStr), "already running") ||
+			strings.Contains(strings.ToLower(err.Error()), "already running") {
+			return nil
+		}
+		return fmt.Errorf("failed to start VM '%s': %w\nOutput: %s", name, err, outputStr)
 	}
 	return nil
 }

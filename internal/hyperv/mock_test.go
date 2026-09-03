@@ -63,7 +63,7 @@ func (m *MockRunner) RunCmdlet(_ context.Context, cmdlet string, args ...string)
 	}
 
 	if m.MockError != nil {
-		return nil, m.MockError
+		return []byte(m.MockOutput), m.MockError
 	}
 	return []byte(m.MockOutput), nil
 
@@ -200,6 +200,41 @@ func TestStartVM_Mock_Error(t *testing.T) {
 	err := manager.StartVMByName(context.Background(), "TestVM")
 	if err == nil {
 		t.Error("Expected error, got nil")
+	}
+}
+
+func TestStartVM_Mock_AlreadyRunning(t *testing.T) {
+	tests := []struct {
+		name      string
+		mockOut   string
+		mockErr   error
+		shouldErr bool
+	}{
+		{
+			name:      "already running in error message",
+			mockOut:   "",
+			mockErr:   fmt.Errorf("The virtual machine 'TestVM' cannot be started because it is already running."),
+			shouldErr: false,
+		},
+		{
+			name:      "already running in output stream",
+			mockOut:   "Start-VM: 'TestVM' cannot be started because it is already running.",
+			mockErr:   fmt.Errorf("exit status 1"),
+			shouldErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			manager, _ := newMockManager(tt.mockOut, tt.mockErr)
+			err := manager.StartVMByName(context.Background(), "TestVM")
+			if tt.shouldErr && err == nil {
+				t.Error("Expected error, got nil")
+			}
+			if !tt.shouldErr && err != nil {
+				t.Errorf("Expected nil error for idempotent already running, got: %v", err)
+			}
+		})
 	}
 }
 

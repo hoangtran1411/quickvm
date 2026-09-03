@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"quickvm/internal/hyperv"
+	"sync/atomic"
 	"testing"
 )
 
@@ -36,9 +37,9 @@ func TestRunRestart(t *testing.T) {
 			name: "Restart all VMs",
 			all:  true,
 			setup: func(m *MockManager) {
-				count := 0
+				var count int32
 				m.RestartVMFn = func(_ context.Context, _ int) error {
-					count++
+					atomic.AddInt32(&count, 1)
 					return nil
 				}
 			},
