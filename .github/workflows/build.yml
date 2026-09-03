@@ -20,7 +20,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: '1.25.6'
+        go-version: '1.27.0'
 
     - name: Cache Go modules
       uses: actions/cache@v4
@@ -102,12 +102,12 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: '1.25.6'
+        go-version: '1.27.0'
 
     - name: golangci-lint
       uses: golangci/golangci-lint-action@v7
       with:
-        version: v2.8.0
+        version: v2.13.2
         args: --timeout=5m
 
   test-coverage:
@@ -121,7 +121,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: '1.25.6'
+        go-version: '1.27.0'
 
     - name: Run tests with coverage
       run: |

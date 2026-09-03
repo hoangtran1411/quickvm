@@ -3,7 +3,8 @@
 <div align="center">
 
 ![QuickVM Logo](https://img.shields.io/badge/QuickVM-Hyper--V%20Manager-blue?style=for-the-badge&logo=windows)
-![Go Version](https://img.shields.io/badge/Go-1.25.6-00ADD8?style=for-the-badge&logo=go)
+![Release](https://img.shields.io/badge/Release-v1.4.0-blueviolet?style=for-the-badge)
+![Go Version](https://img.shields.io/badge/Go-1.27.0-00ADD8?style=for-the-badge&logo=go)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 [![Build Status](https://github.com/hoangtran1411/quickvm/actions/workflows/build.yml/badge.svg)](https://github.com/hoangtran1411/quickvm/actions/workflows/build.yml)
 
@@ -17,18 +18,21 @@
 
 ## ✨ Features
 
-- 🎨 **Beautiful TUI Interface** - Interactive table view with color-coded VM states
+- 🎨 **Beautiful TUI Interface** - Interactive table view with color-coded VM states and responsive actions
 - ⚡ **Quick Commands** - Start/stop/restart VMs by index number
+- 🚀 **Concurrent Batch Operations** - Start, stop, or restart multiple VMs simultaneously (`1 3 5`, `--range 1-5`, or `--all`) with bounded parallel worker pools
+- 🛡️ **Reliable & Idempotent** - Graceful handling of already running VMs, deterministic result ordering, and strict 60s context timeout safety
+- 🤖 **AI-Agent & Scripting Ready** - Machine-readable JSON output mode (`--output json` / `-o json`) across all commands
 - 📊 **Real-time Monitoring** - Live VM status, CPU usage, memory, and uptime
 - 🎯 **Easy Navigation** - Keyboard shortcuts for efficient VM management
 - 🔄 **Auto-refresh** - Keep your VM list up-to-date with a single keypress
-- 💻 **Windows Native** - Direct integration with Hyper-V via PowerShell
+- 💻 **Windows Native** - Direct integration with Hyper-V via safe PowerShell execution
 
 ## 📋 Prerequisites
 
 - Windows 10/11 with Hyper-V enabled
 - Administrator privileges (required for Hyper-V management)
-- Go 1.25.6 or higher (for building from source)
+- Go 1.27.0 or higher (for building from source)
 
 ## 🚀 Installation
 
@@ -118,19 +122,49 @@ quickvm list
 quickvm ls
 ```
 
-#### Start a VM
+#### Start VMs
 ```bash
+# Start a single VM by index
 quickvm start 1
+
+# Start multiple VMs concurrently (parallel execution)
+quickvm start 1 3 5
+
+# Start a range of VMs
+quickvm start --range 1-5
+
+# Start all VMs
+quickvm start --all
 ```
 
-#### Stop a VM
+#### Stop VMs
 ```bash
+# Stop a single VM
 quickvm stop 1
+
+# Stop multiple or all VMs
+quickvm stop 1 2 3
+quickvm stop --all
 ```
 
-#### Restart a VM
+#### Restart VMs
 ```bash
+# Restart a single VM or a range
 quickvm restart 1
+quickvm restart --range 1-3
+```
+
+#### AI Agent & Structured Output (JSON)
+All commands support `--output json` (`-o json`) for machine-readable automation:
+```bash
+# List all VMs in JSON format
+quickvm list -o json
+
+# Batch start VMs with JSON status reporting
+quickvm start 1 2 -o json
+
+# Get system info as structured JSON
+quickvm info -o json
 ```
 
 #### View System Information
@@ -266,33 +300,36 @@ QuickVM is built with clean architecture principles:
 ```
 quickvm/
 ├── cmd/            # CLI commands (Cobra)
-│   ├── root.go      # Root command & TUI launcher
-│   ├── list.go      # List VMs command
-│   ├── start.go     # Start VM command
-│   ├── stop.go      # Stop VM command
-│   ├── restart.go   # Restart VM command
-│   ├── info.go      # System info command
-│   ├── snapshot.go  # Snapshot management
-│   ├── clone.go     # Clone VM command
-│   ├── export.go    # Export VM command
-│   ├── import.go    # Import VM command
-│   ├── gpu.go       # GPU passthrough management
-│   ├── rdp.go       # Remote Desktop connection
-│   ├── workspace.go # VM group management
-│   ├── enable.go    # Enable Hyper-V command
-│   └── update.go    # Update command
+│   ├── root.go            # Root command & TUI launcher
+│   ├── list.go            # List VMs command
+│   ├── start.go           # Start VM command
+│   ├── stop.go            # Stop VM command
+│   ├── restart.go         # Restart VM command
+│   ├── output_helpers.go  # Concurrent batch operations & worker pool
+│   ├── info.go            # System info command
+│   ├── snapshot.go        # Snapshot management
+│   ├── clone.go           # Clone VM command
+│   ├── export.go          # Export VM command
+│   ├── import.go          # Import VM command
+│   ├── gpu.go             # GPU passthrough management
+│   ├── rdp.go             # Remote Desktop connection
+│   ├── workspace.go       # VM group management
+│   ├── enable.go          # Enable Hyper-V command
+│   ├── update.go          # Update command
+│   └── version.go         # Version & build info
 ├── internal/       # Private application logic
-│   └── hyperv/      # Hyper-V integration layer
-│       ├── hyperv.go    # Core VM management
-│       ├── snapshot.go  # Snapshot operations
-│       ├── clone.go     # Clone operations
-│       ├── export.go    # Export/Import operations
-│       ├── gpu.go       # GPU passthrough logic
-│       ├── rdp.go       # RDP & Credential logic
-│       ├── sysinfo.go   # Hardware & System info
-│       └── workspace.go # Workspace profile logic
+│   ├── hyperv/            # Hyper-V integration layer
+│   │   ├── hyperv.go      # Core VM management & idempotency
+│   │   ├── snapshot.go    # Snapshot operations
+│   │   ├── clone.go       # Clone operations
+│   │   ├── export.go      # Export/Import operations
+│   │   ├── gpu.go         # GPU passthrough logic
+│   │   ├── rdp.go         # RDP & Credential logic
+│   │   ├── sysinfo.go     # Hardware & System info
+│   │   └── workspace.go   # Workspace profile logic
+│   └── output/            # Formatter for console tables & AI-agent JSON
 ├── ui/             # TUI components (Bubble Tea)
-│   └── table.go     # Interactive dashboard
+│   └── table.go           # Interactive dashboard
 ├── updater/        # Auto-update functionality
 ├── main.go         # Application entry point
 └── go.mod          # Go modules

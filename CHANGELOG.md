@@ -7,7 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-09-03
+
 ### Added
+
+- 🚀 **Concurrent Batch Operations**: Bounded parallel worker pool (4 workers via `errgroup`) for VM start, stop, and restart commands, cutting batch execution time by up to 75%.
+- 🛡️ **Idempotent VM Starts**: Automatic detection and graceful handling of already-running Hyper-V VMs without reporting false failures.
+- ⏱️ **Context & Timeout Safety**: Strict 60s operation timeouts across CLI batch operations and interactive TUI actions.
+- ⚡ **Streamlined TUI VM Starts**: Calling `StartVMByName` directly from the table UI to bypass redundant `GetVMs` index lookups.
+- 🤖 **AI-Agent & Automation Support**: Comprehensive `--output json` (`-o json`) support across commands for machine-readable automation.
+
+### Added (Previous)
+
 - 📸 **VM Snapshot Management** (2026-01-07)
   - `quickvm snapshot list <vm-index>` - List snapshots for a VM
   - `quickvm snapshot create <vm-index> <name>` - Create a new snapshot
@@ -41,12 +52,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Support for both AMD64 and ARM64 architectures
 
 ### Planned Features
+
 - Bulk operations (`--all` flag)
 - Workspace/Profile system
 
 ## [1.0.0] - 2026-01-05
 
 ### Added
+
 - 🎨 Beautiful TUI interface with Bubble Tea framework
 - ⚡ CLI commands for quick VM operations
 - 📊 Real-time VM monitoring (CPU, Memory, Uptime)
@@ -58,6 +71,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 📦 Automated release builds for Windows AMD64 and ARM64
 
 ### Commands Implemented
+
 - `quickvm` - Launch interactive TUI
 - `quickvm list` - List all VMs
 - `quickvm start <index>` - Start VM by index
@@ -66,6 +80,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `quickvm version` - Show version information
 
 ### Documentation
+
 - README.md - Main documentation
 - QUICK_REFERENCE.md - Quick reference card
 - HUONG_DAN.md - Vietnamese user guide
@@ -76,6 +91,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PROJECT_SUMMARY.md - Complete overview
 
 ### Technical Details
+
 - Built with Go 1.25.2
 - Hyper-V integration via PowerShell
 - Clean architecture with separation of concerns
@@ -84,12 +100,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - MIT License
 
 ### Performance
+
 - Startup time: < 100ms
 - Operation time: 1-2 seconds
 - Memory usage: ~10-20MB
 - Binary size: ~6-8MB
 
 ### Known Limitations
+
 - Requires Administrator privileges
 - Windows-only (Hyper-V specific)
 - VM indices change when VMs are added/removed
@@ -99,6 +117,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Version Guidelines
 
 We use [Semantic Versioning](https://semver.org/):
+
 - **MAJOR** version for incompatible API changes
 - **MINOR** version for new functionality in a backwards compatible manner
 - **PATCH** version for backwards compatible bug fixes

@@ -255,8 +255,8 @@ func BenchmarkGetVMs(b *testing.B) {
 
 	manager := NewManager()
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	
+	for b.Loop() {
 		_, _ = manager.GetVMs(context.TODO())
 	}
 }
