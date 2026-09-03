@@ -7,7 +7,7 @@
 BINARY_NAME=quickvm.exe
 MAIN_PATH=.
 BUILD_DIR=build
-VERSION?=1.0.0
+VERSION?=1.4.0
 
 # Colors for output
 GREEN=\033[0;32m

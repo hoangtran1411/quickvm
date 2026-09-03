@@ -10,9 +10,9 @@ import (
 
 var (
 	// Version of the application
-	Version = "1.0.0"
+	Version = "1.4.0"
 	// BuildDate is the date when the binary was built
-	BuildDate = "2026-01-05"
+	BuildDate = "2026-09-03"
 	// GitCommit is the commit hash of the build
 	GitCommit = "dev"
 )
