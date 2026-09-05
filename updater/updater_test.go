@@ -431,8 +431,8 @@ func BenchmarkCopyFile(b *testing.B) {
 	data := make([]byte, 1024*1024)
 	_ = os.WriteFile(srcPath, data, 0644)
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	
+	for b.Loop() {
 		dstPath := filepath.Join(tmpDir, "dest.bin")
 		_ = copyFile(srcPath, dstPath)
 		_ = os.Remove(dstPath)
@@ -446,8 +446,8 @@ func BenchmarkExtractZip(b *testing.B) {
 	zipPath := filepath.Join(tmpDir, "test.zip")
 	_ = createTestZip(zipPath)
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	
+	for b.Loop() {
 		extractDir := filepath.Join(tmpDir, "extract")
 		_ = os.MkdirAll(extractDir, 0755)
 		_ = extractZip(zipPath, extractDir)
@@ -485,8 +485,8 @@ func BenchmarkCheckForUpdates(b *testing.B) {
 
 	u := NewUpdater("1.0.0")
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	
+	for b.Loop() {
 		_, _, _ = u.CheckForUpdates()
 	}
 }
