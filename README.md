@@ -3,7 +3,7 @@
 <div align="center">
 
 ![QuickVM Logo](https://img.shields.io/badge/QuickVM-Hyper--V%20Manager-blue?style=for-the-badge&logo=windows)
-![Release](https://img.shields.io/badge/Release-v1.4.0-blueviolet?style=for-the-badge)
+![Release](https://img.shields.io/badge/Release-v1.5.0-blueviolet?style=for-the-badge)
 ![Go Version](https://img.shields.io/badge/Go-1.27.0-00ADD8?style=for-the-badge&logo=go)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 [![Build Status](https://github.com/hoangtran1411/quickvm/actions/workflows/build.yml/badge.svg)](https://github.com/hoangtran1411/quickvm/actions/workflows/build.yml)

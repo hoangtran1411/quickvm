@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-09-05
+
+### Security & Hardening
+
+- 🛡️ **PowerShell Injection Defense**: Introduced stateful parameter parsing (`formatCmdletScript`) and safe single-quote escaping in `RunCmdlet`, securely handling dash-prefixed values and arbitrary inputs without shell injection risks.
+- 🔒 **Cryptographic Updater Verification**: Added SHA256 checksum verification (`.sha256`) before replacing binaries, secured cleanup script execution with escaped single quotes, and prioritized exact binary matches (`quickvm-<assetName>`) over checksum files.
+- 🗂️ **Workspace Path Traversal Protection**: Added strict workspace name validation (`ValidateWorkspaceName`) rejecting path traversal sequences (`..`, slashes, colons, wildcards) across all workspace operations.
+- 🚦 **Input Validation**: Added guard clauses rejecting empty or whitespace-only VM and snapshot names prior to issuing PowerShell calls.
+
+### Added
+
+- 🤖 **Complete Machine-Readable JSON Output**: Implemented structured JSON models (`--output json`) for `gpu`, `workspace`, `enable`, `update`, and snapshot commands (`restore`/`delete`).
+- ⚡ **Native Windows Token Elevation**: Replaced slow `powershell.exe` execution in `IsRunningAsAdmin` with native Windows access token checks (`windows.OpenProcessToken`), cutting check latency from ~400ms to <1µs.
+- 🚀 **Concurrent Workspace Execution**: Upgraded workspace batch VM start/stop operations to use bounded concurrency (`errgroup` with limit 4) matching core batch commands.
+- 🖥️ **Multi-Socket Server Support**: Enhanced `getCPUInfo` to cleanly aggregate multi-socket processor arrays returned by `Win32_Processor` without unmarshaling crashes.
+
+### Fixed
+
+- 🛑 **Standardized Non-Zero Exit Codes**: Fixed CLI commands (`list`, `clone`, `export`, `rdp`, batch operations) to return exit code `1` on failure instead of exiting `0`.
+- ⚠️ **Batch False-Success Resolution**: Batch VM operations now emit `"success": false` with error details in JSON mode whenever one or more operations fail.
+- 🔇 **Headless Non-Blocking Mode**: Auto-update check in `root.go` skips interactive `fmt.Scanln` prompts when running in JSON mode.
+- 🧪 **Test Suite Integrity**: Corrected snapshot unit tests that previously passed false-positively due to missing elevation checks.
+- 📦 **Release Linker Flags**: Fixed `.github/workflows/release.yml` linker flags to correctly target `quickvm/cmd.Version`.
+- 🧹 **Dangling Documentation References**: Cleaned up obsolete references to deleted `HUONG_DAN.md` in `Makefile` and `install.ps1`.
+
 ## [1.4.0] - 2026-09-03
 
 ### Added
