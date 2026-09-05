@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -33,8 +34,28 @@ func GetWorkspaceDir() (string, error) {
 	return dir, nil
 }
 
+// ValidateWorkspaceName validates that a workspace name is non-empty, contains no path traversal sequences,
+// and has no invalid filesystem characters.
+func ValidateWorkspaceName(name string) error {
+	trimmed := strings.TrimSpace(name)
+	if trimmed == "" {
+		return fmt.Errorf("workspace name cannot be empty")
+	}
+	if filepath.Base(trimmed) != trimmed || strings.ContainsAny(trimmed, `/\:*"<>|?`) || strings.Contains(trimmed, "..") {
+		return fmt.Errorf("invalid workspace name '%s': contains path traversal or invalid characters", name)
+	}
+	return nil
+}
+
 // SaveWorkspace saves a workspace to a YAML file
 func SaveWorkspace(ws *Workspace) error {
+	if ws == nil {
+		return fmt.Errorf("workspace cannot be nil")
+	}
+	if err := ValidateWorkspaceName(ws.Name); err != nil {
+		return err
+	}
+
 	dir, err := GetWorkspaceDir()
 	if err != nil {
 		return err
@@ -55,6 +76,10 @@ func SaveWorkspace(ws *Workspace) error {
 
 // LoadWorkspace loads a workspace by name
 func LoadWorkspace(name string) (*Workspace, error) {
+	if err := ValidateWorkspaceName(name); err != nil {
+		return nil, err
+	}
+
 	dir, err := GetWorkspaceDir()
 	if err != nil {
 		return nil, err
@@ -97,6 +122,10 @@ func ListWorkspaces() ([]string, error) {
 
 // DeleteWorkspace deletes a workspace file
 func DeleteWorkspace(name string) error {
+	if err := ValidateWorkspaceName(name); err != nil {
+		return err
+	}
+
 	dir, err := GetWorkspaceDir()
 	if err != nil {
 		return err

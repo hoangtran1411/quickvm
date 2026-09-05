@@ -55,14 +55,14 @@ jobs:
       run: |
         $env:GOOS="windows"
         $env:GOARCH="amd64"
-        go build -v -ldflags="-s -w -X 'main.Version=${{ steps.get_version.outputs.VERSION_NUMBER }}' -X 'main.BuildDate=$(Get-Date -Format 'yyyy-MM-dd')' -X 'main.GitCommit=$env:GITHUB_SHA'" -o build/quickvm-windows-amd64.exe
+        go build -v -ldflags="-s -w -X 'quickvm/cmd.Version=${{ steps.get_version.outputs.VERSION_NUMBER }}' -X 'quickvm/cmd.BuildDate=$(Get-Date -Format 'yyyy-MM-dd')' -X 'quickvm/cmd.GitCommit=$env:GITHUB_SHA'" -o build/quickvm-windows-amd64.exe
       shell: pwsh
 
     - name: Build ARM64
       run: |
         $env:GOOS="windows"
         $env:GOARCH="arm64"
-        go build -v -ldflags="-s -w -X 'main.Version=${{ steps.get_version.outputs.VERSION_NUMBER }}' -X 'main.BuildDate=$(Get-Date -Format 'yyyy-MM-dd')' -X 'main.GitCommit=$env:GITHUB_SHA'" -o build/quickvm-windows-arm64.exe
+        go build -v -ldflags="-s -w -X 'quickvm/cmd.Version=${{ steps.get_version.outputs.VERSION_NUMBER }}' -X 'quickvm/cmd.BuildDate=$(Get-Date -Format 'yyyy-MM-dd')' -X 'quickvm/cmd.GitCommit=$env:GITHUB_SHA'" -o build/quickvm-windows-arm64.exe
       shell: pwsh
 
     - name: Create release package
@@ -141,7 +141,6 @@ jobs:
         
         ### 📚 Documentation
         - [Quick Reference](https://github.com/hoangtran1411/quickvm/blob/main/docs/QUICK_REFERENCE.md)
-        - [Vietnamese Guide](https://github.com/hoangtran1411/quickvm/blob/main/docs/HUONG_DAN.md)
         - [Developer Guide](https://github.com/hoangtran1411/quickvm/blob/main/docs/DEVELOPER.md)
         
         ### ✅ Checksums

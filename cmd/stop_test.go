@@ -19,34 +19,38 @@ func TestRunStop(t *testing.T) {
 		args     []string
 		rangeStr string
 		all      bool
+		wantErr  bool
 		setup    func(*MockManager)
 	}{
 		{
-			name: "Stop single VM",
-			args: []string{"1"},
+			name:    "Stop single VM",
+			args:    []string{"1"},
+			wantErr: false,
 			setup: func(m *MockManager) {
-				m.StopVMFn = func(_ context.Context, index int) error {
-					if index != 1 {
-						return fmt.Errorf("wrong index")
+				m.StopVMByNameFn = func(_ context.Context, name string) error {
+					if name != "VM1" {
+						return fmt.Errorf("wrong VM")
 					}
 					return nil
 				}
 			},
 		},
 		{
-			name: "Stop all VMs",
-			all:  true,
+			name:    "Stop all VMs",
+			all:     true,
+			wantErr: false,
 			setup: func(m *MockManager) {
 				var count int32
-				m.StopVMFn = func(_ context.Context, _ int) error {
+				m.StopVMByNameFn = func(_ context.Context, _ string) error {
 					atomic.AddInt32(&count, 1)
 					return nil
 				}
 			},
 		},
 		{
-			name: "Failed to get VMs",
-			args: []string{"1"},
+			name:    "Failed to get VMs",
+			args:    []string{"1"},
+			wantErr: true,
 			setup: func(m *MockManager) {
 				m.GetVMsFn = func(_ context.Context) ([]hyperv.VM, error) {
 					return nil, fmt.Errorf("hyper-v error")
@@ -56,7 +60,16 @@ func TestRunStop(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(_ *testing.T) {
+		t.Run(tt.name, func(t *testing.T) {
+			origExit := osExit
+			var exitCalled bool
+			var exitCode int
+			osExit = func(code int) {
+				exitCalled = true
+				exitCode = code
+			}
+			defer func() { osExit = origExit }()
+
 			m := &MockManager{
 				GetVMsFn: func(_ context.Context) ([]hyperv.VM, error) {
 					return mockVMs, nil
@@ -67,6 +80,16 @@ func TestRunStop(t *testing.T) {
 			}
 
 			runStop(context.Background(), m, tt.args, tt.rangeStr, tt.all)
+
+			if tt.wantErr {
+				if !exitCalled {
+					t.Errorf("Expected osExit(1) to be called, but it was not")
+				} else if exitCode != 1 {
+					t.Errorf("Expected exit code 1, got %d", exitCode)
+				}
+			} else if exitCalled {
+				t.Errorf("Unexpected osExit(%d) called", exitCode)
+			}
 		})
 	}
 }

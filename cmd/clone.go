@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 
@@ -39,7 +40,7 @@ Examples:
 			if !output.IsJSON() {
 				fmt.Printf("❌ Invalid VM index: %s\n", args[0])
 			}
-			return
+			os.Exit(1)
 		}
 
 		// Get new name and trim whitespace
@@ -49,7 +50,7 @@ Examples:
 			if !output.IsJSON() {
 				fmt.Println("❌ New VM name cannot be empty")
 			}
-			return
+			os.Exit(1)
 		}
 
 		// Get source VM name for display
@@ -59,7 +60,7 @@ Examples:
 			if !output.IsJSON() {
 				fmt.Printf("❌ Failed to get source VM: %v\n", err)
 			}
-			return
+			os.Exit(1)
 		}
 
 		// Check if new name already exists
@@ -69,14 +70,14 @@ Examples:
 			if !output.IsJSON() {
 				fmt.Printf("❌ Failed to check VM name: %v\n", err)
 			}
-			return
+			os.Exit(1)
 		}
 		if exists {
 			output.PrintError("VM_EXISTS", "A VM with this name already exists", newName)
 			if !output.IsJSON() {
 				fmt.Printf("❌ A VM with name '%s' already exists\n", newName)
 			}
-			return
+			os.Exit(1)
 		}
 
 		if !output.IsJSON() {
@@ -92,7 +93,7 @@ Examples:
 			if !output.IsJSON() {
 				fmt.Printf("\n❌ Failed to clone VM: %v\n", err)
 			}
-			return
+			os.Exit(1)
 		}
 
 		// JSON output for AI agents

@@ -98,14 +98,16 @@ func (m *Manager) GetVM(ctx context.Context, name string) (*VM, error)
 
 ## Shell Execution & Security (PowerShell)
 
-- **Sanitization**: NEVER construct PowerShell commands using string concatenation with user input.
+- **Sanitization**: NEVER pass unescaped user input to PowerShell `-Command`. PowerShell runtime concatenates trailing args into a single script block before parsing. Always escape single quotes and wrap values inside single-quoted strings:
 
 ```go
-// ❌ Dangerous
-exec.Command("powershell", "-Command", "Get-VM -Name " + input)
-
-// ✅ Safe
+// ❌ Dangerous - PowerShell concatenates trailing arguments after -Command!
 exec.CommandContext(ctx, "powershell", "-Command", "Get-VM", "-Name", input)
+
+// ✅ Safe - Escape single quotes and wrap in single-quoted string literal
+escapedInput := strings.ReplaceAll(input, "'", "''")
+cmd := fmt.Sprintf("Get-VM -Name '%s'", escapedInput)
+exec.CommandContext(ctx, "powershell", "-NoProfile", "-NonInteractive", "-Command", cmd)
 ```
 
 - **Execution**: Prefer `exec.CommandContext` over `exec.Command`.
@@ -164,10 +166,12 @@ type VMManager interface {
 ## Reference Links
 
 ### Official Go Documentation
+
 - [Effective Go](https://go.dev/doc/effective_go)
 - [Go Modules](https://go.dev/ref/mod)
 
 ### Project Specific
+
 - [Cobra (CLI)](https://github.com/spf13/cobra)
 - [Bubble Tea (TUI)](https://github.com/charmbracelet/bubbletea)
 - [Go Hyper-V (Reference)](https://github.com/sheepla/go-hyperv)

@@ -37,7 +37,7 @@ The exported VM will be placed in a subdirectory named after the VM.`,
 			if !output.IsJSON() {
 				fmt.Printf("❌ Invalid VM index: %s\n", args[0])
 			}
-			return
+			os.Exit(1)
 		}
 
 		// Get export path
@@ -51,7 +51,7 @@ The exported VM will be placed in a subdirectory named after the VM.`,
 				if !output.IsJSON() {
 					fmt.Printf("❌ Failed to get current directory: %v\n", err)
 				}
-				return
+				os.Exit(1)
 			}
 			exportPath = filepath.Join(cwd, exportPath)
 		}
@@ -63,7 +63,7 @@ The exported VM will be placed in a subdirectory named after the VM.`,
 			if !output.IsJSON() {
 				fmt.Printf("❌ Failed to get VM: %v\n", err)
 			}
-			return
+			os.Exit(1)
 		}
 
 		// Check if export path exists, create if not
@@ -77,7 +77,7 @@ The exported VM will be placed in a subdirectory named after the VM.`,
 				if !output.IsJSON() {
 					fmt.Printf("❌ Failed to create export directory: %v\n", err)
 				}
-				return
+				os.Exit(1)
 			}
 		}
 
@@ -91,7 +91,7 @@ The exported VM will be placed in a subdirectory named after the VM.`,
 			if !output.IsJSON() {
 				fmt.Printf("❌ Failed to export VM: %v\n", err)
 			}
-			return
+			os.Exit(1)
 		}
 
 		// Show success message with export location

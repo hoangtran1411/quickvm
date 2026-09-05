@@ -106,10 +106,20 @@ func TestCreateSnapshot_InvalidIndex(t *testing.T) {
 func TestCreateSnapshot_EmptyName(t *testing.T) {
 	manager := NewManager()
 
-	// Should fail before calling Hyper-V
-	err := manager.CreateSnapshot(context.TODO(), 1, "")
-	if err == nil {
-		t.Error("Expected error for empty snapshot name, got nil")
+	for _, name := range []string{"", "   ", "\t"} {
+		err := manager.CreateSnapshot(context.TODO(), 1, name)
+		if err == nil || !strings.Contains(err.Error(), "snapshot name cannot be empty") {
+			t.Errorf("Expected 'snapshot name cannot be empty' for %q, got %v", name, err)
+		}
+		err = manager.CreateSnapshotByVMName(context.TODO(), "TestVM", name)
+		if err == nil || !strings.Contains(err.Error(), "snapshot name cannot be empty") {
+			t.Errorf("Expected 'snapshot name cannot be empty' for %q, got %v", name, err)
+		}
+	}
+
+	err := manager.CreateSnapshotByVMName(context.TODO(), "", "ValidSnapshot")
+	if err == nil || !strings.Contains(err.Error(), "VM name cannot be empty") {
+		t.Errorf("Expected 'VM name cannot be empty', got %v", err)
 	}
 }
 
@@ -140,10 +150,20 @@ func TestRestoreSnapshot_InvalidIndex(t *testing.T) {
 func TestRestoreSnapshot_EmptyName(t *testing.T) {
 	manager := NewManager()
 
-	// Should fail before calling Hyper-V
-	err := manager.RestoreSnapshot(context.TODO(), 1, "")
-	if err == nil {
-		t.Error("Expected error for empty snapshot name, got nil")
+	for _, name := range []string{"", "   ", "\t"} {
+		err := manager.RestoreSnapshot(context.TODO(), 1, name)
+		if err == nil || !strings.Contains(err.Error(), "snapshot name cannot be empty") {
+			t.Errorf("Expected 'snapshot name cannot be empty' for %q, got %v", name, err)
+		}
+		err = manager.RestoreSnapshotByVMName(context.TODO(), "TestVM", name)
+		if err == nil || !strings.Contains(err.Error(), "snapshot name cannot be empty") {
+			t.Errorf("Expected 'snapshot name cannot be empty' for %q, got %v", name, err)
+		}
+	}
+
+	err := manager.RestoreSnapshotByVMName(context.TODO(), "", "ValidSnapshot")
+	if err == nil || !strings.Contains(err.Error(), "VM name cannot be empty") {
+		t.Errorf("Expected 'VM name cannot be empty', got %v", err)
 	}
 }
 
@@ -174,10 +194,20 @@ func TestDeleteSnapshot_InvalidIndex(t *testing.T) {
 func TestDeleteSnapshot_EmptyName(t *testing.T) {
 	manager := NewManager()
 
-	// Should fail before calling Hyper-V
-	err := manager.DeleteSnapshot(context.TODO(), 1, "")
-	if err == nil {
-		t.Error("Expected error for empty snapshot name, got nil")
+	for _, name := range []string{"", "   ", "\t"} {
+		err := manager.DeleteSnapshot(context.TODO(), 1, name)
+		if err == nil || !strings.Contains(err.Error(), "snapshot name cannot be empty") {
+			t.Errorf("Expected 'snapshot name cannot be empty' for %q, got %v", name, err)
+		}
+		err = manager.DeleteSnapshotByVMName(context.TODO(), "TestVM", name)
+		if err == nil || !strings.Contains(err.Error(), "snapshot name cannot be empty") {
+			t.Errorf("Expected 'snapshot name cannot be empty' for %q, got %v", name, err)
+		}
+	}
+
+	err := manager.DeleteSnapshotByVMName(context.TODO(), "", "ValidSnapshot")
+	if err == nil || !strings.Contains(err.Error(), "VM name cannot be empty") {
+		t.Errorf("Expected 'VM name cannot be empty', got %v", err)
 	}
 }
 

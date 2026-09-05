@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"quickvm/internal/hyperv"
+	"quickvm/internal/output"
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
@@ -32,22 +33,44 @@ var gpuStatusCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, _ []string) {
 		manager := hyperv.NewManager()
 
-		color.Cyan("🔍 Checking GPU partitioning support...")
-		fmt.Println()
+		if !output.IsJSON() {
+			color.Cyan("🔍 Checking GPU partitioning support...")
+			fmt.Println()
+		}
 
 		gpus, err := manager.CheckGPUPartitionable(cmd.Context())
 		if err != nil {
-			color.Red("❌ Error checking GPU support: %v", err)
+			output.PrintError("GPU_CHECK_FAILED", "Error checking GPU support", err.Error())
+			if !output.IsJSON() {
+				color.Red("❌ Error checking GPU support: %v", err)
+			}
 			os.Exit(1)
 		}
 
 		if len(gpus) == 0 {
+			if output.IsJSON() {
+				output.PrintData(GPUStatusResult{
+					GPUs:      []hyperv.GPUInfo{},
+					Supported: false,
+					Total:     0,
+				})
+				return
+			}
 			color.Yellow("⚠️  No GPUs with partitioning support found.")
 			fmt.Println()
 			color.White("   Possible reasons:")
 			color.White("   • GPU does not support GPU-P")
 			color.White("   • GPU drivers are outdated")
 			color.White("   • Hyper-V is not enabled")
+			return
+		}
+
+		if output.IsJSON() {
+			output.PrintData(GPUStatusResult{
+				GPUs:      gpus,
+				Supported: true,
+				Total:     len(gpus),
+			})
 			return
 		}
 
@@ -79,62 +102,101 @@ Example: quickvm gpu add 1`,
 	Run: func(cmd *cobra.Command, args []string) {
 		index, err := strconv.Atoi(args[0])
 		if err != nil {
-			color.Red("❌ Invalid VM index: %s", args[0])
-			return
+			output.PrintError("INVALID_INDEX", "Invalid VM index", args[0])
+			if !output.IsJSON() {
+				color.Red("❌ Invalid VM index: %s", args[0])
+			}
+			os.Exit(1)
 		}
 
 		manager := hyperv.NewManager()
 
 		// Check admin privileges
 		if !hyperv.IsRunningAsAdmin(cmd.Context()) {
-			color.Red("❌ This command requires Administrator privileges.")
-			fmt.Println()
-			color.Yellow("💡 Please run this command in an elevated PowerShell or Command Prompt.")
+			output.PrintError("ADMIN_REQUIRED", "Administrator privileges required", "This command requires Administrator privileges")
+			if !output.IsJSON() {
+				color.Red("❌ This command requires Administrator privileges.")
+				fmt.Println()
+				color.Yellow("💡 Please run this command in an elevated PowerShell or Command Prompt.")
+			}
 			os.Exit(1)
 		}
 
 		// Check GPU support first
-		color.Cyan("🔍 Checking GPU partitioning support...")
+		if !output.IsJSON() {
+			color.Cyan("🔍 Checking GPU partitioning support...")
+		}
 		gpus, err := manager.CheckGPUPartitionable(cmd.Context())
 		if err != nil {
-			color.Red("❌ Error checking GPU support: %v", err)
+			output.PrintError("GPU_CHECK_FAILED", "Error checking GPU support", err.Error())
+			if !output.IsJSON() {
+				color.Red("❌ Error checking GPU support: %v", err)
+			}
 			os.Exit(1)
 		}
 
 		if len(gpus) == 0 {
-			color.Red("❌ No GPUs with partitioning support found.")
-			color.Yellow("💡 Your GPU may not support GPU-P or drivers need updating.")
+			output.PrintError("GPU_NOT_SUPPORTED", "No GPUs with partitioning support found", "Your GPU may not support GPU-P or drivers need updating")
+			if !output.IsJSON() {
+				color.Red("❌ No GPUs with partitioning support found.")
+				color.Yellow("💡 Your GPU may not support GPU-P or drivers need updating.")
+			}
 			os.Exit(1)
 		}
 
 		// Get VMs to validate index
 		vms, err := manager.GetVMs(cmd.Context())
 		if err != nil {
-			color.Red("❌ Failed to get VMs: %v", err)
+			output.PrintError("VM_GET_FAILED", "Failed to get VMs", err.Error())
+			if !output.IsJSON() {
+				color.Red("❌ Failed to get VMs: %v", err)
+			}
 			os.Exit(1)
 		}
 
 		if index < 1 || index > len(vms) {
-			color.Red("❌ Invalid VM index: %d (valid range: 1-%d)", index, len(vms))
-			return
+			output.PrintError("INVALID_INDEX", "Invalid VM index", fmt.Sprintf("Index %d out of range (1-%d)", index, len(vms)))
+			if !output.IsJSON() {
+				color.Red("❌ Invalid VM index: %d (valid range: 1-%d)", index, len(vms))
+			}
+			os.Exit(1)
 		}
 
 		vm := vms[index-1]
-		color.Cyan("🔧 Adding GPU partition to VM: %s", vm.Name)
-		fmt.Println()
+		if !output.IsJSON() {
+			color.Cyan("🔧 Adding GPU partition to VM: %s", vm.Name)
+			fmt.Println()
+		}
 
 		// Check if VM is running
 		if vm.State == "Running" {
-			color.Red("❌ VM '%s' is currently running.", vm.Name)
-			color.Yellow("💡 Please stop the VM first: quickvm stop %d", index)
+			output.PrintError("VM_RUNNING", "VM is currently running", fmt.Sprintf("VM '%s' must be stopped first", vm.Name))
+			if !output.IsJSON() {
+				color.Red("❌ VM '%s' is currently running.", vm.Name)
+				color.Yellow("💡 Please stop the VM first: quickvm stop %d", index)
+			}
 			os.Exit(1)
 		}
 
 		// Add GPU partition with default config
 		config := hyperv.DefaultGPUPartitionConfig()
 		if err := manager.AddGPUPartition(cmd.Context(), vm.Name, config); err != nil {
-			color.Red("❌ Failed to add GPU partition: %v", err)
+			output.PrintError("GPU_ADD_FAILED", "Failed to add GPU partition", err.Error())
+			if !output.IsJSON() {
+				color.Red("❌ Failed to add GPU partition: %v", err)
+			}
 			os.Exit(1)
+		}
+
+		if output.IsJSON() {
+			output.PrintData(GPUOpResult{
+				Operation: "add",
+				VMName:    vm.Name,
+				VMIndex:   index,
+				Success:   true,
+				Message:   fmt.Sprintf("GPU partition added successfully to '%s'", vm.Name),
+			})
+			return
 		}
 
 		color.Green("✅ GPU partition added successfully to '%s'!", vm.Name)
@@ -177,47 +239,78 @@ Example: quickvm gpu remove 1`,
 	Run: func(cmd *cobra.Command, args []string) {
 		index, err := strconv.Atoi(args[0])
 		if err != nil {
-			color.Red("❌ Invalid VM index: %s", args[0])
-			return
+			output.PrintError("INVALID_INDEX", "Invalid VM index", args[0])
+			if !output.IsJSON() {
+				color.Red("❌ Invalid VM index: %s", args[0])
+			}
+			os.Exit(1)
 		}
 
 		manager := hyperv.NewManager()
 
 		// Check admin privileges
 		if !hyperv.IsRunningAsAdmin(cmd.Context()) {
-			color.Red("❌ This command requires Administrator privileges.")
-			fmt.Println()
-			color.Yellow("💡 Please run this command in an elevated PowerShell or Command Prompt.")
+			output.PrintError("ADMIN_REQUIRED", "Administrator privileges required", "This command requires Administrator privileges")
+			if !output.IsJSON() {
+				color.Red("❌ This command requires Administrator privileges.")
+				fmt.Println()
+				color.Yellow("💡 Please run this command in an elevated PowerShell or Command Prompt.")
+			}
 			os.Exit(1)
 		}
 
 		// Get VMs to validate index
 		vms, err := manager.GetVMs(cmd.Context())
 		if err != nil {
-			color.Red("❌ Failed to get VMs: %v", err)
+			output.PrintError("VM_GET_FAILED", "Failed to get VMs", err.Error())
+			if !output.IsJSON() {
+				color.Red("❌ Failed to get VMs: %v", err)
+			}
 			os.Exit(1)
 		}
 
 		if index < 1 || index > len(vms) {
-			color.Red("❌ Invalid VM index: %d (valid range: 1-%d)", index, len(vms))
-			return
+			output.PrintError("INVALID_INDEX", "Invalid VM index", fmt.Sprintf("Index %d out of range (1-%d)", index, len(vms)))
+			if !output.IsJSON() {
+				color.Red("❌ Invalid VM index: %d (valid range: 1-%d)", index, len(vms))
+			}
+			os.Exit(1)
 		}
 
 		vm := vms[index-1]
-		color.Cyan("🔧 Removing GPU partition from VM: %s", vm.Name)
-		fmt.Println()
+		if !output.IsJSON() {
+			color.Cyan("🔧 Removing GPU partition from VM: %s", vm.Name)
+			fmt.Println()
+		}
 
 		// Check if VM is running
 		if vm.State == "Running" {
-			color.Red("❌ VM '%s' is currently running.", vm.Name)
-			color.Yellow("💡 Please stop the VM first: quickvm stop %d", index)
+			output.PrintError("VM_RUNNING", "VM is currently running", fmt.Sprintf("VM '%s' must be stopped first", vm.Name))
+			if !output.IsJSON() {
+				color.Red("❌ VM '%s' is currently running.", vm.Name)
+				color.Yellow("💡 Please stop the VM first: quickvm stop %d", index)
+			}
 			os.Exit(1)
 		}
 
 		// Remove GPU partition
 		if err := manager.RemoveGPUPartition(cmd.Context(), vm.Name); err != nil {
-			color.Red("❌ Failed to remove GPU partition: %v", err)
+			output.PrintError("GPU_REMOVE_FAILED", "Failed to remove GPU partition", err.Error())
+			if !output.IsJSON() {
+				color.Red("❌ Failed to remove GPU partition: %v", err)
+			}
 			os.Exit(1)
+		}
+
+		if output.IsJSON() {
+			output.PrintData(GPUOpResult{
+				Operation: "remove",
+				VMName:    vm.Name,
+				VMIndex:   index,
+				Success:   true,
+				Message:   fmt.Sprintf("GPU partition removed successfully from '%s'", vm.Name),
+			})
+			return
 		}
 
 		color.Green("✅ GPU partition removed successfully from '%s'!", vm.Name)
@@ -231,13 +324,26 @@ var gpuDriversCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, _ []string) {
 		manager := hyperv.NewManager()
 
-		color.Cyan("🔍 Searching for GPU driver files...")
-		fmt.Println()
+		if !output.IsJSON() {
+			color.Cyan("🔍 Searching for GPU driver files...")
+			fmt.Println()
+		}
 
 		paths, err := manager.GetGPUDriverPaths(cmd.Context())
 		if err != nil {
-			color.Red("❌ Error getting driver paths: %v", err)
+			output.PrintError("GPU_DRIVERS_FAILED", "Error getting driver paths", err.Error())
+			if !output.IsJSON() {
+				color.Red("❌ Error getting driver paths: %v", err)
+			}
 			os.Exit(1)
+		}
+
+		if output.IsJSON() {
+			output.PrintData(GPUDriversResult{
+				Paths: paths,
+				Total: len(paths),
+			})
+			return
 		}
 
 		if len(paths) == 0 {

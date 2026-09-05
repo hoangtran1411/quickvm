@@ -112,7 +112,6 @@ release: clean test build-all ## Create release build
 	@echo "Creating release package..."
 	@mkdir -p $(BUILD_DIR)
 	copy README.md $(BUILD_DIR)\
-	copy HUONG_DAN.md $(BUILD_DIR)\
 	copy DEMO.md $(BUILD_DIR)\
 	@echo "Release package created in $(BUILD_DIR)/"
 

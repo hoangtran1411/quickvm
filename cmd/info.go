@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"quickvm/internal/hyperv"
@@ -30,7 +31,7 @@ var infoCmd = &cobra.Command{
 			if !output.IsJSON() {
 				color.Red("❌ Error getting system info: %v", err)
 			}
-			return
+			os.Exit(1)
 		}
 
 		// JSON output for AI agents

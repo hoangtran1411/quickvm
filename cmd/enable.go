@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"quickvm/internal/hyperv"
+	"quickvm/internal/output"
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
@@ -32,40 +33,77 @@ Examples:
 		// First check current status
 		info, err := manager.GetSystemInfo(cmd.Context(), false)
 		if err != nil {
-			color.Red("❌ Error checking Hyper-V status: %v", err)
+			output.PrintError("STATUS_CHECK_FAILED", "Error checking Hyper-V status", err.Error())
+			if !output.IsJSON() {
+				color.Red("❌ Error checking Hyper-V status: %v", err)
+			}
 			os.Exit(1)
 		}
 
 		if info.HyperV.Enabled {
+			if output.IsJSON() {
+				output.PrintData(EnableResult{
+					AlreadyEnabled:   true,
+					NeedsRestart:     false,
+					RestartScheduled: false,
+					Success:          true,
+					Message:          fmt.Sprintf("Hyper-V is already enabled (Status: %s)", info.HyperV.Status),
+				})
+				return
+			}
 			color.Green("✅ Hyper-V is already enabled on this system!")
 			fmt.Println()
 			color.Cyan("ℹ️  Status: %s", info.HyperV.Status)
 			return
 		}
 
-		// Hyper-V is not enabled, proceed to enable it
-		color.Yellow("⚠️  Hyper-V is currently disabled on this system.")
-		fmt.Println()
-
-		color.Cyan("🔧 Enabling Hyper-V...")
-		fmt.Println()
-
 		// Check if running as administrator
 		if !hyperv.IsRunningAsAdmin(cmd.Context()) {
-			color.Red("❌ This command requires Administrator privileges.")
-			fmt.Println()
-			color.Yellow("💡 Please run this command in an elevated PowerShell or Command Prompt:")
-			color.White("   1. Right-click on PowerShell/Terminal")
-			color.White("   2. Select 'Run as administrator'")
-			color.White("   3. Run 'quickvm enable' again")
+			output.PrintError("ADMIN_REQUIRED", "Administrator privileges required", "This command requires Administrator privileges")
+			if !output.IsJSON() {
+				color.Yellow("⚠️  Hyper-V is currently disabled on this system.")
+				fmt.Println()
+				color.Red("❌ This command requires Administrator privileges.")
+				fmt.Println()
+				color.Yellow("💡 Please run this command in an elevated PowerShell or Command Prompt:")
+				color.White("   1. Right-click on PowerShell/Terminal")
+				color.White("   2. Select 'Run as administrator'")
+				color.White("   3. Run 'quickvm enable' again")
+			}
 			os.Exit(1)
+		}
+
+		if !output.IsJSON() {
+			color.Yellow("⚠️  Hyper-V is currently disabled on this system.")
+			fmt.Println()
+			color.Cyan("🔧 Enabling Hyper-V...")
+			fmt.Println()
 		}
 
 		// Enable Hyper-V
 		needsRestart, err := manager.EnableHyperV(cmd.Context())
 		if err != nil {
-			color.Red("❌ Failed to enable Hyper-V: %v", err)
+			output.PrintError("ENABLE_FAILED", "Failed to enable Hyper-V", err.Error())
+			if !output.IsJSON() {
+				color.Red("❌ Failed to enable Hyper-V: %v", err)
+			}
 			os.Exit(1)
+		}
+
+		if output.IsJSON() {
+			restartScheduled := false
+			if needsRestart && forceRestart {
+				_ = manager.ScheduleRestart(cmd.Context(), 10)
+				restartScheduled = true
+			}
+			output.PrintData(EnableResult{
+				AlreadyEnabled:   false,
+				NeedsRestart:     needsRestart,
+				RestartScheduled: restartScheduled,
+				Success:          true,
+				Message:          "Hyper-V has been enabled successfully",
+			})
+			return
 		}
 
 		color.Green("✅ Hyper-V has been enabled successfully!")

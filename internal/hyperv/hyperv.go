@@ -59,19 +59,107 @@ func (p *PowerShellRunner) RunScript(ctx context.Context, script string) ([]byte
 	return out, nil
 }
 
-// RunCmdlet executes a PowerShell cmdlet safely using separate arguments to avoid injection
+// isKnownValuedParam returns true if the flag/parameter expects a following value argument.
+func isKnownValuedParam(param string) bool {
+	switch strings.ToLower(param) {
+	case "-name", "-newname", "-snapshotname", "-vmname", "-path",
+		"-vhddestinationpath", "-erroraction", "-expandproperty",
+		"/t", "/c":
+		return true
+	default:
+		return false
+	}
+}
+
+// isKnownSwitchOrOperator returns true for known parameter switches or operators.
+func isKnownSwitchOrOperator(arg string) bool {
+	switch strings.ToLower(arg) {
+	case "|", "select-object", "-force", "-passthru", "-copy", "-generatenewid", "-confirm:$false", "-confirm:$true", "/r":
+		return true
+	default:
+		return false
+	}
+}
+
+func isSafeIdentRune(r rune) bool {
+	switch {
+	case r >= 'a' && r <= 'z':
+		return true
+	case r >= 'A' && r <= 'Z':
+		return true
+	case r >= '0' && r <= '9':
+		return true
+	case r == '_':
+		return true
+	default:
+		return false
+	}
+}
+
+func isSafeSlashParam(s string) bool {
+	for _, r := range s {
+		switch {
+		case r >= 'a' && r <= 'z', r >= 'A' && r <= 'Z', r >= '0' && r <= '9':
+		default:
+			return false
+		}
+	}
+	return true
+}
+
+func isSafeFlagParam(s string) bool {
+	for _, r := range s {
+		if !isSafeIdentRune(r) {
+			return false
+		}
+	}
+	return true
+}
+
+// formatCmdletScript formats a PowerShell cmdlet invocation safely.
+// Parameter values are strictly single-quoted with internal single-quotes escaped.
+// Values following value-expecting flags are always treated as values even if prefixed with '-'.
+func formatCmdletScript(cmdlet string, args ...string) string {
+	parts := make([]string, 0, 1+len(args))
+	parts = append(parts, cmdlet)
+	expectingValue := false
+
+	for _, arg := range args {
+		if expectingValue {
+			parts = append(parts, "'"+strings.ReplaceAll(arg, "'", "''")+"'")
+			expectingValue = false
+			continue
+		}
+
+		if isKnownValuedParam(arg) {
+			parts = append(parts, arg)
+			expectingValue = true
+			continue
+		}
+
+		if isKnownSwitchOrOperator(arg) {
+			parts = append(parts, arg)
+			continue
+		}
+
+		if strings.HasPrefix(arg, "-") && len(arg) > 1 && isSafeFlagParam(arg[1:]) {
+			parts = append(parts, arg)
+			continue
+		}
+		if strings.HasPrefix(arg, "/") && len(arg) > 1 && isSafeSlashParam(arg[1:]) {
+			parts = append(parts, arg)
+			continue
+		}
+
+		parts = append(parts, "'"+strings.ReplaceAll(arg, "'", "''")+"'")
+	}
+	return strings.Join(parts, " ")
+}
+
+// RunCmdlet executes a PowerShell cmdlet safely, ensuring parameter values are properly single-quoted and escaped
 func (p *PowerShellRunner) RunCmdlet(ctx context.Context, cmdlet string, args ...string) ([]byte, error) {
-	// Construct args: powershell -NoProfile -NonInteractive -Command Cmdlet -Arg1 val1 ...
-	// This relies on the fact that we are passing "Cmdlet" and its args as separate arguments to the powershell executable,
-	// which then parses them. This avoids shell injection when 'cmdlet' is just the command name and 'args' are its parameters.
-
-	// Base args
-	psArgs := make([]string, 0, 4+len(args))
-	psArgs = append(psArgs, "-NoProfile", "-NonInteractive", "-Command", cmdlet)
-	// Append the rest
-	psArgs = append(psArgs, args...)
-
-	cmd := exec.CommandContext(ctx, "powershell", psArgs...)
+	script := formatCmdletScript(cmdlet, args...)
+	cmd := exec.CommandContext(ctx, "powershell", "-NoProfile", "-NonInteractive", "-Command", script)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return out, fmt.Errorf("cmdlet execution failed: %w", err)
@@ -226,6 +314,10 @@ func (m *Manager) StartVM(ctx context.Context, index int) error {
 
 // StartVMByName starts a virtual machine by name
 func (m *Manager) StartVMByName(ctx context.Context, name string) error {
+	if strings.TrimSpace(name) == "" {
+		return fmt.Errorf("VM name cannot be empty")
+	}
+
 	// why: Fallback to DefaultOperationTimeout ensures external PowerShell processes
 	// do not hang indefinitely if the caller supplied a context without a deadline.
 	if _, hasDeadline := ctx.Deadline(); !hasDeadline {
@@ -267,6 +359,10 @@ func (m *Manager) StopVM(ctx context.Context, index int) error {
 
 // StopVMByName stops a virtual machine by name
 func (m *Manager) StopVMByName(ctx context.Context, name string) error {
+	if strings.TrimSpace(name) == "" {
+		return fmt.Errorf("VM name cannot be empty")
+	}
+
 	// why: Safe execution using RunCmdlet to handle VM names with special chars or potential injection attempts.
 	output, err := m.Exec.RunCmdlet(ctx, "Stop-VM", "-Name", name, "-Force")
 	if err != nil {
@@ -292,6 +388,10 @@ func (m *Manager) RestartVM(ctx context.Context, index int) error {
 
 // RestartVMByName restarts a virtual machine by name
 func (m *Manager) RestartVMByName(ctx context.Context, name string) error {
+	if strings.TrimSpace(name) == "" {
+		return fmt.Errorf("VM name cannot be empty")
+	}
+
 	// why: Enforce context timeout/cancellation and safe execution.
 	output, err := m.Exec.RunCmdlet(ctx, "Restart-VM", "-Name", name, "-Force")
 	if err != nil {
@@ -302,20 +402,13 @@ func (m *Manager) RestartVMByName(ctx context.Context, name string) error {
 
 // GetVMStatus gets the status of a specific VM by name
 func (m *Manager) GetVMStatus(ctx context.Context, name string) (string, error) {
-	// why: Use RunCmdlet to safely query properties without script injection risks.
-	// We use Select-Object -ExpandProperty to get just the string value.
-	output, err := m.Exec.RunCmdlet(ctx, "Get-VM", "-Name", name, "|", "Select-Object", "-ExpandProperty", "State")
-	// Note: Piping in RunCmdlet via args works because we are passing "-Command" "Get-VM ... | ..." to powershell.
-	// Wait, RunCmdlet as I defined it:
-	// psArgs := []string{..., "-Command", cmdlet} -> append args.
-	// Result: powershell ... -Command Get-VM -Name name | Select...
-	// This works in PowerShell syntax.
+	if strings.TrimSpace(name) == "" {
+		return "", fmt.Errorf("VM name cannot be empty")
+	}
 
+	// why: Use RunCmdlet to safely query properties without script injection risks.
+	output, err := m.Exec.RunCmdlet(ctx, "Get-VM", "-Name", name, "|", "Select-Object", "-ExpandProperty", "State")
 	if err != nil {
-		// Fallback for complex queries or if piping fails in this specific way,
-		// but standard PowerShell argument parsing usually handles this if arguments are passed correctly.
-		// Actually, passing "|" as a separate arg to -Command might rely on whitespace.
-		// Safer approach for property extraction:
 		return "", fmt.Errorf("failed to get VM status: %v", err)
 	}
 	return strings.TrimSpace(string(output)), nil

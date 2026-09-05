@@ -66,10 +66,10 @@ func (m *Manager) GetVMIPAddressByName(ctx context.Context, vmName string) (stri
 
 	// Get IPv4 address from VM network adapter
 	psScript := fmt.Sprintf(`
-		$ips = (Get-VMNetworkAdapter -VMName "%s").IPAddresses
+		$ips = (Get-VMNetworkAdapter -VMName '%s').IPAddresses
 		$ipv4 = $ips | Where-Object { $_ -match '^\d+\.\d+\.\d+\.\d+$' } | Select-Object -First 1
 		if ($ipv4) { $ipv4 } else { "" }
-	`, vmName)
+	`, strings.ReplaceAll(vmName, "'", "''"))
 
 	output, err := m.Exec.RunScript(ctx, psScript)
 	if err != nil {

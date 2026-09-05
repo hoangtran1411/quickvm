@@ -145,7 +145,7 @@ func (m *Manager) GetExportedVMInfo(ctx context.Context, path string) (map[strin
 	}
 
 	psScript := fmt.Sprintf(`
-		$report = Compare-VM -Path "%s"
+		$report = Compare-VM -Path '%s'
 		@{
 			VMName = $report.VM.Name
 			State = $report.VM.State.ToString()
@@ -153,7 +153,7 @@ func (m *Manager) GetExportedVMInfo(ctx context.Context, path string) (map[strin
 			ProcessorCount = $report.VM.ProcessorCount
 			Incompatibilities = ($report.Incompatibilities | ForEach-Object { $_.Message }) -join "; "
 		} | ConvertTo-Json
-	`, vmcxPath)
+	`, strings.ReplaceAll(vmcxPath, "'", "''"))
 	// Note: vmcxPath is from filepath.Glob which is local. Still potential risk if malicious filenames, but low.
 	// Ideally pass path as arg.
 

@@ -34,7 +34,7 @@ func (m *Manager) GetSnapshots(ctx context.Context, vmIndex int) ([]Snapshot, er
 // GetSnapshotsByVMName retrieves all snapshots for a VM by name
 func (m *Manager) GetSnapshotsByVMName(ctx context.Context, vmName string) ([]Snapshot, error) {
 	psScript := fmt.Sprintf(`
-		$snapshots = Get-VMSnapshot -VMName "%s" -ErrorAction SilentlyContinue
+		$snapshots = Get-VMSnapshot -VMName '%s' -ErrorAction SilentlyContinue
 		if ($snapshots) {
 			$snapshots | Select-Object @{Name='Name';Expression={$_.Name}},
 				@{Name='VMName';Expression={$_.VMName}},
@@ -44,7 +44,7 @@ func (m *Manager) GetSnapshotsByVMName(ctx context.Context, vmName string) ([]Sn
 		} else {
 			Write-Output "[]"
 		}
-	`, vmName)
+	`, strings.ReplaceAll(vmName, "'", "''"))
 
 	output, err := m.Exec.RunScript(ctx, psScript)
 	if err != nil {
@@ -78,6 +78,10 @@ func (m *Manager) GetSnapshotsByVMName(ctx context.Context, vmName string) ([]Sn
 
 // CreateSnapshot creates a new snapshot for a VM by index
 func (m *Manager) CreateSnapshot(ctx context.Context, vmIndex int, snapshotName string) error {
+	if strings.TrimSpace(snapshotName) == "" {
+		return fmt.Errorf("snapshot name cannot be empty")
+	}
+
 	vms, err := m.GetVMs(ctx)
 	if err != nil {
 		return err
@@ -93,6 +97,13 @@ func (m *Manager) CreateSnapshot(ctx context.Context, vmIndex int, snapshotName 
 
 // CreateSnapshotByVMName creates a new snapshot for a VM by name
 func (m *Manager) CreateSnapshotByVMName(ctx context.Context, vmName, snapshotName string) error {
+	if strings.TrimSpace(vmName) == "" {
+		return fmt.Errorf("VM name cannot be empty")
+	}
+	if strings.TrimSpace(snapshotName) == "" {
+		return fmt.Errorf("snapshot name cannot be empty")
+	}
+
 	output, err := m.Exec.RunCmdlet(ctx, "Checkpoint-VM", "-Name", vmName, "-SnapshotName", snapshotName)
 	if err != nil {
 		return fmt.Errorf("failed to create snapshot '%s' for VM '%s': %v\nOutput: %s", snapshotName, vmName, err, string(output))
@@ -102,6 +113,10 @@ func (m *Manager) CreateSnapshotByVMName(ctx context.Context, vmName, snapshotNa
 
 // RestoreSnapshot restores a VM to a specific snapshot by index
 func (m *Manager) RestoreSnapshot(ctx context.Context, vmIndex int, snapshotName string) error {
+	if strings.TrimSpace(snapshotName) == "" {
+		return fmt.Errorf("snapshot name cannot be empty")
+	}
+
 	vms, err := m.GetVMs(ctx)
 	if err != nil {
 		return err
@@ -117,6 +132,13 @@ func (m *Manager) RestoreSnapshot(ctx context.Context, vmIndex int, snapshotName
 
 // RestoreSnapshotByVMName restores a VM to a specific snapshot by name
 func (m *Manager) RestoreSnapshotByVMName(ctx context.Context, vmName, snapshotName string) error {
+	if strings.TrimSpace(vmName) == "" {
+		return fmt.Errorf("VM name cannot be empty")
+	}
+	if strings.TrimSpace(snapshotName) == "" {
+		return fmt.Errorf("snapshot name cannot be empty")
+	}
+
 	output, err := m.Exec.RunCmdlet(ctx, "Restore-VMSnapshot", "-VMName", vmName, "-Name", snapshotName, "-Confirm:$false")
 	if err != nil {
 		return fmt.Errorf("failed to restore snapshot '%s' for VM '%s': %v\nOutput: %s", snapshotName, vmName, err, string(output))
@@ -126,6 +148,10 @@ func (m *Manager) RestoreSnapshotByVMName(ctx context.Context, vmName, snapshotN
 
 // DeleteSnapshot deletes a snapshot from a VM by index
 func (m *Manager) DeleteSnapshot(ctx context.Context, vmIndex int, snapshotName string) error {
+	if strings.TrimSpace(snapshotName) == "" {
+		return fmt.Errorf("snapshot name cannot be empty")
+	}
+
 	vms, err := m.GetVMs(ctx)
 	if err != nil {
 		return err
@@ -141,6 +167,13 @@ func (m *Manager) DeleteSnapshot(ctx context.Context, vmIndex int, snapshotName 
 
 // DeleteSnapshotByVMName deletes a snapshot from a VM by name
 func (m *Manager) DeleteSnapshotByVMName(ctx context.Context, vmName, snapshotName string) error {
+	if strings.TrimSpace(vmName) == "" {
+		return fmt.Errorf("VM name cannot be empty")
+	}
+	if strings.TrimSpace(snapshotName) == "" {
+		return fmt.Errorf("snapshot name cannot be empty")
+	}
+
 	output, err := m.Exec.RunCmdlet(ctx, "Remove-VMSnapshot", "-VMName", vmName, "-Name", snapshotName, "-Confirm:$false")
 	if err != nil {
 		return fmt.Errorf("failed to delete snapshot '%s' from VM '%s': %v\nOutput: %s", snapshotName, vmName, err, string(output))

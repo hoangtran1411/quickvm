@@ -105,6 +105,13 @@ func PrintData(data interface{}) {
 	// For non-JSON, caller handles the formatting
 }
 
+// PrintResponse prints a complete Response struct as JSON
+func PrintResponse(resp Response) {
+	if IsJSON() {
+		printJSON(resp)
+	}
+}
+
 // printJSON marshals and prints JSON to stdout
 func printJSON(v interface{}) {
 	encoder := json.NewEncoder(os.Stdout)

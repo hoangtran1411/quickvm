@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"quickvm/internal/output"
 	"quickvm/updater"
 
 	"github.com/spf13/cobra"
@@ -20,33 +21,79 @@ var updateCmd = &cobra.Command{
 	Long: `Check for new versions of QuickVM from GitHub releases.
 If a new version is available, download and install it automatically.`,
 	Run: func(_ *cobra.Command, _ []string) {
-		fmt.Println("🔍 Checking for updates...")
+		if !output.IsJSON() {
+			fmt.Println("🔍 Checking for updates...")
+		}
 
 		u := updater.NewUpdater(Version)
 
 		release, hasUpdate, err := u.CheckForUpdates()
 		if err != nil {
-			fmt.Printf("❌ Failed to check for updates: %v\n", err)
-			fmt.Println("💡 Tip: Check your internet connection and try again")
+			output.PrintError("UPDATE_CHECK_FAILED", "Failed to check for updates", err.Error())
+			if !output.IsJSON() {
+				fmt.Printf("❌ Failed to check for updates: %v\n", err)
+				fmt.Println("💡 Tip: Check your internet connection and try again")
+			}
 			os.Exit(1)
 		}
 
 		if !hasUpdate {
+			if output.IsJSON() {
+				output.PrintData(UpdateResult{
+					HasUpdate:      false,
+					CurrentVersion: Version,
+					LatestVersion:  Version,
+					Installed:      false,
+					Success:        true,
+					Message:        "QuickVM is up to date",
+				})
+				return
+			}
 			fmt.Println("✅ You are already using the latest version!")
 			fmt.Printf("   Current version: %s\n", Version)
 			return
 		}
 
-		fmt.Printf("🎉 New version available: %s\n", release.TagName)
-		fmt.Printf("   Current version: %s\n", Version)
-		fmt.Println()
-
 		if checkOnly {
+			if output.IsJSON() {
+				output.PrintData(UpdateResult{
+					HasUpdate:      true,
+					CurrentVersion: Version,
+					LatestVersion:  release.TagName,
+					ReleaseNotes:   release.Body,
+					Installed:      false,
+					Success:        true,
+					Message:        "New version available",
+				})
+				return
+			}
+			fmt.Printf("🎉 New version available: %s\n", release.TagName)
+			fmt.Printf("   Current version: %s\n", Version)
+			fmt.Println()
 			fmt.Println("📋 Release Notes:")
 			fmt.Println(release.Body)
 			fmt.Println()
 			fmt.Println("💡 Run 'quickvm update' without --check-only to install")
 			return
+		}
+
+		if output.IsJSON() && !autoInstall {
+			output.PrintData(UpdateResult{
+				HasUpdate:      true,
+				CurrentVersion: Version,
+				LatestVersion:  release.TagName,
+				ReleaseNotes:   release.Body,
+				Installed:      false,
+				Success:        true,
+				Message:        "Update available. Run with -y/--yes to install non-interactively.",
+			})
+			return
+		}
+
+		if !output.IsJSON() {
+			fmt.Printf("🎉 New version available: %s\n", release.TagName)
+			fmt.Printf("   Current version: %s\n", Version)
+			fmt.Println()
 		}
 
 		if !autoInstall {
@@ -63,10 +110,28 @@ If a new version is available, download and install it automatically.`,
 			}
 		}
 
-		fmt.Println()
+		if !output.IsJSON() {
+			fmt.Println()
+		}
 		if err := u.DownloadAndInstall(release); err != nil {
-			fmt.Printf("❌ Update failed: %v\n", err)
+			output.PrintError("UPDATE_INSTALL_FAILED", "Update failed", err.Error())
+			if !output.IsJSON() {
+				fmt.Printf("❌ Update failed: %v\n", err)
+			}
 			os.Exit(1)
+		}
+
+		if output.IsJSON() {
+			output.PrintData(UpdateResult{
+				HasUpdate:      true,
+				CurrentVersion: Version,
+				LatestVersion:  release.TagName,
+				ReleaseNotes:   release.Body,
+				Installed:      true,
+				Success:        true,
+				Message:        "Update installed successfully",
+			})
+			return
 		}
 	},
 }

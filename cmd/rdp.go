@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 
 	"quickvm/internal/hyperv"
@@ -10,7 +11,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var rdpCredentials string
+var (
+	rdpCredentials string
+	rdpCleanCreds  bool
+)
 
 var rdpCmd = &cobra.Command{
 	Use:   "rdp <vm-index>",
@@ -31,12 +35,13 @@ Credentials format:
   - Domain user: -u "domain\username@password"
 
 When password is provided, credentials are saved to Windows Credential Manager
-for seamless login.
+for seamless login. Use --clean-creds to remove them when done.
 
 Examples:
   quickvm rdp 1                               # RDP into VM 1
   quickvm rdp 2 -u admin                      # RDP with username
-  quickvm rdp 1 -u "admin@password123"        # RDP with auto-login`,
+  quickvm rdp 1 -u "admin@password123"        # RDP with auto-login
+  quickvm rdp 1 --clean-creds                 # Clean saved RDP credentials`,
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		manager := hyperv.NewManager()
@@ -48,7 +53,7 @@ Examples:
 			if !output.IsJSON() {
 				fmt.Printf("❌ Invalid VM index: %s\n", args[0])
 			}
-			return
+			os.Exit(1)
 		}
 
 		// Get VM name for display
@@ -58,7 +63,7 @@ Examples:
 			if !output.IsJSON() {
 				fmt.Printf("❌ Failed to get VM: %v\n", err)
 			}
-			return
+			os.Exit(1)
 		}
 
 		// Get IP address first to show to user
@@ -68,6 +73,29 @@ Examples:
 			if !output.IsJSON() {
 				fmt.Printf("❌ Failed to get VM IP address: %v\n", err)
 			}
+			os.Exit(1)
+		}
+
+		// Handle credential cleanup request
+		if rdpCleanCreds {
+			if err := manager.DeleteRDPCredentials(cmd.Context(), ip); err != nil {
+				output.PrintError("RDP_FAILED", "Failed to clean RDP credentials", err.Error())
+				if !output.IsJSON() {
+					fmt.Printf("❌ Failed to clean credentials: %v\n", err)
+				}
+				os.Exit(1)
+			}
+			if output.IsJSON() {
+				output.PrintData(RDPResult{
+					VMName:    vmName,
+					VMIndex:   index,
+					IPAddress: ip,
+					Success:   true,
+					Message:   "RDP credentials cleaned successfully",
+				})
+				return
+			}
+			fmt.Printf("✅ Saved RDP credentials for VM '%s' (%s) cleaned successfully!\n", vmName, ip)
 			return
 		}
 
@@ -86,7 +114,7 @@ Examples:
 			if !output.IsJSON() {
 				fmt.Printf("❌ Failed to open RDP: %v\n", err)
 			}
-			return
+			os.Exit(1)
 		}
 
 		// JSON output for AI agents
@@ -110,6 +138,7 @@ Examples:
 		}
 		if creds.Password != "" {
 			fmt.Println("   - Credentials saved for auto-login")
+			fmt.Printf("   - To clean up saved credentials, run: quickvm rdp %d --clean-creds\n", index)
 		}
 		fmt.Println("   - If connection fails, ensure Remote Desktop is enabled in the VM")
 	},
@@ -117,5 +146,6 @@ Examples:
 
 func init() {
 	rdpCmd.Flags().StringVarP(&rdpCredentials, "user", "u", "", "Credentials: \"username\" or \"username@password\"")
+	rdpCmd.Flags().BoolVar(&rdpCleanCreds, "clean-creds", false, "Remove saved RDP credentials for this VM")
 	rootCmd.AddCommand(rdpCmd)
 }

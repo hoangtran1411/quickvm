@@ -82,6 +82,25 @@ func (m *SmartMockVerifyDisk) RunCmdlet(_ context.Context, _ string, _ ...string
 	return []byte("{}"), nil
 }
 
+func TestGetCPUInfo_MultiSocket(t *testing.T) {
+	manager := NewManager()
+	mock := &MockSysInfoExecutor{
+		MockOutput: `{"Name": "Intel Xeon E5-2680", "Cores": 28}`,
+	}
+	manager.Exec = mock
+
+	cpu, err := manager.getCPUInfo(context.Background())
+	if err != nil {
+		t.Fatalf("getCPUInfo failed: %v", err)
+	}
+	if cpu.Name != "Intel Xeon E5-2680" {
+		t.Errorf("Expected Name 'Intel Xeon E5-2680', got '%s'", cpu.Name)
+	}
+	if cpu.Cores != 28 {
+		t.Errorf("Expected Cores 28, got %d", cpu.Cores)
+	}
+}
+
 func contains(s, substr string) bool {
 	// Simple helper
 	for i := 0; i < len(s)-len(substr)+1; i++ {

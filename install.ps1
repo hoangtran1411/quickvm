@@ -205,7 +205,6 @@ Write-Host "   quickvm version   - Show version" -ForegroundColor White
 Write-Host ""
 Write-Host "📖 For more information, see:" -ForegroundColor Cyan
 Write-Host "   - README.md for full documentation" -ForegroundColor White
-Write-Host "   - HUONG_DAN.md for Vietnamese guide" -ForegroundColor White
 Write-Host "   - DEMO.md for examples and use cases" -ForegroundColor White
 Write-Host ""
 Write-Host "🚀 Happy VM managing!" -ForegroundColor Magenta

@@ -19,11 +19,13 @@ func TestRunStart(t *testing.T) {
 		args     []string
 		rangeStr string
 		all      bool
+		wantErr  bool
 		setup    func(*MockManager)
 	}{
 		{
-			name: "Start single VM",
-			args: []string{"1"},
+			name:    "Start single VM",
+			args:    []string{"1"},
+			wantErr: false,
 			setup: func(m *MockManager) {
 				m.StartVMByNameFn = func(_ context.Context, name string) error {
 					if name != "VM1" {
@@ -34,8 +36,9 @@ func TestRunStart(t *testing.T) {
 			},
 		},
 		{
-			name: "Start all VMs",
-			all:  true,
+			name:    "Start all VMs",
+			all:     true,
+			wantErr: false,
 			setup: func(m *MockManager) {
 				var count int32
 				m.StartVMByNameFn = func(_ context.Context, _ string) error {
@@ -45,8 +48,9 @@ func TestRunStart(t *testing.T) {
 			},
 		},
 		{
-			name: "Failed to get VMs",
-			args: []string{"1"},
+			name:    "Failed to get VMs",
+			args:    []string{"1"},
+			wantErr: true,
 			setup: func(m *MockManager) {
 				m.GetVMsFn = func(_ context.Context) ([]hyperv.VM, error) {
 					return nil, fmt.Errorf("hyper-v error")
@@ -54,8 +58,9 @@ func TestRunStart(t *testing.T) {
 			},
 		},
 		{
-			name: "Failed to start one VM",
-			args: []string{"1", "2"},
+			name:    "Failed to start one VM",
+			args:    []string{"1", "2"},
+			wantErr: true,
 			setup: func(m *MockManager) {
 				m.StartVMByNameFn = func(_ context.Context, name string) error {
 					if name == "VM2" {
@@ -68,7 +73,16 @@ func TestRunStart(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(_ *testing.T) {
+		t.Run(tt.name, func(t *testing.T) {
+			origExit := osExit
+			var exitCalled bool
+			var exitCode int
+			osExit = func(code int) {
+				exitCalled = true
+				exitCode = code
+			}
+			defer func() { osExit = origExit }()
+
 			m := &MockManager{
 				GetVMsFn: func(_ context.Context) ([]hyperv.VM, error) {
 					return mockVMs, nil
@@ -78,8 +92,17 @@ func TestRunStart(t *testing.T) {
 				tt.setup(m)
 			}
 
-			// We just run it. Verification happens inside m.StartVMByNameFn
 			runStart(context.Background(), m, tt.args, tt.rangeStr, tt.all)
+
+			if tt.wantErr {
+				if !exitCalled {
+					t.Errorf("Expected osExit(1) to be called, but it was not")
+				} else if exitCode != 1 {
+					t.Errorf("Expected exit code 1, got %d", exitCode)
+				}
+			} else if exitCalled {
+				t.Errorf("Unexpected osExit(%d) called", exitCode)
+			}
 		})
 	}
 }

@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 
@@ -46,7 +47,7 @@ Example:
 			if !output.IsJSON() {
 				fmt.Printf("❌ Invalid VM index: %s\n", args[0])
 			}
-			return
+			os.Exit(1)
 		}
 
 		// Get VM name for display
@@ -56,7 +57,7 @@ Example:
 			if !output.IsJSON() {
 				fmt.Printf("❌ Failed to get VM: %v\n", err)
 			}
-			return
+			os.Exit(1)
 		}
 
 		if !output.IsJSON() {
@@ -69,7 +70,7 @@ Example:
 			if !output.IsJSON() {
 				fmt.Printf("❌ Failed to get snapshots: %v\n", err)
 			}
-			return
+			os.Exit(1)
 		}
 
 		// JSON output for AI agents
@@ -127,7 +128,7 @@ Examples:
 			if !output.IsJSON() {
 				fmt.Printf("❌ Invalid VM index: %s\n", args[0])
 			}
-			return
+			os.Exit(1)
 		}
 
 		snapshotName := args[1]
@@ -139,7 +140,7 @@ Examples:
 			if !output.IsJSON() {
 				fmt.Printf("❌ Failed to get VM: %v\n", err)
 			}
-			return
+			os.Exit(1)
 		}
 
 		if !output.IsJSON() {
@@ -151,7 +152,7 @@ Examples:
 			if !output.IsJSON() {
 				fmt.Printf("❌ Failed to create snapshot: %v\n", err)
 			}
-			return
+			os.Exit(1)
 		}
 
 		// JSON output for AI agents
@@ -191,8 +192,11 @@ Examples:
 
 		index, err := strconv.Atoi(args[0])
 		if err != nil {
-			fmt.Printf("❌ Invalid VM index: %s\n", args[0])
-			return
+			output.PrintError("INVALID_INDEX", "Invalid VM index", args[0])
+			if !output.IsJSON() {
+				fmt.Printf("❌ Invalid VM index: %s\n", args[0])
+			}
+			os.Exit(1)
 		}
 
 		snapshotName := args[1]
@@ -200,15 +204,36 @@ Examples:
 		// Get VM name for display
 		vmName, err := manager.GetVMNameByIndex(cmd.Context(), index)
 		if err != nil {
-			fmt.Printf("❌ Failed to get VM: %v\n", err)
-			return
+			output.PrintError("VM_GET_FAILED", "Failed to get VM", err.Error())
+			if !output.IsJSON() {
+				fmt.Printf("❌ Failed to get VM: %v\n", err)
+			}
+			os.Exit(1)
 		}
 
-		fmt.Printf("⏮️  Restoring VM '%s' to snapshot '%s'...\n", vmName, snapshotName)
-		fmt.Println("⚠️  Warning: All changes after this snapshot will be lost!")
+		if !output.IsJSON() {
+			fmt.Printf("⏮️  Restoring VM '%s' to snapshot '%s'...\n", vmName, snapshotName)
+			fmt.Println("⚠️  Warning: All changes after this snapshot will be lost!")
+		}
 
 		if err := manager.RestoreSnapshot(cmd.Context(), index, snapshotName); err != nil {
-			fmt.Printf("❌ Failed to restore snapshot: %v\n", err)
+			output.PrintError("SNAPSHOT_RESTORE_FAILED", "Failed to restore snapshot", err.Error())
+			if !output.IsJSON() {
+				fmt.Printf("❌ Failed to restore snapshot: %v\n", err)
+			}
+			os.Exit(1)
+		}
+
+		// JSON output for AI agents
+		if output.IsJSON() {
+			output.PrintData(SnapshotOpResult{
+				Operation:    "restore",
+				VMName:       vmName,
+				VMIndex:      index,
+				SnapshotName: snapshotName,
+				Success:      true,
+				Message:      "Snapshot restored successfully",
+			})
 			return
 		}
 
@@ -232,8 +257,11 @@ Examples:
 
 		index, err := strconv.Atoi(args[0])
 		if err != nil {
-			fmt.Printf("❌ Invalid VM index: %s\n", args[0])
-			return
+			output.PrintError("INVALID_INDEX", "Invalid VM index", args[0])
+			if !output.IsJSON() {
+				fmt.Printf("❌ Invalid VM index: %s\n", args[0])
+			}
+			os.Exit(1)
 		}
 
 		snapshotName := args[1]
@@ -241,14 +269,35 @@ Examples:
 		// Get VM name for display
 		vmName, err := manager.GetVMNameByIndex(cmd.Context(), index)
 		if err != nil {
-			fmt.Printf("❌ Failed to get VM: %v\n", err)
-			return
+			output.PrintError("VM_GET_FAILED", "Failed to get VM", err.Error())
+			if !output.IsJSON() {
+				fmt.Printf("❌ Failed to get VM: %v\n", err)
+			}
+			os.Exit(1)
 		}
 
-		fmt.Printf("🗑️  Deleting snapshot '%s' from VM '%s'...\n", snapshotName, vmName)
+		if !output.IsJSON() {
+			fmt.Printf("🗑️  Deleting snapshot '%s' from VM '%s'...\n", snapshotName, vmName)
+		}
 
 		if err := manager.DeleteSnapshot(cmd.Context(), index, snapshotName); err != nil {
-			fmt.Printf("❌ Failed to delete snapshot: %v\n", err)
+			output.PrintError("SNAPSHOT_DELETE_FAILED", "Failed to delete snapshot", err.Error())
+			if !output.IsJSON() {
+				fmt.Printf("❌ Failed to delete snapshot: %v\n", err)
+			}
+			os.Exit(1)
+		}
+
+		// JSON output for AI agents
+		if output.IsJSON() {
+			output.PrintData(SnapshotOpResult{
+				Operation:    "delete",
+				VMName:       vmName,
+				VMIndex:      index,
+				SnapshotName: snapshotName,
+				Success:      true,
+				Message:      "Snapshot deleted successfully",
+			})
 			return
 		}
 

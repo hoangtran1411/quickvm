@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"quickvm/internal/hyperv"
@@ -34,7 +35,7 @@ var listCmd = &cobra.Command{
 			if !output.IsJSON() {
 				fmt.Printf("❌ Failed to get VMs: %v\n", err)
 			}
-			return
+			os.Exit(1)
 		}
 
 		// JSON output for AI agents

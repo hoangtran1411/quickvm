@@ -143,18 +143,18 @@ func (m *Manager) CheckGPUPartitionable(ctx context.Context) ([]GPUInfo, error) 
 // GetVMGPUPartition gets GPU partition info for a specific VM
 func (m *Manager) GetVMGPUPartition(ctx context.Context, vmName string) (*VMGPUPartition, error) {
 	// Escape vmName to prevent PowerShell injection attacks
-	safeVMName := escapePSString(vmName)
+	safeVMName := strings.ReplaceAll(vmName, "'", "''")
 	psScript := fmt.Sprintf(`
-		$adapter = Get-VMGpuPartitionAdapter -VMName "%s" -ErrorAction SilentlyContinue
+		$adapter = Get-VMGpuPartitionAdapter -VMName '%s' -ErrorAction SilentlyContinue
 		if ($adapter -eq $null) {
 			@{
-				VMName = "%s"
+				VMName = '%s'
 				HasGPU = $false
 				PartitionCount = 0
 			} | ConvertTo-Json
 		} else {
 			@{
-				VMName = "%s"
+				VMName = '%s'
 				HasGPU = $true
 				PartitionCount = 1
 			} | ConvertTo-Json
@@ -202,24 +202,26 @@ func (m *Manager) AddGPUPartition(ctx context.Context, vmName string, config *GP
 
 	// Add GPU Partition Adapter
 	// Escape vmName to prevent PowerShell injection attacks
-	safeVMName := escapePSString(vmName)
+	safeVMName := strings.ReplaceAll(vmName, "'", "''")
+	safeLowMMIO := strings.ReplaceAll(config.LowMMIOSpace, "'", "''")
+	safeHighMMIO := strings.ReplaceAll(config.HighMMIOSpace, "'", "''")
 	psScript := fmt.Sprintf(`
 		# Step 1: Add GPU Partition Adapter
-		Add-VMGpuPartitionAdapter -VMName "%s"
+		Add-VMGpuPartitionAdapter -VMName '%s'
 		
 		# Step 2: Configure GPU Partition parameters
-		Set-VMGpuPartitionAdapter -VMName "%s" `+
+		Set-VMGpuPartitionAdapter -VMName '%s' `+
 		`-MinPartitionVRAM %d -MaxPartitionVRAM %d -OptimalPartitionVRAM %d `+
 		`-MinPartitionEncode %d -MaxPartitionEncode %d -OptimalPartitionEncode %d `+
 		`-MinPartitionDecode %d -MaxPartitionDecode %d -OptimalPartitionDecode %d `+
 		`-MinPartitionCompute %d -MaxPartitionCompute %d -OptimalPartitionCompute %d
 		
 		# Step 3: Enable Guest Controlled Cache Types
-		Set-VM -GuestControlledCacheTypes $true -VMName "%s"
+		Set-VM -GuestControlledCacheTypes $true -VMName '%s'
 		
 		# Step 4: Set Memory Mapped IO Space
-		Set-VM -LowMemoryMappedIoSpace %s -VMName "%s"
-		Set-VM -HighMemoryMappedIoSpace %s -VMName "%s"
+		Set-VM -LowMemoryMappedIoSpace '%s' -VMName '%s'
+		Set-VM -HighMemoryMappedIoSpace '%s' -VMName '%s'
 		
 		Write-Output "SUCCESS"
 	`,
@@ -230,8 +232,8 @@ func (m *Manager) AddGPUPartition(ctx context.Context, vmName string, config *GP
 		config.MinDecode, config.MaxDecode, config.OptimalDecode,
 		config.MinCompute, config.MaxCompute, config.OptimalCompute,
 		safeVMName,
-		config.LowMMIOSpace, safeVMName,
-		config.HighMMIOSpace, safeVMName,
+		safeLowMMIO, safeVMName,
+		safeHighMMIO, safeVMName,
 	)
 
 	output, err := m.Exec.RunScript(ctx, psScript)
@@ -246,7 +248,7 @@ func (m *Manager) AddGPUPartition(ctx context.Context, vmName string, config *GP
 	return nil
 }
 
-// RemoveGPUPartition removes a GPU partition from a VM
+// RemoveGPUPartition removes GPU partition from a VM
 func (m *Manager) RemoveGPUPartition(ctx context.Context, vmName string) error {
 	// Check if VM is running
 	state, err := m.GetVMStatus(ctx, vmName)
@@ -267,9 +269,9 @@ func (m *Manager) RemoveGPUPartition(ctx context.Context, vmName string) error {
 	}
 
 	// Escape vmName to prevent PowerShell injection attacks
-	safeVMName := escapePSString(vmName)
+	safeVMName := strings.ReplaceAll(vmName, "'", "''")
 	psScript := fmt.Sprintf(`
-		Remove-VMGpuPartitionAdapter -VMName "%s"
+		Remove-VMGpuPartitionAdapter -VMName '%s'
 		Write-Output "SUCCESS"
 	`, safeVMName)
 

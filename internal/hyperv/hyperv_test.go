@@ -260,3 +260,122 @@ func BenchmarkGetVMs(b *testing.B) {
 		_, _ = manager.GetVMs(context.TODO())
 	}
 }
+
+func TestFormatCmdletScript(t *testing.T) {
+	tests := []struct {
+		name     string
+		cmdlet   string
+		args     []string
+		expected string
+	}{
+		{
+			name:     "Simple cmdlet with name",
+			cmdlet:   "Start-VM",
+			args:     []string{"-Name", "MyVM"},
+			expected: "Start-VM -Name 'MyVM'",
+		},
+		{
+			name:     "Cmdlet with switch flag",
+			cmdlet:   "Stop-VM",
+			args:     []string{"-Name", "MyVM", "-Force"},
+			expected: "Stop-VM -Name 'MyVM' -Force",
+		},
+		{
+			name:     "Cmdlet with injection attempt in value",
+			cmdlet:   "Start-VM",
+			args:     []string{"-Name", "MyVM'; Stop-Process -Id 1 #"},
+			expected: "Start-VM -Name 'MyVM''; Stop-Process -Id 1 #'",
+		},
+		{
+			name:     "Value starting with dash (parameter value matching flag syntax)",
+			cmdlet:   "Start-VM",
+			args:     []string{"-Name", "-WhatIf"},
+			expected: "Start-VM -Name '-WhatIf'",
+		},
+		{
+			name:     "Value starting with dash prod name",
+			cmdlet:   "Start-VM",
+			args:     []string{"-Name", "-proddb"},
+			expected: "Start-VM -Name '-proddb'",
+		},
+		{
+			name:     "Value matching operator name",
+			cmdlet:   "Start-VM",
+			args:     []string{"-Name", "Select-Object"},
+			expected: "Start-VM -Name 'Select-Object'",
+		},
+		{
+			name:     "Value matching pipe",
+			cmdlet:   "Start-VM",
+			args:     []string{"-Name", "|"},
+			expected: "Start-VM -Name '|'",
+		},
+		{
+			name:     "Pipeline with Select-Object and ExpandProperty",
+			cmdlet:   "Get-VM",
+			args:     []string{"-Name", "MyVM", "|", "Select-Object", "-ExpandProperty", "State"},
+			expected: "Get-VM -Name 'MyVM' | Select-Object -ExpandProperty 'State'",
+		},
+		{
+			name:     "Multiple valued parameters",
+			cmdlet:   "Checkpoint-VM",
+			args:     []string{"-Name", "MyVM", "-SnapshotName", "Snap 1"},
+			expected: "Checkpoint-VM -Name 'MyVM' -SnapshotName 'Snap 1'",
+		},
+		{
+			name:     "Shutdown cmdlet with flags and values",
+			cmdlet:   "shutdown",
+			args:     []string{"/r", "/t", "10", "/c", "Restarting"},
+			expected: "shutdown /r /t '10' /c 'Restarting'",
+		},
+		{
+			name:     "Switch with explicit boolean",
+			cmdlet:   "Restore-VMSnapshot",
+			args:     []string{"-VMName", "MyVM", "-Name", "Snap1", "-Confirm:$false"},
+			expected: "Restore-VMSnapshot -VMName 'MyVM' -Name 'Snap1' -Confirm:$false",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			actual := formatCmdletScript(tt.cmdlet, tt.args...)
+			if actual != tt.expected {
+				t.Errorf("formatCmdletScript() =\n  %q\nwant:\n  %q", actual, tt.expected)
+			}
+		})
+	}
+}
+
+func TestVMOperations_EmptyNameValidation(t *testing.T) {
+	manager := NewManager()
+	ctx := context.Background()
+
+	emptyNames := []string{"", "   ", "\t\n"}
+
+	for _, name := range emptyNames {
+		t.Run("start_empty_"+name, func(t *testing.T) {
+			err := manager.StartVMByName(ctx, name)
+			if err == nil || !strings.Contains(err.Error(), "VM name cannot be empty") {
+				t.Errorf("Expected 'VM name cannot be empty', got %v", err)
+			}
+		})
+		t.Run("stop_empty_"+name, func(t *testing.T) {
+			err := manager.StopVMByName(ctx, name)
+			if err == nil || !strings.Contains(err.Error(), "VM name cannot be empty") {
+				t.Errorf("Expected 'VM name cannot be empty', got %v", err)
+			}
+		})
+		t.Run("restart_empty_"+name, func(t *testing.T) {
+			err := manager.RestartVMByName(ctx, name)
+			if err == nil || !strings.Contains(err.Error(), "VM name cannot be empty") {
+				t.Errorf("Expected 'VM name cannot be empty', got %v", err)
+			}
+		})
+		t.Run("status_empty_"+name, func(t *testing.T) {
+			_, err := manager.GetVMStatus(ctx, name)
+			if err == nil || !strings.Contains(err.Error(), "VM name cannot be empty") {
+				t.Errorf("Expected 'VM name cannot be empty', got %v", err)
+			}
+		})
+	}
+}

@@ -7,6 +7,7 @@ trigger: always_on
 > **Core Rules** - For full idioms reference, see `go-idioms-reference.md`
 
 This project is a **Hyper-V Virtual Machine Management CLI/TUI** built with:
+
 - **Cobra** for CLI command structure
 - **BubbleTea & Lipgloss** for Terminal User Interface
 - **Internal packages** (`hyperv/`) for business logic wrapping PowerShell
@@ -17,7 +18,7 @@ This project is a **Hyper-V Virtual Machine Management CLI/TUI** built with:
 ## Code Style
 
 - Format with `gofmt`/`goimports`. Run `golangci-lint` (v2.8.0+) `run ./...` before commit.
-- **Linting Configuration**: MUST use `golangci-lint` v2 configuration schema (v2.8.x+). 
+- **Linting Configuration**: MUST use `golangci-lint` v2 configuration schema (v2.8.x+).
   - Top-level `version: "2"` is mandatory.
   - Use kebab-case for all linter settings.
   - Exclusions move to `linters: exclusions: rules`.
@@ -47,8 +48,8 @@ This project is a **Hyper-V Virtual Machine Management CLI/TUI** built with:
 ## Hyper-V & Systems Integration
 
 - **PowerShell Security**:
-  - **NEVER** concatenate user input into command arguments.
-  - Use `exec.CommandContext` with individual arguments.
+  - **NEVER** pass unescaped user input to PowerShell. PowerShell `-Command` concatenates trailing arguments into a single script block.
+  - Wrap values inside single-quoted strings with `''` escaping.
 - **Context Awareness**:
   - All I/O functions MUST accept `context.Context` as the first argument.
   - Use timeouts for all external process calls.

@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"os"
 	"sync"
 	"time"
 
@@ -11,6 +12,8 @@ import (
 	"quickvm/internal/hyperv"
 	"quickvm/internal/output"
 )
+
+var osExit = os.Exit
 
 const defaultBatchConcurrency = 4
 
@@ -90,6 +93,49 @@ type ImportResult struct {
 	Error      string `json:"error,omitempty"`
 }
 
+// GPUStatusResult represents the result of checking GPU partitioning support
+type GPUStatusResult struct {
+	GPUs      []hyperv.GPUInfo `json:"gpus"`
+	Supported bool             `json:"supported"`
+	Total     int              `json:"total"`
+}
+
+// GPUOpResult represents the result of a GPU partition operation
+type GPUOpResult struct {
+	Operation string `json:"operation"`
+	VMName    string `json:"vmName"`
+	VMIndex   int    `json:"vmIndex"`
+	Success   bool   `json:"success"`
+	Message   string `json:"message,omitempty"`
+	Error     string `json:"error,omitempty"`
+}
+
+// GPUDriversResult represents the result of searching for GPU driver files
+type GPUDriversResult struct {
+	Paths []string `json:"paths"`
+	Total int      `json:"total"`
+}
+
+// EnableResult represents the result of enabling Hyper-V
+type EnableResult struct {
+	AlreadyEnabled   bool   `json:"alreadyEnabled"`
+	NeedsRestart     bool   `json:"needsRestart"`
+	RestartScheduled bool   `json:"restartScheduled"`
+	Success          bool   `json:"success"`
+	Message          string `json:"message"`
+}
+
+// UpdateResult represents the result of checking or applying updates
+type UpdateResult struct {
+	HasUpdate      bool   `json:"hasUpdate"`
+	CurrentVersion string `json:"currentVersion"`
+	LatestVersion  string `json:"latestVersion"`
+	ReleaseNotes   string `json:"releaseNotes,omitempty"`
+	Installed      bool   `json:"installed"`
+	Success        bool   `json:"success"`
+	Message        string `json:"message"`
+}
+
 // VMOperationFunc is a function that performs an operation on a VM
 type VMOperationFunc func(ctx context.Context, manager hyperv.VMManager, vm hyperv.VM) error
 
@@ -120,6 +166,7 @@ func runVMBatchOperation(
 		if !output.IsJSON() {
 			fmt.Printf("❌ Failed to get VMs: %v\n", err)
 		}
+		osExit(1)
 		return
 	}
 
@@ -130,6 +177,7 @@ func runVMBatchOperation(
 		if !output.IsJSON() {
 			fmt.Printf("❌ Error: %v\n", err)
 		}
+		osExit(1)
 		return
 	}
 
@@ -202,19 +250,40 @@ func runVMBatchOperation(
 
 	_ = g.Wait()
 
-	// JSON output for AI agents
+	outputBatchResults(config, results, successCount, failCount, len(indices))
+}
+
+func outputBatchResults(config VMOperationConfig, results []VMOperationResult, successCount, failCount, totalCount int) {
 	if output.IsJSON() {
-		output.PrintData(VMBatchResult{
-			Operation:    config.Operation,
-			Results:      results,
-			SuccessCount: successCount,
-			FailCount:    failCount,
-			TotalCount:   len(indices),
+		topSuccess := failCount == 0
+		var errInfo *output.ErrorInfo
+		if failCount > 0 {
+			errInfo = &output.ErrorInfo{
+				Code:    "BATCH_OPERATION_FAILED",
+				Message: fmt.Sprintf("%d of %d operations failed", failCount, totalCount),
+			}
+		}
+		output.PrintResponse(output.Response{
+			Success: topSuccess,
+			Data: VMBatchResult{
+				Operation:    config.Operation,
+				Results:      results,
+				SuccessCount: successCount,
+				FailCount:    failCount,
+				TotalCount:   totalCount,
+			},
+			Error: errInfo,
 		})
+		if failCount > 0 {
+			osExit(1)
+		}
 		return
 	}
 
-	if len(indices) > 1 {
+	if totalCount > 1 {
 		fmt.Printf("\n📊 Summary: %d %s, %d failed\n", successCount, config.SuccessVerb, failCount)
+	}
+	if failCount > 0 {
+		osExit(1)
 	}
 }

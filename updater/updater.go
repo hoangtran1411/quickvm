@@ -4,6 +4,8 @@ package updater
 
 import (
 	"archive/zip"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -87,26 +89,90 @@ func (u *Updater) CheckForUpdates() (*Release, bool, error) {
 	return &release, hasUpdate, nil
 }
 
-// DownloadAndInstall downloads and installs the latest version
-//
-//nolint:funlen // Complex download flow
-func (u *Updater) DownloadAndInstall(release *Release) error {
-	// Determine the correct asset based on architecture
-	assetName := u.getAssetName()
+func findReleaseAssets(release *Release, assetName string) (downloadURL string, assetSize int64, checksumURL string, err error) {
+	if release == nil {
+		return "", 0, "", fmt.Errorf("release cannot be nil")
+	}
 
-	var downloadURL string
-	var assetSize int64
+	expectedExeName := "quickvm-" + assetName
+	expectedShaName := expectedExeName + ".sha256"
 
+	// First, check for exact match
 	for _, asset := range release.Assets {
-		if strings.Contains(asset.Name, assetName) {
+		if asset.Name == expectedExeName {
 			downloadURL = asset.BrowserDownloadURL
 			assetSize = asset.Size
-			break
+		}
+		if asset.Name == expectedShaName {
+			checksumURL = asset.BrowserDownloadURL
+		}
+	}
+
+	// Fallback to suffix match only if exact match was not found
+	if downloadURL == "" {
+		for _, asset := range release.Assets {
+			if strings.HasSuffix(asset.Name, assetName) && !strings.HasSuffix(asset.Name, ".sha256") {
+				downloadURL = asset.BrowserDownloadURL
+				assetSize = asset.Size
+				break
+			}
+		}
+	}
+	if checksumURL == "" {
+		for _, asset := range release.Assets {
+			if strings.HasSuffix(asset.Name, assetName+".sha256") {
+				checksumURL = asset.BrowserDownloadURL
+				break
+			}
 		}
 	}
 
 	if downloadURL == "" {
-		return fmt.Errorf("no suitable release asset found for your platform")
+		return "", 0, "", fmt.Errorf("no suitable release asset found for your platform")
+	}
+	return downloadURL, assetSize, checksumURL, nil
+}
+
+func verifyChecksum(client *http.Client, checksumURL, computedHash string) error {
+	if checksumURL == "" {
+		return nil
+	}
+	checkResp, err := client.Get(checksumURL)
+	if err != nil {
+		return fmt.Errorf("failed to download checksum: %w", err)
+	}
+	defer func() { _ = checkResp.Body.Close() }()
+
+	if checkResp.StatusCode != http.StatusOK {
+		return fmt.Errorf("failed to download checksum: HTTP %d", checkResp.StatusCode)
+	}
+
+	checkBytes, err := io.ReadAll(checkResp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read checksum: %w", err)
+	}
+	expectedHash := strings.TrimSpace(string(checkBytes))
+	if fields := strings.Fields(expectedHash); len(fields) > 0 {
+		expectedHash = fields[0]
+	}
+	if expectedHash == "" {
+		return fmt.Errorf("checksum file is empty")
+	}
+	if !strings.EqualFold(computedHash, expectedHash) {
+		return fmt.Errorf("checksum verification failed: expected %s, got %s", expectedHash, computedHash)
+	}
+	fmt.Println("🔒 Checksum verified successfully!")
+	return nil
+}
+
+// DownloadAndInstall downloads and installs the latest version
+//
+//nolint:funlen // Complex download flow
+func (u *Updater) DownloadAndInstall(release *Release) error {
+	assetName := u.getAssetName()
+	downloadURL, assetSize, checksumURL, err := findReleaseAssets(release, assetName)
+	if err != nil {
+		return err
 	}
 
 	fmt.Printf("📦 Downloading QuickVM %s (%d MB)...\n", release.TagName, assetSize/1024/1024)
@@ -134,11 +200,20 @@ func (u *Updater) DownloadAndInstall(release *Release) error {
 	tmpPath := tmpFile.Name()
 	defer func() { _ = os.Remove(tmpPath) }()
 
-	// Download with progress
-	_, err = io.Copy(tmpFile, resp.Body)
+	// Download with progress and compute sha256 hash
+	hasher := sha256.New()
+	multiWriter := io.MultiWriter(tmpFile, hasher)
+	_, err = io.Copy(multiWriter, resp.Body)
 	_ = tmpFile.Close()
 	if err != nil {
 		return fmt.Errorf("failed to save update: %w", err)
+	}
+
+	computedHash := hex.EncodeToString(hasher.Sum(nil))
+
+	// Verify checksum if available
+	if err := verifyChecksum(client, checksumURL, computedHash); err != nil {
+		return err
 	}
 
 	fmt.Println("✅ Download complete!")
@@ -231,13 +306,16 @@ func createCleanupScript(oldPath string) error {
 	// Create a PowerShell script that will delete the old version after a delay
 	scriptPath := oldPath + ".cleanup.ps1"
 
+	safeOldPath := strings.ReplaceAll(oldPath, "'", "''")
+	safeScriptPath := strings.ReplaceAll(scriptPath, "'", "''")
+
 	scriptContent := fmt.Sprintf(`# QuickVM Update Cleanup Script
 # This script will delete itself after cleaning up
 
 Start-Sleep -Seconds 2
 
 # Try to remove old version
-$oldFile = "%s"
+$oldFile = '%s'
 if (Test-Path $oldFile) {
     try {
         Remove-Item $oldFile -Force -ErrorAction Stop
@@ -248,10 +326,10 @@ if (Test-Path $oldFile) {
 }
 
 # Delete this cleanup script
-$scriptFile = "%s"
+$scriptFile = '%s'
 Start-Sleep -Milliseconds 500
 Remove-Item $scriptFile -Force -ErrorAction SilentlyContinue
-`, oldPath, scriptPath)
+`, safeOldPath, safeScriptPath)
 
 	// Write script to file
 	// gosec G306: Expect WriteFile permissions to be 0600 or less
@@ -259,13 +337,11 @@ Remove-Item $scriptFile -Force -ErrorAction SilentlyContinue
 		return fmt.Errorf("failed to write cleanup script: %w", err)
 	}
 
-	// Execute cleanup script in background
-	// Start the process detached (don't wait for it)
-	go func() {
-		// Small delay to ensure current process can exit first
-		time.Sleep(100 * time.Millisecond)
-		_ = executeCommand(scriptPath)
-	}()
+	// Execute cleanup script detached in background (cmd.Start() detaches it,
+	// script itself sleeps 2s allowing current process to exit)
+	if err := executeCommand(scriptPath); err != nil {
+		return fmt.Errorf("failed to start cleanup script: %w", err)
+	}
 
 	return nil
 }

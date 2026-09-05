@@ -490,3 +490,146 @@ func BenchmarkCheckForUpdates(b *testing.B) {
 		_, _, _ = u.CheckForUpdates()
 	}
 }
+
+func TestFindReleaseAssets(t *testing.T) {
+	tests := []struct {
+		name            string
+		release         *Release
+		assetName       string
+		wantDownload    string
+		wantChecksum    string
+		wantErr         bool
+	}{
+		{
+			name: "Exact match with sha256 appearing first",
+			release: &Release{
+				Assets: []Asset{
+					{Name: "quickvm-windows-amd64.exe.sha256", BrowserDownloadURL: "https://example.com/check.sha256", Size: 64},
+					{Name: "quickvm-windows-amd64.exe", BrowserDownloadURL: "https://example.com/quickvm.exe", Size: 1024},
+				},
+			},
+			assetName:    "windows-amd64.exe",
+			wantDownload: "https://example.com/quickvm.exe",
+			wantChecksum: "https://example.com/check.sha256",
+			wantErr:      false,
+		},
+		{
+			name: "Suffix match fallback",
+			release: &Release{
+				Assets: []Asset{
+					{Name: "custom-windows-amd64.exe", BrowserDownloadURL: "https://example.com/custom.exe", Size: 2048},
+					{Name: "custom-windows-amd64.exe.sha256", BrowserDownloadURL: "https://example.com/custom.sha256", Size: 64},
+				},
+			},
+			assetName:    "windows-amd64.exe",
+			wantDownload: "https://example.com/custom.exe",
+			wantChecksum: "https://example.com/custom.sha256",
+			wantErr:      false,
+		},
+		{
+			name: "No suitable asset",
+			release: &Release{
+				Assets: []Asset{
+					{Name: "quickvm-linux-amd64.tar.gz", BrowserDownloadURL: "https://example.com/linux.tar.gz", Size: 1024},
+				},
+			},
+			assetName: "windows-amd64.exe",
+			wantErr:   true,
+		},
+		{
+			name:      "Nil release",
+			release:   nil,
+			assetName: "windows-amd64.exe",
+			wantErr:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dl, size, check, err := findReleaseAssets(tt.release, tt.assetName)
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("findReleaseAssets() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if !tt.wantErr {
+				if dl != tt.wantDownload {
+					t.Errorf("downloadURL = %s, want %s", dl, tt.wantDownload)
+				}
+				if check != tt.wantChecksum {
+					t.Errorf("checksumURL = %s, want %s", check, tt.wantChecksum)
+				}
+				if size == 0 {
+					t.Errorf("expected size > 0")
+				}
+			}
+		})
+	}
+}
+
+func TestVerifyChecksum(t *testing.T) {
+	validHash := "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/valid.sha256":
+			_, _ = w.Write([]byte(validHash + "  quickvm-windows-amd64.exe\n"))
+		case "/mismatch.sha256":
+			_, _ = w.Write([]byte("0000000000000000000000000000000000000000000000000000000000000000\n"))
+		case "/empty.sha256":
+			_, _ = w.Write([]byte("   \n"))
+		case "/notfound.sha256":
+			http.NotFound(w, r)
+		default:
+			http.Error(w, "server error", http.StatusInternalServerError)
+		}
+	}))
+	defer server.Close()
+
+	client := server.Client()
+
+	tests := []struct {
+		name         string
+		checksumURL  string
+		computedHash string
+		wantErr      bool
+	}{
+		{
+			name:         "Empty checksum URL skipped safely",
+			checksumURL:  "",
+			computedHash: validHash,
+			wantErr:      false,
+		},
+		{
+			name:         "Valid checksum match",
+			checksumURL:  server.URL + "/valid.sha256",
+			computedHash: validHash,
+			wantErr:      false,
+		},
+		{
+			name:         "Checksum mismatch fails",
+			checksumURL:  server.URL + "/mismatch.sha256",
+			computedHash: validHash,
+			wantErr:      true,
+		},
+		{
+			name:         "Empty checksum file fails",
+			checksumURL:  server.URL + "/empty.sha256",
+			computedHash: validHash,
+			wantErr:      true,
+		},
+		{
+			name:         "404 checksum download fails (not silently ignored)",
+			checksumURL:  server.URL + "/notfound.sha256",
+			computedHash: validHash,
+			wantErr:      true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := verifyChecksum(client, tt.checksumURL, tt.computedHash)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("verifyChecksum() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}

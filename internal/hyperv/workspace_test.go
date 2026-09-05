@@ -170,3 +170,42 @@ func TestGetWorkspaceDir(t *testing.T) {
 		t.Error("Workspace directory was not created")
 	}
 }
+
+func TestWorkspace_PathTraversal(t *testing.T) {
+	traversalNames := []string{
+		"../../etc/passwd",
+		"..\\..\\Windows\\System32",
+		"sub/dir",
+		"sub\\dir",
+		"test:name",
+		"test*name",
+		"test?name",
+		"test<name",
+		"test>name",
+		"test|name",
+		"test\"name",
+		"",
+		"   ",
+	}
+
+	for _, name := range traversalNames {
+		t.Run("traversal_"+name, func(t *testing.T) {
+			if err := ValidateWorkspaceName(name); err == nil {
+				t.Errorf("Expected ValidateWorkspaceName(%q) to fail, but it succeeded", name)
+			}
+
+			if _, err := LoadWorkspace(name); err == nil {
+				t.Errorf("Expected LoadWorkspace(%q) to fail, but it succeeded", name)
+			}
+
+			if err := DeleteWorkspace(name); err == nil {
+				t.Errorf("Expected DeleteWorkspace(%q) to fail, but it succeeded", name)
+			}
+
+			ws := &Workspace{Name: name, VMs: []string{"VM1"}}
+			if err := SaveWorkspace(ws); err == nil {
+				t.Errorf("Expected SaveWorkspace with name %q to fail, but it succeeded", name)
+			}
+		})
+	}
+}

@@ -9,7 +9,7 @@ QuickVM is a fast Hyper-V Virtual Machine management CLI/TUI for Windows, built 
 ### Quick Reference
 
 | Command | JSON Response Type | Description |
-|---------|-------------------|-------------|
+| --------- | ------------------- | ------------- |
 | `list -o json` | `VMListResponse` | List all VMs with details |
 | `info -o json` | `SystemInfo` | System/Hyper-V info |
 | `start 1 -o json` | `VMBatchResult` | Start VM(s) |
@@ -18,13 +18,29 @@ QuickVM is a fast Hyper-V Virtual Machine management CLI/TUI for Windows, built 
 | `version -o json` | `VersionInfo` | App version info |
 | `snapshot list 1 -o json` | `SnapshotListResult` | List VM snapshots |
 | `snapshot create 1 "name" -o json` | `SnapshotOpResult` | Create snapshot |
+| `snapshot restore 1 "name" -o json` | `SnapshotOpResult` | Restore snapshot |
+| `snapshot delete 1 "name" -o json` | `SnapshotOpResult` | Delete snapshot |
 | `export 1 "./path" -o json` | `ExportResult` | Export VM |
+| `import "./path" -o json` | `ImportResult` | Import VM |
 | `clone 1 "name" -o json` | `CloneResult` | Clone VM |
 | `rdp 1 -o json` | `RDPResult` | RDP connection info |
+| `workspace list -o json` | `WorkspaceListResult` | List workspaces |
+| `workspace create "ws" -v "vms" -o json` | `WorkspaceResult` | Create workspace |
+| `workspace show "ws" -o json` | `WorkspaceShowResult` | Show workspace details |
+| `workspace delete "ws" -o json` | `WorkspaceResult` | Delete workspace |
+| `workspace start "ws" -o json` | `WorkspaceBatchResult` | Start all workspace VMs |
+| `workspace stop "ws" -o json` | `WorkspaceBatchResult` | Stop all workspace VMs |
+| `gpu status -o json` | `GPUStatusResult` | Check GPU-P support |
+| `gpu add 1 -o json` | `GPUOpResult` | Add GPU partition |
+| `gpu remove 1 -o json` | `GPUOpResult` | Remove GPU partition |
+| `gpu drivers -o json` | `GPUDriversResult` | GPU driver paths |
+| `enable -o json` | `EnableResult` | Enable Hyper-V |
+| `update -o json` | `UpdateResult` | Check/apply updates |
 
 ### Response Format
 
 **Success:**
+
 ```json
 {
   "success": true,
@@ -33,6 +49,7 @@ QuickVM is a fast Hyper-V Virtual Machine management CLI/TUI for Windows, built 
 ```
 
 **Error:**
+
 ```json
 {
   "success": false,
@@ -47,7 +64,7 @@ QuickVM is a fast Hyper-V Virtual Machine management CLI/TUI for Windows, built 
 ### Error Codes
 
 | Code | Description |
-|------|-------------|
+| ------ | ------------- |
 | `VM_GET_FAILED` | Failed to retrieve VM info |
 | `VM_LIST_FAILED` | Failed to list VMs |
 | `INVALID_INDEX` | Invalid VM index provided |
@@ -56,6 +73,7 @@ QuickVM is a fast Hyper-V Virtual Machine management CLI/TUI for Windows, built 
 | `CLONE_FAILED` | Clone operation failed |
 | `RDP_FAILED` | RDP connection failed |
 | `SNAPSHOT_*_FAILED` | Snapshot operations |
+
 ```
 
 ## Quick Commands
@@ -114,14 +132,17 @@ quickvm/
 
 ## PowerShell Security (CRITICAL)
 
-**NEVER** concatenate user input into PowerShell commands:
+**NEVER** pass unescaped user input into PowerShell commands.
+Note that the PowerShell runtime concatenates all trailing arguments after `-Command` separated by spaces into a single script block before parsing. Separate `exec.Command` arguments do NOT bypass shell parsing for PowerShell `-Command`.
 
 ```go
-// ❌ DANGEROUS - Command injection vulnerability
-exec.Command("powershell", "-Command", "Get-VM -Name " + userInput)
-
-// ✅ SAFE - Use separate arguments
+// ❌ DANGEROUS - PowerShell concatenates arguments after -Command into a single script block!
 exec.CommandContext(ctx, "powershell", "-Command", "Get-VM", "-Name", userInput)
+
+// ✅ SAFE - Escape single quotes and wrap values in single-quoted literals:
+escapedInput := strings.ReplaceAll(userInput, "'", "''")
+cmd := fmt.Sprintf("Get-VM -Name '%s'", escapedInput)
+exec.CommandContext(ctx, "powershell", "-NoProfile", "-NonInteractive", "-Command", cmd)
 ```
 
 ## Testing
@@ -167,7 +188,7 @@ type Manager struct {
 ## Common Tasks
 
 | Task | Command/Location |
-|------|------------------|
+| ------ | ------------------ |
 | Add CLI command | Create `cmd/<command>.go`, follow Cobra pattern |
 | Add Hyper-V operation | Add method to `internal/hyperv/hyperv.go` |
 | Add TUI feature | Modify `ui/table.go`, use Bubble Tea patterns |
@@ -177,6 +198,7 @@ type Manager struct {
 ## AI Workflows
 
 Use slash commands for automated tasks:
+
 - `/dev-cycle` - Format, lint, test, build
 - `/add-command` - Add new CLI command
 - `/add-hyperv-feature` - Add Hyper-V functionality

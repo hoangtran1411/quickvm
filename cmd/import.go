@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"quickvm/internal/hyperv"
+	"quickvm/internal/output"
 
 	"github.com/spf13/cobra"
 )
@@ -45,36 +46,44 @@ Flags:
 		if !filepath.IsAbs(importPath) {
 			cwd, err := os.Getwd()
 			if err != nil {
-				fmt.Printf("❌ Failed to get current directory: %v\n", err)
-				return
+				output.PrintError("PATH_ERROR", "Failed to get current directory", err.Error())
+				if !output.IsJSON() {
+					fmt.Printf("❌ Failed to get current directory: %v\n", err)
+				}
+				os.Exit(1)
 			}
 			importPath = filepath.Join(cwd, importPath)
 		}
 
 		// Verify path exists
 		if _, err := os.Stat(importPath); os.IsNotExist(err) {
-			fmt.Printf("❌ Import path does not exist: %s\n", importPath)
-			return
+			output.PrintError("PATH_NOT_FOUND", "Import path does not exist", importPath)
+			if !output.IsJSON() {
+				fmt.Printf("❌ Import path does not exist: %s\n", importPath)
+			}
+			os.Exit(1)
 		}
 
-		fmt.Printf("📦 Importing VM from '%s'...\n", importPath)
+		if !output.IsJSON() {
+			fmt.Printf("📦 Importing VM from '%s'...\n", importPath)
 
-		// Show options being used
-		if importCopy {
-			fmt.Println("   📋 Mode: Copy (will copy VM files to default location)")
-		} else {
-			fmt.Println("   📋 Mode: Register in place")
+			// Show options being used
+			if importCopy {
+				fmt.Println("   📋 Mode: Copy (will copy VM files to default location)")
+			} else {
+				fmt.Println("   📋 Mode: Register in place")
+			}
+
+			if importGenerateNewID {
+				fmt.Println("   🔄 Generating new VM ID")
+			}
+
+			if importVHDPath != "" {
+				fmt.Printf("   💾 VHD destination: %s\n", importVHDPath)
+			}
+
+			fmt.Println("⏳ This may take a while depending on VM size...")
 		}
-
-		if importGenerateNewID {
-			fmt.Println("   🔄 Generating new VM ID")
-		}
-
-		if importVHDPath != "" {
-			fmt.Printf("   💾 VHD destination: %s\n", importVHDPath)
-		}
-
-		fmt.Println("⏳ This may take a while depending on VM size...")
 
 		// Build import options
 		opts := hyperv.ImportVMOptions{
@@ -86,7 +95,21 @@ Flags:
 
 		vmName, err := manager.ImportVM(cmd.Context(), opts)
 		if err != nil {
-			fmt.Printf("❌ Failed to import VM: %v\n", err)
+			output.PrintError("IMPORT_FAILED", "Failed to import VM", err.Error())
+			if !output.IsJSON() {
+				fmt.Printf("❌ Failed to import VM: %v\n", err)
+			}
+			os.Exit(1)
+		}
+
+		// JSON output for AI agents
+		if output.IsJSON() {
+			output.PrintData(ImportResult{
+				VMName:     vmName,
+				ImportPath: importPath,
+				Success:    true,
+				Message:    "VM imported successfully",
+			})
 			return
 		}
 

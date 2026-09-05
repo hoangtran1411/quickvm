@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os/exec"
 	"strings"
 )
 
@@ -176,10 +175,18 @@ func (m *Manager) GetSystemInfo(ctx context.Context, includeDisk bool) (*SystemI
 // getCPUInfo retrieves CPU information
 func (m *Manager) getCPUInfo(ctx context.Context) (*CPUInfo, error) {
 	psScript := `
-		$cpu = Get-WmiObject -Class Win32_Processor
+		$cpus = @(Get-WmiObject -Class Win32_Processor)
+		$name = ""
+		$totalCores = 0
+		if ($cpus.Count -gt 0) {
+			$name = [string]$cpus[0].Name
+			foreach ($c in $cpus) {
+				$totalCores += [int]$c.NumberOfCores
+			}
+		}
 		@{
-			Name = $cpu.Name
-			Cores = $cpu.NumberOfCores
+			Name = $name
+			Cores = $totalCores
 		} | ConvertTo-Json
 	`
 
@@ -413,23 +420,6 @@ func (m *Manager) EnableHyperV(ctx context.Context) (bool, error) {
 	}
 
 	return result.NeedsRestart, nil
-}
-
-// IsRunningAsAdmin checks if the current process is running with administrator privileges
-func IsRunningAsAdmin(ctx context.Context) bool {
-	psScript := `
-		$identity = [Security.Principal.WindowsIdentity]::GetCurrent()
-		$principal = New-Object Security.Principal.WindowsPrincipal($identity)
-		$principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-	`
-
-	cmd := exec.CommandContext(ctx, "powershell", "-NoProfile", "-NonInteractive", "-Command", psScript)
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return false
-	}
-
-	return strings.TrimSpace(string(output)) == "True"
 }
 
 // ScheduleRestart schedules a system restart after the specified number of seconds

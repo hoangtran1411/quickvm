@@ -69,8 +69,15 @@ func checkAndUpdate() {
 	}
 
 	if !hasUpdate {
-		fmt.Println("✅ The current version is the latest!")
-		fmt.Println()
+		if !output.IsJSON() {
+			fmt.Println("✅ The current version is the latest!")
+			fmt.Println()
+		}
+		return
+	}
+
+	if output.IsJSON() {
+		// In headless/JSON mode, do not block on interactive stdin
 		return
 	}
 
