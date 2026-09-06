@@ -4,7 +4,7 @@ This directory contains all CLI commands built with [Cobra](https://github.com/s
 
 ## Architecture
 
-```
+```text
 cmd/
 ├── root.go         # Root command, launches TUI when no args
 ├── start.go        # quickvm start <index>
@@ -73,14 +73,18 @@ func init() {
 ## Key Conventions
 
 ### Index-Based VM Reference
+
 Commands use 1-based numeric indices instead of VM names:
+
 ```powershell
 quickvm start 1    # Start first VM
 quickvm stop 2     # Stop second VM
 ```
 
 ### Error Output Format
+
 Use emoji prefixes for visual feedback:
+
 - `✅` Success
 - `❌` Error
 - `⚠️` Warning

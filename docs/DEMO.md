@@ -3,7 +3,8 @@
 ## 📸 Screenshots
 
 ### 1. TUI Mode (Interactive Interface)
-```
+
+```text
 ╭───────────────────────────────────────────────────────────────────────────╮
 │ 🖥️  QuickVM - Hyper-V Manager                                            │
 ╰───────────────────────────────────────────────────────────────────────────╯
@@ -24,6 +25,7 @@ Status: VM list refreshed!
 ```
 
 ### 2. List Command Output
+
 ```powershell
 PS> quickvm list
 
@@ -45,6 +47,7 @@ Total VMs: 5
 ```
 
 ### 3. Start Command
+
 ```powershell
 PS> quickvm start 2
 
@@ -53,9 +56,11 @@ PS> quickvm start 2
 ```
 
 ### 4. Start Range Command (New Feature!)
+
 Start multiple VMs at once using the `--range` flag:
 
 **Range format (start-end):**
+
 ```powershell
 PS> quickvm start --range 1-3
 
@@ -72,6 +77,7 @@ PS> quickvm start --range 1-3
 ```
 
 **Comma-separated format:**
+
 ```powershell
 PS> quickvm start --range 1,3,5
 
@@ -88,11 +94,13 @@ PS> quickvm start --range 1,3,5
 ```
 
 **Short flag syntax:**
+
 ```powershell
 PS> quickvm start -r 1-5
 ```
 
 ### 5. Stop Command
+
 ```powershell
 PS> quickvm stop 3
 
@@ -103,6 +111,7 @@ PS> quickvm stop 3
 ## 🎯 Use Cases & Examples
 
 ### Use Case 1: Daily Development Workflow
+
 **Scenario**: You work with multiple development VMs and need to quickly start them each morning.
 
 ```powershell
@@ -117,6 +126,7 @@ quickvm list
 ```
 
 ### Use Case 2: Testing Environment Management
+
 **Scenario**: Running automated tests across different OS versions.
 
 ```powershell
@@ -135,6 +145,7 @@ foreach ($vm in @(2, 4, 6, 7)) {
 ```
 
 ### Use Case 3: Resource Management
+
 **Scenario**: You need to free up system resources quickly.
 
 ```powershell
@@ -148,6 +159,7 @@ quickvm
 ```
 
 ### Use Case 4: Quick VM Status Check
+
 **Scenario**: Check which VMs are running before starting work.
 
 ```powershell
@@ -160,6 +172,7 @@ qvm list
 ```
 
 ### Use Case 5: Automated Backup Workflow
+
 **Scenario**: Stop VMs before running backups, then restart them.
 
 ```powershell
@@ -186,6 +199,7 @@ foreach ($vm in $criticalVMs) {
 ```
 
 ### Use Case 6: Development Lab Setup
+
 **Scenario**: Quickly set up a multi-VM development lab.
 
 ```powershell
@@ -214,26 +228,30 @@ quickvm list
 ## 🎨 UI/UX Features Showcase
 
 ### Color Coding
+
 - 🟢 **Green (Running)**: VM is active and consuming resources
 - 🔴 **Red (Off)**: VM is stopped and not consuming resources
 - 🟡 **Yellow (Paused)**: VM is paused, can be quickly resumed
 
 ### Interactive Navigation
+
 - **Arrow Keys**: Navigate through VM list smoothly
 - **Enter Key**: Quick start for selected VM
-- **Single Key Actions**: 
+- **Single Key Actions**:
   - `s` for stop (red alert action)
   - `t` for restart (medium priority)
   - `r` for refresh (low impact)
 - **Escape Hatch**: `q` or `Esc` for quick exit
 
 ### Real-time Information
+
 - **CPU Usage**: Monitor VM resource consumption
 - **Memory**: See allocated memory per VM
 - **Uptime**: Track how long VMs have been running
 - **Status**: Operating status at a glance
 
 ### Error Handling
+
 ```powershell
 PS> quickvm start 99
 
@@ -248,6 +266,7 @@ PS> quickvm start 1
 ## 📊 Performance Comparison
 
 ### Traditional Method (PowerShell)
+
 ```powershell
 # List VMs
 Get-VM
@@ -262,6 +281,7 @@ Get-VM -Name "Ubuntu-Dev"
 ```
 
 ### QuickVM Method
+
 ```powershell
 # List VMs
 quickvm list
@@ -279,7 +299,9 @@ quickvm start 1
 ## 🔥 Power User Tips
 
 ### 1. Create PowerShell Functions
+
 Add to your `$PROFILE`:
+
 ```powershell
 # Quick aliases
 Set-Alias qvm quickvm
@@ -301,6 +323,7 @@ function Stop-AllVMs {
 ```
 
 ### 2. Scheduled Tasks
+
 ```powershell
 # Create a scheduled task to start VMs at boot
 $action = New-ScheduledTaskAction -Execute "quickvm.exe" -Argument "start 1"
@@ -309,10 +332,13 @@ Register-ScheduledTask -TaskName "StartVM1" -Action $action -Trigger $trigger
 ```
 
 ### 3. Context Menu Integration
+
 Add QuickVM to Windows context menu (requires registry edit).
 
 ### 4. Notification Integration
+
 Combine with Windows notifications:
+
 ```powershell
 quickvm start 1
 if ($LASTEXITCODE -eq 0) {
@@ -323,6 +349,7 @@ if ($LASTEXITCODE -eq 0) {
 ## 📈 Monitoring Dashboard Example
 
 Create a simple monitoring loop:
+
 ```powershell
 while ($true) {
     Clear-Host

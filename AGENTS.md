@@ -74,8 +74,6 @@ QuickVM is a fast Hyper-V Virtual Machine management CLI/TUI for Windows, built 
 | `RDP_FAILED` | RDP connection failed |
 | `SNAPSHOT_*_FAILED` | Snapshot operations |
 
-```
-
 ## Quick Commands
 
 ```powershell
@@ -101,7 +99,7 @@ make dev
 
 ## Project Structure
 
-```
+```text
 quickvm/
 ├── cmd/                    # CLI commands (Cobra)
 │   ├── root.go            # Entry point, launches TUI if no args

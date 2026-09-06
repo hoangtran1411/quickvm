@@ -10,13 +10,13 @@
 
 **A beautiful TUI-based command-line tool for managing Hyper-V virtual machines**
 
-[Features](#features) • [Installation](#installation) • [Usage](#usage) • [Screenshots](#screenshots)
+[Features](#features) • [Installation](#installation) • [Usage](#usage) • [Documentation](#documentation)
 
 </div>
 
 ---
 
-## ✨ Features
+## <a id="features"></a>✨ Features
 
 - 🎨 **Beautiful TUI Interface** - Interactive table view with color-coded VM states and responsive actions
 - ⚡ **Quick Commands** - Start/stop/restart VMs by index number
@@ -34,7 +34,7 @@
 - Administrator privileges (required for Hyper-V management)
 - Go 1.27.0 or higher (for building from source)
 
-## 🚀 Installation
+## <a id="installation"></a>🚀 Installation
 
 ### Quick Install (Recommended)
 
@@ -95,7 +95,7 @@ golangci-lint run
 .\install-menu.bat
 ```
 
-## 📖 Usage
+## <a id="usage"></a>📖 Usage
 
 ### Interactive TUI Mode
 
@@ -106,6 +106,7 @@ quickvm
 ```
 
 **Keyboard Shortcuts:**
+
 - `↑/↓` - Navigate through VMs
 - `Enter` - Start the selected VM
 - `s` - Stop the selected VM
@@ -116,6 +117,7 @@ quickvm
 ### Command Line Mode
 
 #### List all VMs
+
 ```bash
 quickvm list
 # or
@@ -123,6 +125,7 @@ quickvm ls
 ```
 
 #### Start VMs
+
 ```bash
 # Start a single VM by index
 quickvm start 1
@@ -138,6 +141,7 @@ quickvm start --all
 ```
 
 #### Stop VMs
+
 ```bash
 # Stop a single VM
 quickvm stop 1
@@ -148,6 +152,7 @@ quickvm stop --all
 ```
 
 #### Restart VMs
+
 ```bash
 # Restart a single VM or a range
 quickvm restart 1
@@ -155,7 +160,9 @@ quickvm restart --range 1-3
 ```
 
 #### AI Agent & Structured Output (JSON)
+
 All commands support `--output json` (`-o json`) for machine-readable automation:
+
 ```bash
 # List all VMs in JSON format
 quickvm list -o json
@@ -168,17 +175,20 @@ quickvm info -o json
 ```
 
 #### View System Information
+
 ```bash
 quickvm info
 ```
 
 This will display:
+
 - 🖥️ **CPU**: Name and number of cores
 - 💾 **Memory**: Total, used, and free RAM (in MB and GB)
 - 💿 **Disk Drives**: Name, free space, and total capacity for each drive
 - 🔧 **Hyper-V Status**: Whether Hyper-V is enabled or disabled
 
 #### Update QuickVM
+
 ```bash
 # Check for updates and install
 quickvm update
@@ -194,6 +204,7 @@ quickvm --update list
 ```
 
 #### Enable Hyper-V
+
 ```bash
 # Enable Hyper-V (will prompt for restart if needed)
 quickvm enable
@@ -208,6 +219,7 @@ quickvm enable --no-restart
 > ⚠️ **Note**: The `enable` command requires Administrator privileges.
 
 #### Snapshot Management
+
 ```bash
 # List all snapshots for a VM
 quickvm snapshot list 1
@@ -223,6 +235,7 @@ quickvm snapshot delete 1 "Old Snapshot"
 ```
 
 #### Export/Import VMs
+
 ```bash
 # Export a VM to a directory
 quickvm export 1 "D:\Backups\VMs"
@@ -236,6 +249,7 @@ quickvm import "D:\Backups\VMs\MyVM" --new-id      # Generate new VM ID
 ```
 
 #### GPU Passthrough (GPU-P)
+
 ```bash
 # Check GPU partitioning support
 quickvm gpu status
@@ -251,6 +265,7 @@ quickvm gpu drivers
 ```
 
 #### Remote Desktop (RDP)
+
 ```bash
 # Connect to a running VM via RDP
 quickvm rdp 1
@@ -260,6 +275,7 @@ quickvm rdp 1 -u "admin@password123"
 ```
 
 #### Workspace Management (VM Groups)
+
 ```bash
 # Create a workspace with specific VMs
 quickvm ws create "DevEnvironment" --vms "Proxy,WebApp,DB"
@@ -297,7 +313,7 @@ quickvm
 
 QuickVM is built with clean architecture principles:
 
-```
+```text
 quickvm/
 ├── cmd/            # CLI commands (Cobra)
 │   ├── root.go            # Root command & TUI launcher
@@ -350,23 +366,27 @@ quickvm/
 3. **Reliability** - Comprehensive error handling, automated testing, and proper process management via Context API
 4. **Beauty** - Color-coded states and modern terminal aesthetics
 
-## 📚 Documentation
+## <a id="documentation"></a>📚 Documentation
 
 For more detailed information, check out our comprehensive documentation:
 
 ### Getting Started
-- **[Installation Guide](docs/INSTALLATION.md)** - Detailed installation instructions
-- **[Quick Reference](docs/QUICK_REFERENCE.md)** - All commands and shortcuts at a glance
+
+- **[Getting Started & Installation](docs/GETTING_STARTED.md)** - Detailed installation and onboarding instructions
+- **[Quick Reference](docs/QUICK_REFERENCE.md)** - All commands, shortcuts, JSON schemas & error codes at a glance
 
 ### User Guides
+
 - **[Demo & Examples](docs/DEMO.md)** - Real-world use cases and power user tips
+- **[Auto-Update Guide](docs/AUTO_UPDATE.md)** - Keep QuickVM up-to-date automatically
+- **[GPU Passthrough Guide](docs/GPU_PASSTHROUGH.md)** - Partition host GPU for virtual machines
 
 ### Developer Documentation
+
+- **[Documentation Index](docs/README.md)** - Complete documentation directory and index
 - **[Developer Guide](docs/DEVELOPER.md)** - Architecture and development notes
 - **[Feature Roadmap](docs/FEATURE_ROADMAP.md)** - Planned features and priorities
-- **[Workflow Guide](docs/WORKFLOW.md)** - Development and deployment workflow
-- **[Contributing Guide](docs/CONTRIBUTING.md)** - How to contribute to QuickVM
-- **[Project Summary](docs/PROJECT_SUMMARY.md)** - Complete project overview
+- **[Contributing & Workflow Guide](docs/CONTRIBUTING.md)** - How to contribute and development workflow
 - **[AI Agent Setup](docs/AI_AGENT.md)** - Skills, workflows, and AI assistant configuration
 
 ## 🔒 Permissions
@@ -400,4 +420,3 @@ For questions, suggestions, or issues, please open an issue on GitHub.
 ⭐ Star this repo if you find it useful!
 
 </div>
-

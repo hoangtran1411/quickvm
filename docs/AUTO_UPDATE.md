@@ -23,6 +23,7 @@ quickvm update
 ```
 
 The command will:
+
 1. Check GitHub releases for the latest version
 2. Compare with your current version
 3. Prompt you to install if an update is available
@@ -32,18 +33,21 @@ The command will:
 ### Update Options
 
 #### Check Only (No Install)
+
 ```powershell
 # Just check if updates are available
 quickvm update --check-only
 ```
 
 This will show you:
+
 - Current version
 - Latest available version
 - Release notes
 - But won't install anything
 
 #### Auto-Install (No Prompt)
+
 ```powershell
 # Automatically install without asking
 quickvm update -y
@@ -73,6 +77,7 @@ If an update is available, you'll be prompted to install it before the command r
 ## 🎯 Usage Examples
 
 ### Example 1: Manual Update Check
+
 ```powershell
 PS> quickvm update
 
@@ -90,6 +95,7 @@ PS> quickvm update
 ```
 
 ### Example 2: Check Only
+
 ```powershell
 PS> quickvm update --check-only
 
@@ -105,6 +111,7 @@ PS> quickvm update --check-only
 ```
 
 ### Example 3: Already Up-to-Date
+
 ```powershell
 PS> quickvm update
 
@@ -114,6 +121,7 @@ PS> quickvm update
 ```
 
 ### Example 4: With Global Flag
+
 ```powershell
 PS> quickvm --update list
 
@@ -124,6 +132,7 @@ PS> quickvm --update list
 ```
 
 ### Example 5: Auto-Install in Script
+
 ```powershell
 # Update script
 quickvm update -y
@@ -138,15 +147,19 @@ if ($LASTEXITCODE -eq 0) {
 ## 🔒 Security
 
 ### Checksum Verification
+
 Updates are downloaded from official GitHub releases with SHA256 checksums for verification.
 
 ### Automatic Backup
+
 Before installing an update, QuickVM creates a backup of the current executable:
+
 - Backup location: `quickvm.exe.backup`
 - Automatically restored if update fails
 - Deleted after successful update
 
 ### Rollback
+
 If an update fails, QuickVM automatically restores the backup:
 
 ```powershell
@@ -169,6 +182,7 @@ If an update fails, QuickVM automatically restores the backup:
 ```
 
 **Solutions**:
+
 - Check internet connection
 - Verify GitHub is accessible
 - Check firewall settings
@@ -179,6 +193,7 @@ If an update fails, QuickVM automatically restores the backup:
 **Problem**: Update download interrupted
 
 **Solutions**:
+
 - Check internet connection
 - Ensure enough disk space
 - Try again with `quickvm update`
@@ -192,6 +207,7 @@ If an update fails, QuickVM automatically restores the backup:
 ```
 
 **Solutions**:
+
 - Run PowerShell as Administrator
 - Close other instances of QuickVM
 - Temporarily disable antivirus
@@ -201,6 +217,7 @@ If an update fails, QuickVM automatically restores the backup:
 **Problem**: QuickVM says already up-to-date but you know there's a new version
 
 **Solutions**:
+
 - Check your current version: `quickvm version`
 - Check GitHub releases manually
 - Version format must match (v1.0.0)
@@ -246,7 +263,7 @@ quickvm update -y
 
 ## 📊 Update Process Flow
 
-```
+```text
 1. quickvm update
          ↓
 2. Check GitHub API
@@ -273,23 +290,29 @@ quickvm update -y
 ## 🔧 Technical Details
 
 ### Update Source
+
 - GitHub Releases API
 - Repository: `hoangtran1411/quickvm`
 - API: `https://api.github.com/repos/hoangtran1411/quickvm/releases/latest`
 
 ### Architecture Detection
+
 QuickVM automatically detects your system architecture:
+
 - AMD64 (64-bit Intel/AMD)
 - ARM64 (ARM 64-bit)
 
 And downloads the appropriate binary.
 
 ### Version Comparison
+
 Versions are compared as strings after removing the "v" prefix:
+
 - `v1.0.0` vs `v1.0.1` → Update available
 - `v1.0.0` vs `v1.0.0` → Already latest
 
 ### File Locations
+
 - Current executable: `quickvm.exe`
 - During update: `quickvm-update-*.exe` (temp)
 - Backup: `quickvm.exe.backup`

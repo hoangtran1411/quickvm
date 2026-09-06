@@ -11,19 +11,22 @@
 > **QuickVM is a "Quick" VM manager, NOT a Hyper-V replacement.**
 
 ### What QuickVM IS ✅
+
 - A fast CLI wrapper for common Hyper-V tasks
 - A beautiful TUI for visual VM management
 - A productivity tool for developers managing 3-5 VMs daily
 - Quick actions: list, start, stop, restart, clone, snapshot, rdp
 
 ### What QuickVM is NOT ❌
+
 - A full Hyper-V Manager replacement
 - An infrastructure management tool
 - A networking/storage configuration tool
 - A remote management solution
 
 ### Decision Principle
-> If the feature is already well-handled by Hyper-V Manager GUI, 
+>
+> If the feature is already well-handled by Hyper-V Manager GUI,
 > we DON'T implement it. Use the right tool for the job.
 
 ---
@@ -31,7 +34,7 @@
 ## 📊 Overview
 
 | Tier | Description | Feature Count | Status |
-|------|-------------|---------------|--------|
+| ------ | ------------- | --------------- | -------- |
 | Tier 1 | High Value, Medium Effort | 4 | ✅ Active |
 | Tier 2 | Quick Wins | 5 | ✅ Active |
 | Tier 3 | Advanced Features | 5 | ❌ Archived |
@@ -55,6 +58,7 @@ quickvm snapshot delete <vm-index> "name"     # Delete a snapshot
 ```
 
 **Rationale:** Checkpoint management is a crucial feature when working with VMs. It allows users to:
+
 - Save state before making changes
 - Quickly restore when errors occur
 - Test safely with rollback capability
@@ -62,6 +66,7 @@ quickvm snapshot delete <vm-index> "name"     # Delete a snapshot
 **Complexity:** ⭐⭐⭐ (Medium)
 
 **PowerShell Commands:**
+
 ```powershell
 Get-VMSnapshot -VMName "VMName"
 Checkpoint-VM -Name "VMName" -SnapshotName "SnapshotName"
@@ -85,6 +90,7 @@ quickvm clone 1 "WebServer-Test"              # Example
 **Complexity:** ⭐⭐⭐ (Medium)
 
 **PowerShell Commands:**
+
 ```powershell
 Export-VM -Name "SourceVM" -Path "C:\VMs\Export"
 Import-VM -Path "C:\VMs\Export\SourceVM\Virtual Machines\*.vmcx" -Copy -GenerateNewId
@@ -110,6 +116,7 @@ quickvm import "D:\Backups\VMs\WebServer"
 **Complexity:** ⭐⭐⭐ (Medium)
 
 **PowerShell Commands:**
+
 ```powershell
 Export-VM -Name "VMName" -Path "D:\Backups"
 Import-VM -Path "D:\Backups\VMName\Virtual Machines\*.vmcx"
@@ -133,6 +140,7 @@ quickvm config show <vm-index>                # View current config
 **Complexity:** ⭐⭐ (Low-Medium)
 
 **PowerShell Commands:**
+
 ```powershell
 Set-VM -Name "VMName" -MemoryStartupBytes 4GB
 Set-VMProcessor -VMName "VMName" -Count 2
@@ -159,6 +167,7 @@ quickvm connect 1
 **Complexity:** ⭐ (Low)
 
 **Implementation:**
+
 ```go
 // Simple: call vmconnect.exe
 exec.Command("vmconnect.exe", "localhost", vmName).Start()
@@ -254,8 +263,8 @@ quickvm list --watch                          # Watch mode for list command
 
 > ⚠️ **ARCHIVED (2026-01-12)**: These features are intentionally NOT implemented.
 >
-> **Rationale**: QuickVM is a "Quick" VM manager, not a Hyper-V replacement. 
-> These features are already well-handled by Hyper-V Manager GUI, and implementing 
+> **Rationale**: QuickVM is a "Quick" VM manager, not a Hyper-V replacement.
+> These features are already well-handled by Hyper-V Manager GUI, and implementing
 > them would lead to scope creep and maintenance burden.
 >
 > **Philosophy**: Use QuickVM for quick tasks (start/stop/clone/rdp), use Hyper-V Manager for infrastructure changes.
@@ -441,6 +450,7 @@ quickvm docker ps                             # Command from plugin
 > ⚠️ **Note:** See [Refined Priority Roadmap](#-refined-priority-roadmap-brainstorming-2026-01-10) below for updated priorities based on user workflow analysis.
 
 ### Phase 1 (Week 1-2)
+
 - [x] VM Snapshots (Tier 1, #1) ✅
 - [x] VM Clone (P0) ✅
 - [x] RDP Connect (P0) ✅
@@ -449,16 +459,19 @@ quickvm docker ps                             # Command from plugin
 - [x] IP Address in TUI ✅ 2026-01-11
 
 ### Phase 2 (Week 3-4)
+
 - [ ] Bulk Operations Enhancement (Multi-index, --all)
 - [ ] VM Config (Tier 1, #4)
 - [ ] Watch Mode (Tier 2, #9)
 
 ### Phase 3 (Week 5-6)
+
 - [ ] VM Clone (Tier 1, #2)
 - [x] Export/Import (Tier 1, #3) ✅ **Completed 2026-01-07**
 - [ ] SSH/RDP Connect (Tier 2, #6)
 
 ### Phase 4 (Future)
+
 - [ ] Tier 3 & 4 features
 
 ---
@@ -479,12 +492,14 @@ quickvm clone 1 "WebServer-Copy"              # Example
 ```
 
 **Implementation Notes:**
+
 - Full clone only (Export → Import → Rename)
 - Linked clone NOT supported (anti-VM detection concerns)
 - Generate new VM ID
 - Estimated time: Several minutes depending on disk size
 
 **PowerShell Flow:**
+
 ```powershell
 # 1. Export VM
 Export-VM -Name "SourceVM" -Path "$env:TEMP\quickvm-clone"
@@ -512,11 +527,13 @@ quickvm rdp 1 -u admin                        # With username (optional)
 ```
 
 **Implementation Notes:**
+
 - Manual trigger only (no auto-connect after start)
 - Get VM IP first, then call mstsc.exe
 - Error if VM not running or no IP available
 
 **PowerShell to get IP:**
+
 ```powershell
 (Get-VMNetworkAdapter -VMName "VMName").IPAddresses | Where-Object { $_ -match '^\d+\.\d+\.\d+\.\d+$' }
 ```
@@ -566,6 +583,7 @@ quickvm ws start dev                          # Short alias
 **Config Location:** `~/.quickvm/workspaces/<name>.yaml`
 
 **YAML Structure:**
+
 ```yaml
 # ~/.quickvm/workspaces/dev.yaml
 name: "Development Environment"
@@ -588,6 +606,7 @@ vms:
 ```
 
 **Implementation Notes:**
+
 - Support both wizard mode and direct YAML editing
 - VMs identified by Hyper-V name (not index, as index may change)
 - Alias is optional, for user convenience
@@ -615,6 +634,7 @@ quickvm snapshot restore <vm-index> --latest  # Restore most recent snapshot
 ```
 
 **Implementation Notes:**
+
 - Must maintain backward compatibility
 - Auto-naming format: `quickvm-YYYY-MM-DD-HHMMSS`
 - `--latest` finds snapshot with most recent creation time
@@ -632,7 +652,7 @@ Already defined in Tier 1, #4. No changes needed.
 > Features to consider when time permits. Not critical for core workflow.
 
 | Feature | Description | Complexity |
-|---------|-------------|------------|
+| --------- | ------------- | ------------ |
 | Auto-snapshot | Snapshot before workspace start | Medium |
 | Health check | Verify VM running before RDP | Low |
 | Workspace import/export | Share config with team | Low |
@@ -653,11 +673,13 @@ Already defined in Tier 1, #4. No changes needed.
 ## 🛠️ Technical Improvements & Refactoring
 
 ### 2026-01-10: Dependency Injection for PowerShell
+
 - **Change**: Refactored `hyperv` package to use `ShellExecutor` interface.
 - **Reason**: Improved unit test coverage and testability without requiring a Windows environment.
 - **Impact**: Developers can now mock PowerShell output in tests using `MockRunner`.
 
 ### 2026-01-11: Pivot to Simplicity
+
 - **Decision**: Remove/Hide complex features (GPU, detailed Disk mgmt) from main view.
 - **Change**: `GetSystemInfo` now accepts `includeDisk` flag to speed up default loading.
 - **Change**: Added `IP Address` column to TUI for better utility.

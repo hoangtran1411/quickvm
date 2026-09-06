@@ -8,7 +8,7 @@ The `.agent/` directory contains configuration files that enhance AI coding assi
 
 This project follows the [AGENTS.md standard](https://agents.md/) - used by 60k+ open-source projects.
 
-```
+```text
 quickvm/
 ├── AGENTS.md                 # Root context for AI agents
 ├── cmd/AGENTS.md             # CLI commands context
@@ -61,7 +61,7 @@ Skills are **reusable knowledge modules** that the AI can reference when relevan
 ### Available Skills
 
 | Skill | Description | Use Case |
-|-------|-------------|----------|
+| ------- | ------------- | ---------- |
 | **Go CLI with Cobra** | CLI application patterns | Adding commands, flag handling |
 | **Go TUI with Bubble Tea** | Terminal UI patterns | Interactive interfaces |
 | **Go PowerShell Integration** | PowerShell execution patterns | Windows automation |
@@ -71,13 +71,14 @@ Skills are **reusable knowledge modules** that the AI can reference when relevan
 ### How Skills Work
 
 When you ask the AI to implement something, it will:
+
 1. Identify relevant skills
 2. Read the skill's `SKILL.md` file
 3. Apply the patterns and templates from the skill
 
 **Example prompts that trigger skills:**
 
-```
+```text
 "Add a new command to list snapshots"
 → Triggers: Go CLI with Cobra skill
 
@@ -95,7 +96,7 @@ Workflows are **step-by-step guides** for common tasks. They can be invoked usin
 ### Available Workflows
 
 | Command | Description | Auto-run |
-|---------|-------------|----------|
+| --------- | ------------- | ---------- |
 | `/dev-cycle` | Format, test, build cycle | ✅ All steps |
 | `/add-command` | Add new CLI command | Partial |
 | `/add-hyperv-feature` | Add Hyper-V functionality | Partial |
@@ -118,7 +119,7 @@ Workflows use special annotations to control automation:
 
 Simply type the slash command in your AI chat:
 
-```
+```text
 /dev-cycle
 ```
 
@@ -171,18 +172,21 @@ command-to-run
 ## Best Practices
 
 ### For Skills
+
 - Keep skills focused on one topic
 - Include working code examples
 - Document common variations
 - Reference external resources when helpful
 
 ### For Workflows
+
 - Use clear step numbers
 - Include verification steps
 - Add checklists at the end
 - Use `// turbo` for safe, repeatable commands
 
 ### For Rules
+
 - Keep rules concise
 - Focus on project-specific requirements
 - Use clear examples of do's and don'ts
@@ -190,16 +194,19 @@ command-to-run
 ## Troubleshooting
 
 ### Skill not being applied
+
 - Ensure the skill file is named `SKILL.md`
 - Check the YAML frontmatter is valid
 - Verify the skill directory is under `.agent/skills/`
 
 ### Workflow not found
+
 - Ensure the file is in `.agent/workflows/`
 - Check the YAML frontmatter has a `description` field
 - Verify file extension is `.md`
 
 ### Commands not auto-running
+
 - Check for `// turbo` annotation before the code block
 - For all commands, add `// turbo-all` anywhere in the file
 

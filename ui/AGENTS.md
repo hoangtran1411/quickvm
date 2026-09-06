@@ -4,7 +4,7 @@ This directory contains the interactive Terminal User Interface built with [Bubb
 
 ## Architecture
 
-```
+```text
 ui/
 └── table.go        # Main TUI model with VM table
 ```
@@ -176,6 +176,7 @@ t.SetStyles(s)
 5. Update help text in `View()`
 
 Example - Add "Export VM" feature:
+
 ```go
 // In Update()
 case "e":

@@ -9,8 +9,9 @@ Welcome to the QuickVM documentation! This directory contains guides and referen
 ## 📚 Documentation Index
 
 | Document | Description |
-|----------|-------------|
+| ---------- | ------------- |
 | [Getting Started](GETTING_STARTED.md) | Installation, commands, shortcuts, and codebase overview |
+| [Quick Reference](QUICK_REFERENCE.md) | Command cheat sheet, TUI shortcuts, JSON schemas & error codes |
 | [Demo & Examples](DEMO.md) | Real-world use cases and power user tips |
 | [Developer Guide](DEVELOPER.md) | Architecture and development notes |
 | [Contributing](CONTRIBUTING.md) | How to contribute + development workflow |
@@ -26,8 +27,9 @@ Welcome to the QuickVM documentation! This directory contains guides and referen
 ## 🎯 Quick Navigation
 
 | I want to... | Go to... |
-|--------------|----------|
+| -------------- | ---------- |
 | **Install QuickVM** | [Getting Started](GETTING_STARTED.md#-quick-install) |
+| **Quick cheat sheet** | [Quick Reference](QUICK_REFERENCE.md) |
 | **Learn all commands** | [Getting Started](GETTING_STARTED.md#-all-commands-at-a-glance) |
 | **See keyboard shortcuts** | [Getting Started](GETTING_STARTED.md#-tui-keyboard-shortcuts) |
 | **See real examples** | [Demo & Examples](DEMO.md) |
@@ -43,16 +45,20 @@ Welcome to the QuickVM documentation! This directory contains guides and referen
 ## 📖 Recommended Reading Order
 
 ### For New Users
+
 1. [Getting Started](GETTING_STARTED.md) - Install and learn basics
-2. [Demo & Examples](DEMO.md) - See it in action
+2. [Quick Reference](QUICK_REFERENCE.md) - Command cheat sheet and shortcuts
+3. [Demo & Examples](DEMO.md) - See it in action
 
 ### For Developers
+
 1. [Getting Started](GETTING_STARTED.md#-understanding-the-codebase-for-developers) - Codebase overview
 2. [Developer Guide](DEVELOPER.md) - Deep architecture details
 3. [Contributing](CONTRIBUTING.md) - How to contribute
 4. [Feature Roadmap](FEATURE_ROADMAP.md) - What's planned (and what's NOT)
 
 ### For AI-Assisted Development
+
 1. [AI Agent Setup](AI_AGENT.md) - Understand skills and workflows
 2. [Skills Reference](SKILLS_REFERENCE.md) - Available code patterns
 3. [Workflows Reference](WORKFLOWS_REFERENCE.md) - Available task automation

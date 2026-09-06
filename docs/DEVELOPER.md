@@ -3,6 +3,7 @@
 ## Quick Start for Developers
 
 ### Prerequisites
+
 - Go 1.21+
 - Windows 10/11 with Hyper-V
 - PowerShell 5.1+
@@ -37,7 +38,7 @@ golangci-lint run
 
 ### Component Breakdown
 
-```
+```text
 ┌─────────────────────────────────────────────────────────┐
 │                    User Interface                       │
 ├─────────────────────────────────────────────────────────┤
@@ -72,6 +73,7 @@ golangci-lint run
 ### Package Responsibilities
 
 #### `cmd/` - CLI Commands Layer
+
 - **Purpose**: Define CLI commands and their behavior
 - **Technology**: Cobra framework
 - **Files**:
@@ -83,6 +85,7 @@ golangci-lint run
   - `version.go` - Version information
 
 #### `hyperv/` - Hyper-V Integration Layer
+
 - **Purpose**: Interact with Hyper-V through PowerShell
 - **Key Components**:
   - `Manager` struct: Main entry point
@@ -96,6 +99,7 @@ golangci-lint run
 - **Technology**: PowerShell execution via `ShellExecutor` interface (allows mocking)
 
 #### `ui/` - TUI Layer
+
 - **Purpose**: Interactive terminal UI
 - **Technology**: Bubble Tea + Bubbles + Lipgloss
 - **Components**:
@@ -107,9 +111,11 @@ golangci-lint run
 ## Key Design Decisions
 
 ### 1. PowerShell Integration
+
 **Decision**: Use PowerShell commands instead of Windows API
 
 **Rationale**:
+
 - ✅ Simpler to implement
 - ✅ Easier to maintain
 - ✅ More reliable (uses official Hyper-V cmdlets)
@@ -117,15 +123,18 @@ golangci-lint run
 - ❌ Slightly slower (acceptable for this use case)
 
 **Implementation**:
+
 ```go
 cmd := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-Command", psScript)
 output, err := cmd.CombinedOutput()
 ```
 
 ### 2. Index-Based VM Reference
+
 **Decision**: Use numeric indices instead of names in CLI
 
 **Rationale**:
+
 - ✅ Faster to type (e.g., `quickvm start 1` vs `quickvm start "My Long VM Name"`)
 - ✅ No need to escape special characters
 - ✅ Consistent with TUI navigation
@@ -134,13 +143,16 @@ output, err := cmd.CombinedOutput()
 **Mitigation**: Always show VM name in output for confirmation
 
 ### 3. Dual Interface (CLI + TUI)
+
 **Decision**: Provide both command-line and interactive modes
 
 **Rationale**:
+
 - CLI: Fast, scriptable, automation-friendly
 - TUI: Visual, exploratory, beginner-friendly
 
 **Usage Patterns**:
+
 - **Automation**: Use CLI commands in scripts
 - **Exploration**: Use TUI to browse and manage VMs
 - **Quick Actions**: Use CLI for single operations
@@ -150,6 +162,7 @@ output, err := cmd.CombinedOutput()
 ### Adding a New Command
 
 1. Create `cmd/mycommand.go`:
+
 ```go
 package cmd
 
@@ -172,7 +185,8 @@ func init() {
 }
 ```
 
-2. Rebuild and test:
+1. Rebuild and test:
+
 ```powershell
 go build -o quickvm.exe
 .\quickvm.exe mycommand
@@ -181,6 +195,7 @@ go build -o quickvm.exe
 ### Adding Hyper-V Functionality
 
 1. Add method to `hyperv/hyperv.go`:
+
 ```go
 func (m *Manager) MyNewFunction(vmIndex int) error {
     psScript := `Your-PowerShell-Command`
@@ -193,11 +208,12 @@ func (m *Manager) MyNewFunction(vmIndex int) error {
 }
 ```
 
-2. Add test in `hyperv/hyperv_test.go`
+1. Add test in `hyperv/hyperv_test.go`
 
 ### Modifying TUI
 
 1. Update model in `ui/table.go`:
+
 ```go
 // Add to Update function for new keybindings
 case "x":
@@ -205,7 +221,8 @@ case "x":
     return m, m.myNewAction()
 ```
 
-2. Test manually:
+1. Test manually:
+
 ```powershell
 go build -o quickvm.exe
 .\quickvm.exe  # launches TUI
@@ -214,6 +231,7 @@ go build -o quickvm.exe
 ## Testing Strategy
 
 ### Unit Tests
+
 ```powershell
 # Run all tests
 go test ./...
@@ -250,6 +268,7 @@ go tool cover -html=coverage.out
 ## Performance Considerations
 
 ### Current Bottlenecks
+
 1. **PowerShell startup time** (~200-500ms per command)
    - Acceptable for interactive use
    - Could be improved with persistent PowerShell session
@@ -257,6 +276,7 @@ go tool cover -html=coverage.out
 2. **JSON parsing** - Minimal overhead
 
 ### Optimization Opportunities
+
 1. Cache VM list for short periods (5-10 seconds)
 2. Use PowerShell Runspaces for faster execution
 3. Batch multiple operations
@@ -264,6 +284,7 @@ go tool cover -html=coverage.out
 ## Error Handling Patterns
 
 ### PowerShell Errors
+
 ```go
 cmd := exec.Command("powershell", ...)
 output, err := cmd.CombinedOutput()
@@ -273,6 +294,7 @@ if err != nil {
 ```
 
 ### Validation Errors
+
 ```go
 if index < 1 || index > len(vms) {
     return fmt.Errorf("invalid VM index: %d (valid range: 1-%d)", index, len(vms))
@@ -280,6 +302,7 @@ if index < 1 || index > len(vms) {
 ```
 
 ### User-Friendly Messages
+
 - ✅ Use emojis for visual feedback
 - ✅ Include context in error messages
 - ✅ Suggest fixes when possible
@@ -287,16 +310,19 @@ if index < 1 || index > len(vms) {
 ## Build & Release
 
 ### Development Build
+
 ```powershell
 go build -o quickvm.exe
 ```
 
 ### Optimized Build
+
 ```powershell
 go build -ldflags="-s -w" -o quickvm.exe
 ```
 
 ### Multi-Architecture Build
+
 ```powershell
 # AMD64
 $env:GOOS="windows"; $env:GOARCH="amd64"
@@ -308,7 +334,9 @@ go build -ldflags="-s -w" -o quickvm-arm64.exe
 ```
 
 ### Version Management
+
 Update `cmd/version.go`:
+
 ```go
 var (
     Version   = "1.1.0"
@@ -320,19 +348,23 @@ var (
 ## Troubleshooting Development Issues
 
 ### Import Errors
+
 ```powershell
 go mod tidy
 go mod download
 ```
 
 ### Build Cache Issues
+
 ```powershell
 go clean -cache
 go build -v -o quickvm.exe
 ```
 
 ### PowerShell Script Debugging
+
 Create test scripts in separate `.ps1` files:
+
 ```powershell
 # test-script.ps1
 Get-VM | Select-Object Name, State | ConvertTo-Json
@@ -344,12 +376,14 @@ powershell -File test-script.ps1
 ## Future Improvements
 
 ### High Priority
+
 - [ ] Bulk Operations Enhancement (Multi-index, --all)
 - [ ] Workspace/Profile System (.quickvm/workspaces/*.yaml)
 - [ ] VM Config (RAM/CPU management)
 - [ ] Better error messages
 
 ### Medium Priority
+
 - [ ] Remote Hyper-V server support
 - [ ] VM grouping/tagging
 - [x] Export/import VM configs ✅
@@ -358,6 +392,7 @@ powershell -File test-script.ps1
 - [ ] Performance metrics
 
 ### Low Priority
+
 - [ ] GUI wrapper
 - [ ] Web interface
 - [ ] Mobile app integration
@@ -366,23 +401,28 @@ powershell -File test-script.ps1
 ## Resources
 
 ### Documentation
+
 - [Cobra Framework](https://github.com/spf13/cobra)
 - [Bubble Tea](https://github.com/charmbracelet/bubbletea)
 - [Hyper-V PowerShell](https://docs.microsoft.com/en-us/powershell/module/hyper-v/)
 - [Go Documentation](https://golang.org/doc/)
 
 ### Similar Projects
+
 - Vagrant (multi-VM management)
 - Multipass (Ubuntu VMs)
 - Docker (containers)
 
 ### AI-Assisted Development
+
 This project includes AI agent configuration for enhanced development:
+
 - **Skills**: Reusable patterns in `.agent/skills/`
 - **Workflows**: Task automation in `.agent/workflows/`
 - **Documentation**: [AI Agent Setup](AI_AGENT.md)
 
 ### Community
+
 - GitHub Discussions
 - Stack Overflow
 - Reddit r/golang

@@ -4,7 +4,7 @@ This package contains all Hyper-V business logic, abstracting PowerShell command
 
 ## Architecture
 
-```
+```text
 internal/hyperv/
 ├── hyperv.go       # Manager struct, VM struct, core operations
 ├── executor.go     # ShellExecutor interface + PowerShellRunner
@@ -68,12 +68,14 @@ func (m *Manager) GetVMs(ctx context.Context) ([]VM, error) {
 ## Security Rules (CRITICAL)
 
 ### ❌ NEVER DO THIS
+
 ```go
 // Command injection vulnerability!
 script := fmt.Sprintf("Get-VM -Name %s", userInput)
 ```
 
 ### ✅ ALWAYS DO THIS
+
 ```go
 // Use parameterized execution
 script := `Get-VM -Name $args[0]`
@@ -81,6 +83,7 @@ output, err := m.Exec.RunCommandWithArgs(ctx, script, vmName)
 ```
 
 Or use PowerShell's built-in escaping:
+
 ```go
 // Quote and escape the name
 safeName := strings.ReplaceAll(vmName, "'", "''")
@@ -124,6 +127,7 @@ func TestGetVMs(t *testing.T) {
 5. Add integration test with `//go:build windows` tag
 
 Example:
+
 ```go
 // hyperv.go
 func (m *Manager) SetVMMemory(ctx context.Context, vmName string, memoryMB int64) error {
@@ -154,6 +158,7 @@ func (m *Manager) SetVMMemory(ctx context.Context, vmName string, memoryMB int64
 ## Error Handling
 
 Always wrap errors with context:
+
 ```go
 if err != nil {
     return nil, fmt.Errorf("operation '%s' failed for VM '%s': %w", 
@@ -162,6 +167,7 @@ if err != nil {
 ```
 
 Use typed errors for specific failure modes:
+
 ```go
 var (
     ErrVMNotFound    = errors.New("VM not found")
@@ -173,6 +179,7 @@ var (
 ## Context Usage
 
 All methods MUST accept `context.Context`:
+
 ```go
 func (m *Manager) StartVM(ctx context.Context, index int) error {
     // Use context for timeouts

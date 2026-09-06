@@ -20,11 +20,13 @@ If there's output, your GPU supports partitioning.
 ## Commands
 
 ### Check GPU Status
+
 ```bash
 quickvm gpu status
 ```
 
 ### Add GPU to VM
+
 ```bash
 # VM must be OFF before adding GPU
 quickvm stop <vm-index>
@@ -32,6 +34,7 @@ quickvm gpu add <vm-index>
 ```
 
 ### Remove GPU from VM
+
 ```bash
 quickvm gpu remove <vm-index>
 ```
@@ -43,24 +46,28 @@ After adding GPU, you need to copy drivers from Host to Guest:
 ### 1. Copy Driver Files
 
 **From Host:**
-```
+
+```text
 C:\Windows\System32\DriverStore\FileRepository\nv_dispi.inf_amd64_[UUID]
 ```
 
 **To Guest:**
-```
+
+```text
 C:\Windows\System32\HostDriverStore\FileRepository\nv_dispi.inf_amd64_[UUID]
 ```
 
 ### 2. Copy System Files
 
 **From Host:**
-```
+
+```text
 C:\Windows\System32\nv*.*  (all files starting with "nv")
 ```
 
 **To Guest:**
-```
+
+```text
 C:\Windows\System32\
 ```
 
@@ -92,7 +99,7 @@ Set-VM -HighMemoryMappedIoSpace 32GB -VMName $vm
 ## Troubleshooting
 
 | Issue | Solution |
-|-------|----------|
+| ------- | ---------- |
 | GPU not visible in Guest | Check if drivers were copied correctly |
 | Error when adding GPU | Ensure VM is OFF |
 | `Get-VMPartitionableGPU` returns empty | GPU not supported or outdated driver |

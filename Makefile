@@ -68,6 +68,16 @@ lint: ## Run linter (requires golangci-lint)
 	@echo "Running linter..."
 	golangci-lint run
 
+.PHONY: lint-md
+lint-md: ## Lint markdown files (requires npx/markdownlint-cli)
+	@echo "Linting markdown..."
+	npx --yes markdownlint-cli "**/*.md"
+
+.PHONY: fmt-md
+fmt-md: ## Format markdown files with markdownlint
+	@echo "Formatting markdown..."
+	npx --yes markdownlint-cli --fix "**/*.md"
+
 .PHONY: clean
 clean: ## Clean build artifacts
 	@echo "Cleaning..."

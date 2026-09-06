@@ -5,9 +5,11 @@ Quick reference for all available AI skills in this project.
 ## Available Skills
 
 ### Go CLI with Cobra
+
 **Location**: `.agent/skills/go-cli-cobra/SKILL.md`
 
 **What it provides**:
+
 - Root command template
 - Resource command template
 - Version command template
@@ -15,6 +17,7 @@ Quick reference for all available AI skills in this project.
 - Flag handling best practices
 
 **When to use**:
+
 - Adding new CLI commands
 - Restructuring command hierarchy
 - Implementing flags and arguments
@@ -22,9 +25,11 @@ Quick reference for all available AI skills in this project.
 ---
 
 ### Go TUI with Bubble Tea
+
 **Location**: `.agent/skills/go-tui-bubbletea/SKILL.md`
 
 **What it provides**:
+
 - Lipgloss style definitions
 - Table model template
 - Elm Architecture patterns (Model-Update-View)
@@ -32,6 +37,7 @@ Quick reference for all available AI skills in this project.
 - Keyboard handling patterns
 
 **When to use**:
+
 - Creating interactive terminal UIs
 - Adding table/list views
 - Styling terminal output
@@ -39,9 +45,11 @@ Quick reference for all available AI skills in this project.
 ---
 
 ### Go PowerShell Integration
+
 **Location**: `.agent/skills/go-powershell-integration/SKILL.md`
 
 **What it provides**:
+
 - ShellExecutor interface pattern
 - Mock implementation for testing
 - Security best practices (injection prevention)
@@ -49,6 +57,7 @@ Quick reference for all available AI skills in this project.
 - Error handling patterns
 
 **When to use**:
+
 - Adding PowerShell commands
 - Windows system integration
 - Mocking for tests
@@ -56,9 +65,11 @@ Quick reference for all available AI skills in this project.
 ---
 
 ### Go Testing Patterns
+
 **Location**: `.agent/skills/go-testing-patterns/SKILL.md`
 
 **What it provides**:
+
 - Table-driven test template
 - Interface-based mocking
 - Test helper patterns
@@ -66,6 +77,7 @@ Quick reference for all available AI skills in this project.
 - GitHub Actions CI configuration
 
 **When to use**:
+
 - Writing unit tests
 - Setting up CI/CD
 - Mocking dependencies
@@ -73,9 +85,11 @@ Quick reference for all available AI skills in this project.
 ---
 
 ### Go Project Structure
+
 **Location**: `.agent/skills/go-project-structure/SKILL.md`
 
 **What it provides**:
+
 - Standard directory layout
 - Makefile template
 - GitHub Actions workflows
@@ -83,6 +97,7 @@ Quick reference for all available AI skills in this project.
 - CHANGELOG format
 
 **When to use**:
+
 - Starting new projects
 - Restructuring existing projects
 - Setting up CI/CD
@@ -98,7 +113,7 @@ Quick reference for all available AI skills in this project.
 ## Skill Triggers
 
 | Request | Skill Applied |
-|---------|---------------|
+| --------- | --------------- |
 | "Add a command for X" | Go CLI with Cobra |
 | "Create a table view" | Go TUI with Bubble Tea |
 | "Execute PowerShell command" | Go PowerShell Integration |

@@ -12,7 +12,7 @@
 - [Quick Start for Contributors](#-quick-start-for-contributors)
 - [Reporting Bugs](#-reporting-bugs)
 - [Suggesting Features](#-suggesting-features)
-- [Development Setup](#-development-setup)
+- [Development Setup](#development-setup)
 - [Development Workflow](#-development-workflow)
 - [Coding Guidelines](#-coding-guidelines)
 - [Pull Request Process](#-pull-request-process)
@@ -87,18 +87,19 @@ If applicable.
 ## 💡 Suggesting Features
 
 > ⚠️ **Important**: Check [FEATURE_ROADMAP.md](FEATURE_ROADMAP.md) first!
-> 
+>
 > Features in **Tier 3 & 4 are ARCHIVED** and won't be implemented.
 > QuickVM is intentionally a "Quick" VM manager, not a Hyper-V replacement.
 
 When suggesting features:
+
 - Explain the use case
 - Describe how it fits the "Quick" philosophy
 - Provide examples of usage
 
 ---
 
-## 🛠️ Development Setup
+## <a id="development-setup"></a>🛠️ Development Setup
 
 ### Prerequisites
 
@@ -218,7 +219,7 @@ This project uses `golangci-lint` in CI. **All PRs must pass linting.**
 #### Common Lint Errors to Avoid
 
 | Rule | Error | Fix |
-|------|-------|-----|
+| ------ | ------- | ----- |
 | `errcheck` | Error return value not checked | Always check or explicitly ignore with `_ =` |
 | `ineffassign` | Ineffectual assignment | Remove unused assignments |
 | `staticcheck` | Various static analysis | Follow suggestions |
@@ -226,6 +227,7 @@ This project uses `golangci-lint` in CI. **All PRs must pass linting.**
 #### Error Return Values (`errcheck`)
 
 **❌ Wrong** - Will fail CI:
+
 ```go
 os.WriteFile(path, data, 0644)
 w.Write([]byte(response))
@@ -233,6 +235,7 @@ copyFile(src, dst)
 ```
 
 **✅ Correct** - Production code:
+
 ```go
 if err := os.WriteFile(path, data, 0644); err != nil {
     return fmt.Errorf("failed to write file: %w", err)
@@ -240,6 +243,7 @@ if err := os.WriteFile(path, data, 0644); err != nil {
 ```
 
 **✅ Correct** - Test/Benchmark code (when error handling not needed):
+
 ```go
 _ = os.WriteFile(path, data, 0644)
 _, _ = w.Write([]byte(response))
@@ -266,6 +270,7 @@ Our `.golangci.yml` uses `version: "2"`. Key differences for contributors:
 #### If You Don't Have golangci-lint
 
 At minimum, run these before pushing:
+
 ```powershell
 go vet ./...      # Basic static analysis
 go build ./...    # Ensure code compiles
@@ -276,7 +281,7 @@ go test ./...     # Ensure tests pass
 
 Use conventional commits:
 
-```
+```text
 feat: add support for VM snapshots
 fix: correct memory calculation
 docs: update README
@@ -285,6 +290,7 @@ refactor: simplify PowerShell generation
 ```
 
 Prefixes:
+
 - `feat:` - New feature
 - `fix:` - Bug fix
 - `docs:` - Documentation
@@ -387,8 +393,8 @@ func init() {
 }
 ```
 
-2. Add tests in `cmd/mycommand_test.go`
-3. Update documentation
+1. Add tests in `cmd/mycommand_test.go`
+2. Update documentation
 
 ### Adding Hyper-V Functionality
 
@@ -402,6 +408,7 @@ func init() {
 ## 🐞 Troubleshooting Development
 
 ### Import issues
+
 ```powershell
 go clean -modcache
 go mod download
@@ -409,12 +416,14 @@ go mod tidy
 ```
 
 ### Build issues
+
 ```powershell
 go clean -cache
 go build -v -o quickvm.exe
 ```
 
 ### PowerShell execution policy
+
 ```powershell
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 ```
@@ -432,6 +441,7 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 ## 🌟 Recognition
 
 Contributors are recognized in:
+
 - GitHub contributors list
 - Release notes
 - Project README (significant contributions)

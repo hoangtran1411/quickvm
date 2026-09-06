@@ -10,7 +10,7 @@
 
 - [Quick Install](#-quick-install)
 - [All Commands at a Glance](#-all-commands-at-a-glance)
-- [TUI Keyboard Shortcuts](#-tui-keyboard-shortcuts)
+- [TUI Keyboard Shortcuts](#tui-keyboard-shortcuts)
 - [Installation Methods](#-installation-methods)
 - [Understanding the Codebase](#-understanding-the-codebase-for-developers)
 - [Troubleshooting](#-troubleshooting)
@@ -38,7 +38,7 @@
 ### Core Commands
 
 | Command | Description | Example |
-|---------|-------------|---------|
+| --------- | ------------- | --------- |
 | `quickvm` | Launch interactive TUI | `quickvm` |
 | `quickvm list` | List all VMs | `quickvm list` |
 | `quickvm start <index>` | Start VM | `quickvm start 1` |
@@ -50,7 +50,7 @@
 ### Snapshot Commands
 
 | Command | Description |
-|---------|-------------|
+| --------- | ------------- |
 | `quickvm snapshot list <index>` | List snapshots |
 | `quickvm snapshot create <index> "name"` | Create snapshot |
 | `quickvm snapshot restore <index> "name"` | Restore snapshot |
@@ -66,7 +66,7 @@
 ### System Commands
 
 | Command | Description |
-|---------|-------------|
+| --------- | ------------- |
 | `quickvm info` | Show system info |
 | `quickvm update` | Update QuickVM |
 | `quickvm version` | Show version |
@@ -74,17 +74,17 @@
 ### Useful Flags
 
 | Flag | Description | Example |
-|------|-------------|---------|
+| ------ | ------------- | --------- |
 | `--range` | Start VMs in range | `quickvm start --range 1-5` |
 | `--update` | Check updates first | `quickvm --update list` |
 | `-y` | Auto-confirm | `quickvm update -y` |
 
 ---
 
-## ⌨️ TUI Keyboard Shortcuts
+## <a id="tui-keyboard-shortcuts"></a>⌨️ TUI Keyboard Shortcuts
 
 | Key | Action |
-|-----|--------|
+| ----- | -------- |
 | `↑` / `↓` | Navigate VMs |
 | `Enter` | Start selected VM |
 | `s` | Stop selected VM |
@@ -95,7 +95,7 @@
 ### Status Colors
 
 | Color | State |
-|-------|-------|
+| ------- | ------- |
 | 🟢 Green | Running |
 | 🔴 Red | Off |
 | 🟡 Yellow | Paused |
@@ -106,7 +106,7 @@
 
 ### Method 1: Interactive Menu (Recommended)
 
-```
+```text
 1. Extract ZIP
 2. Double-click install-menu.bat
 3. Choose:
@@ -142,7 +142,7 @@ go build -ldflags="-s -w" -o quickvm.exe
 ### Installation Location Comparison
 
 | Location | Pros | Cons | Best For |
-|----------|------|------|----------|
+| ---------- | ------ | ------ | ---------- |
 | **System** | Global access, no PATH config | Needs Admin | Shared workstations |
 | **User** ⭐ | No Admin, easy update | Single user | Most users |
 | **Current** | Portable, no install | Must use `.\quickvm.exe` | USB/Testing |
@@ -153,13 +153,13 @@ go build -ldflags="-s -w" -o quickvm.exe
 
 ### High-Level Architecture
 
-```
+```text
 User → main.go → cmd/ (Cobra CLI) → hyperv/ (Business Logic) → PowerShell
 ```
 
 ### Project Structure
 
-```
+```text
 quickvm/
 ├── cmd/          # CLI commands (one file per command)
 │   ├── root.go   # Root command + TUI launcher
@@ -177,14 +177,17 @@ quickvm/
 ### Key Concepts
 
 **1. Entry Point (`main.go`)**
+
 ```go
 func main() {
     cmd.Execute()
 }
 ```
+
 Just calls the CLI framework. All logic is in packages.
 
 **2. Command Pattern (`cmd/start.go`)**
+
 ```go
 var startCmd = &cobra.Command{
     Use:   "start <vm-index>",
@@ -201,6 +204,7 @@ func init() {
 ```
 
 **3. Hyper-V Integration (`hyperv/hyperv.go`)**
+
 ```go
 func (m *Manager) StartVM(index int) error {
     psScript := fmt.Sprintf(`Start-VM -Name "%s"`, vmName)
@@ -208,6 +212,7 @@ func (m *Manager) StartVM(index int) error {
     // ...
 }
 ```
+
 Uses `ShellExecutor` interface for testability.
 
 ### Quick Tips for New Contributors
@@ -222,25 +227,30 @@ Uses `ShellExecutor` interface for testability.
 ## 🐛 Troubleshooting
 
 ### "Execution policy" error
+
 ```powershell
 Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process
 .\install-menu.ps1
 ```
 
 ### "quickvm is not recognized"
+
 1. Restart terminal
 2. Check PATH: `$env:Path -split ';' | Select-String "bin"`
 3. Re-install with User option
 
 ### "Access is denied" (System install)
+
 Run PowerShell as Administrator
 
 ### "Failed to get VMs"
+
 - Run as Administrator
 - Check `Get-VM` works in PowerShell
 - Verify Hyper-V is enabled
 
 ### Script blocked by Windows
+
 ```powershell
 Unblock-File .\install-menu.ps1
 Unblock-File .\install.ps1
@@ -251,11 +261,13 @@ Unblock-File .\install.ps1
 ## ⚡ Power User Tips
 
 ### Create alias
+
 ```powershell
 Set-Alias qvm quickvm
 ```
 
 ### Start multiple VMs
+
 ```powershell
 quickvm start --range 1-5
 # or
@@ -263,6 +275,7 @@ quickvm start --range 1-5
 ```
 
 ### Auto-start VMs at boot
+
 ```powershell
 $action = New-ScheduledTaskAction -Execute "quickvm.exe" -Argument "start 1"
 $trigger = New-ScheduledTaskTrigger -AtStartup

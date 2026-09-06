@@ -5,19 +5,23 @@ Quick reference for all available AI workflows in this project.
 ## Development Workflows
 
 ### `/dev-cycle` - Standard Development Cycle
+
 **Auto-run**: ✅ All steps
 
 Fast iteration cycle:
-```
+
+```text
 1. Format code (go fmt)
 2. Run tests
 3. Build binary
 ```
 
 ### `/add-command` - Add New CLI Command
+
 **Auto-run**: Partial
 
 Steps:
+
 1. Create command file in `cmd/`
 2. Add business logic to `hyperv/` (if needed)
 3. Write unit tests
@@ -25,9 +29,11 @@ Steps:
 5. Verify with `--help`
 
 ### `/add-hyperv-feature` - Add Hyper-V Feature
+
 **Auto-run**: Partial
 
 Steps:
+
 1. Research PowerShell cmdlet
 2. Create feature file in `hyperv/`
 3. Add mock-based tests
@@ -35,9 +41,11 @@ Steps:
 5. Update documentation
 
 ### `/add-tui-feature` - Add TUI Feature
+
 **Auto-run**: Build step only
 
 Steps:
+
 1. Identify change type (keyboard, column, style)
 2. Update Model (if needed)
 3. Add keyboard shortcut
@@ -49,18 +57,22 @@ Steps:
 ## Quality Workflows
 
 ### `/test-coverage` - Generate Coverage Reports
+
 **Auto-run**: ✅ All steps
 
 Steps:
+
 1. Run tests with coverage
 2. Generate coverage profile
 3. Create HTML report
 4. View summary
 
 ### `/refactor` - Safe Refactoring
+
 **Auto-run**: ✅ Test/build steps
 
 Steps:
+
 1. Verify existing tests pass
 2. Note coverage percentage
 3. Make small changes
@@ -68,9 +80,11 @@ Steps:
 5. Verify no regression
 
 ### `/fix-bug` - Debug and Fix Bugs
+
 **Auto-run**: Partial
 
 Steps:
+
 1. Reproduce the bug
 2. Locate the issue
 3. Write failing test
@@ -78,9 +92,11 @@ Steps:
 5. Verify all tests pass
 
 ### `/review-pr` - Code Review
+
 **Auto-run**: ✅ Check steps
 
 Checklist:
+
 - Code style and formatting
 - Architecture patterns
 - Security (PowerShell injection)
@@ -92,9 +108,11 @@ Checklist:
 ## Maintenance Workflows
 
 ### `/release` - Create New Release
+
 **Auto-run**: Partial
 
 Steps:
+
 1. Update version in `cmd/version.go`
 2. Update CHANGELOG.md
 3. Run all checks
@@ -103,9 +121,11 @@ Steps:
 6. Verify GitHub Release
 
 ### `/update-deps` - Update Dependencies
+
 **Auto-run**: ✅ All steps
 
 Steps:
+
 1. Check current dependencies
 2. Check for updates
 3. Update dependencies
@@ -114,9 +134,11 @@ Steps:
 6. Manual verification
 
 ### `/improve-ax` - Improve Agent Experience
+
 **Auto-run**: ✅ Most steps
 
 Steps:
+
 1. Audit current AGENTS.md files
 2. Check for outdated information
 3. Update from recent changes
@@ -127,6 +149,7 @@ Steps:
 8. Update AI_AGENT.md index
 
 When to use:
+
 - After adding new features
 - When AI agents make repeated mistakes
 - During periodic maintenance

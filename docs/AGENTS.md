@@ -4,7 +4,7 @@ This directory contains all project documentation in Markdown format.
 
 ## Documentation Structure
 
-```
+```text
 docs/
 ├── README.md              # Documentation index (this file's parent)
 ├── GETTING_STARTED.md     # Installation, commands, quick start
@@ -22,6 +22,7 @@ docs/
 ## Documentation Standards
 
 ### Language & Style
+
 - **Language**: English only (EN-US)
 - **Tone**: Clear, concise, professional
 - **Audience**: Developers and power users
@@ -54,7 +55,6 @@ quickvm start 1
 | Column 1 | Column 2 |
 |----------|----------|
 | Data     | Data     |
-```
 
 ### Must-Have Elements
 
@@ -125,11 +125,11 @@ quickvm start 1
 # With options
 quickvm start 1 --force
 ```
-```
 
 ## Screenshots & Media
 
 If adding screenshots:
+
 1. Save to `docs/assets/` directory
 2. Use descriptive filenames: `tui-vm-list.png`
 3. Reference with relative paths: `![TUI](assets/tui-vm-list.png)`
@@ -138,6 +138,7 @@ If adding screenshots:
 ## Version Documentation
 
 When releasing new versions:
+
 1. Update `CHANGELOG.md` in root
 2. Update version in `GETTING_STARTED.md`
 3. Add migration notes if breaking changes
@@ -145,6 +146,7 @@ When releasing new versions:
 ## AI Agent Relevance
 
 This documentation is consumed by:
+
 - Human developers
 - AI coding agents (via AGENTS.md context)
 
